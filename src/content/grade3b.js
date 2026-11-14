@@ -89,7 +89,7 @@ export const G3B = {
     return { text: `Cum scrii ${n} cu cifre romane?`, ans: r, opts: textOpts(r, [toR(n + 1), toR(Math.max(1, n - 1)), r.split('').reverse().join('')]), steps: ['I = 1, V = 5, X = 10, L = 50.', `${n} = ${r}`] };
   },
   sinonime() {
-    const S = [['frumos', 'drăguț', 'urât'], ['bucuros', 'vesel', 'trist'], ['repede', 'iute', 'încet'], ['mare', 'uriaș', 'mic'], ['harnic', 'muncitor', 'leneș'], ['curajos', 'viteaz', 'fricos'], ['a începe', 'a porni', 'a termina'], ['zi', 'ziuă', 'noapte'], ['cald', 'fierbinte', 'rece'], ['deștept', 'isteț', 'prost']];
+    const S = [['frumos', 'drăguț', 'urât'], ['bucuros', 'vesel', 'trist'], ['repede', 'iute', 'încet'], ['mare', 'uriaș', 'mic'], ['harnic', 'muncitor', 'leneș'], ['curajos', 'viteaz', 'fricos'], ['a începe', 'a porni', 'a termina'], ['a vorbi', 'a spune', 'a tăcea'], ['cald', 'fierbinte', 'rece'], ['curat', 'îngrijit', 'murdar']];
     const [w, sin, ant] = pick(S), askSin = Math.random() < 0.5, ans = askSin ? sin : ant, other = S.filter((x) => x[0] !== w).map((x) => x[1]);
     return { text: `Care este ${askSin ? 'sinonimul (are același înțeles)' : 'antonimul (are înțeles opus)'} cuvântului?`, expr: w, ans, opts: textOpts(ans, [askSin ? ant : sin, pick(other), w]),
       steps: [askSin ? `Sinonime = cuvinte cu același înțeles: ${w} = ${sin}.` : `Antonime = cuvinte cu înțeles opus: ${w} ≠ ${ant}.`] };

@@ -147,7 +147,7 @@ const multiplayer = () => (NET.room ? openLobby() : openCreate());
 initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
 initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd } });
 let seated = false;
-initChase(scene, shadow, { teleport: (x, z, y = 0) => teleport(x, z, y), setView: (y) => { yaw = y; yawS = y; face = Math.PI; seated = false; } }, (l) => glow.addExcludedMesh(l));
+initChase(scene, shadow, { getZ: () => P.z, teleport: (x, z, y = 0) => teleport(x, z, y), setView: (y) => { yaw = y; yawS = y; face = Math.PI; seated = false; } }, (l) => glow.addExcludedMesh(l));
 const CR = W.classroom;
 setClassHooks({
   toSeat: (i) => { const st = CR.seats[i % CR.seats.length]; teleport(st.x, st.z, st.y); face = Math.PI; yaw = 0; seated = true; },

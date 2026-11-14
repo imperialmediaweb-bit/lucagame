@@ -10,7 +10,8 @@ import { apiCall, loggedIn } from './account.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const RZ0 = -420, RLEN = 700, SPEEDV = 7.5;
+const RZ0 = -420, RLEN = 700, SPEEDV = 7.5, GOAL = 12;
+let gate = null;
 let C = null, H = {}, monster, portals = [];
 export const chasing = () => !!(C && C.active);
 
@@ -27,7 +28,13 @@ export function initChase(scene, shadow, hooks, labelHook) {
     });
     const arch = MeshBuilder.CreateBox('ra' + z, { width: 9, height: 0.5, depth: 0.5 }, scene); arch.position.set(0, 6, z - 10); arch.material = mat(scene, '#f2b632', 0.3);
   }
-  monster = createAvatar(scene, { skin: '#6fd04a', shirt: '#4b3cc4', pants: '#2b2f38', hat: 'urechi', face: 'robot' }, shadow, 'monster');
+  monster = createAvatar(scene, { skin: '#4a2470', shirt: '#14101c', pants: '#2b1645', hat: 'coarne', face: 'monstru' }, shadow, 'monster');
+  // portalul de ieșire: apare când ai rezolvat toate exercițiile misiunii
+  gate = new TransformNode('exitGate', scene);
+  const gr = MeshBuilder.CreateTorus('exitRing', { diameter: 7, thickness: 0.6, tessellation: 48 }, scene); gr.parent = gate; gr.position.y = 3.6; gr.rotation.x = Math.PI / 2; gr.material = mat(scene, '#2EC4A6', 0.8);
+  const gd = MeshBuilder.CreateDisc('exitDisc', { radius: 3.2, tessellation: 48 }, scene); gd.parent = gate; gd.position.y = 3.6; const gdm = mat(scene, '#7B5CF6', 0.9).clone('exitM'); gdm.alpha = 0.55; gdm.backFaceCulling = false; gd.material = gdm;
+  const gl = makeLabel(scene, 'IEȘIRE', 'ai scăpat!', '#2EC4A6', 3); gl.parent = gate; gl.position.y = 8; labelHook && labelHook(gl);
+  gate.setEnabled(false);
   monster.root.scaling.setAll(1.9); monster.root.position.set(0, 0, RZ0 + 50);
 
   // portalurile din piață
@@ -46,7 +53,7 @@ export function initChase(scene, shadow, hooks, labelHook) {
 function buildUI() {
   const el = document.createElement('div'); el.id = 'chase'; el.hidden = true;
   el.innerHTML = `<div class="chtop"><span id="chLives"></span><span id="chLvl"></span><span id="chScore"></span><button class="iconbtn" type="button" id="chQuit">Ieși</button></div>
-    <div class="chcard"><div class="chbar"><i id="chT"></i></div><div class="chq" id="chQ"></div><div class="opts" id="chO"></div></div>`;
+    <div class="chcard"><div class="chgoal"><span id="chGoalT"></span><div class="chprog"><i id="chG"></i></div></div><div class="chbar"><i id="chT"></i></div><div class="chq" id="chQ"></div><div class="opts" id="chO"></div></div>`;
   document.body.appendChild(el);
   $('chQuit').onclick = () => end(true);
 }
@@ -63,9 +70,9 @@ export function updatePortals(dt, P, t) {
 export function portalPanel(id) {
   const p = SPEED[id], best = (S.records || {})['portal-' + id];
   showPanel(`<div class="eyebrow">Portal de viteză · ${esc(p.sub)}</div><h2>${esc(p.name)}</h2>
-    <p>Fugi pe pistă! <b>Monstrul vine din spate</b> și te ajunge când se termină timpul. Răspunde corect și repede ca să scapi. Ai <b>3 vieți</b>.</p>
+    <p><b>Misiunea:</b> rezolvă corect <b>${GOAL} exerciții</b> ca să ajungi la portalul de ieșire. <b>Monstrul vine din spate</b> și te ajunge când se termină timpul la un exercițiu. Ai <b>3 vieți</b>: câte vieți îți rămân la final, atâtea stele primești.</p>
     <p>Timp pe exercițiu: <b>${timeFor(id, 1)} secunde</b> la început, tot mai puțin la fiecare nivel (minim ${SPEED[id].min} s).</p>
-    ${best ? `<p>Recordul tău: <b>${best.score} puncte</b> · nivelul ${best.level}</p>` : ''}
+    ${best ? `<p>Recordul tău: <b>${best.score} puncte</b> · ${'★'.repeat(best.stars || 0)}${'☆'.repeat(3 - (best.stars || 0))}</p>` : ''}
     <div class="row"><button class="btn light" type="button" id="ppTop">Clasament</button><button class="btn light" type="button" data-close>Nu acum</button><button class="btn" type="button" id="ppGo">Fugi!</button></div>`);
   $('ppGo').onclick = () => { $('panel').hidden = true; start(id); };
   $('ppTop').onclick = () => showBoard('portal-' + id, p.name, () => portalPanel(id));
@@ -86,7 +93,8 @@ export async function showBoard(board, title, back) {
 
 /* ---------- fuga ---------- */
 function start(id) {
-  C = { active: true, id, level: 1, lives: 3, score: 0, correct: 0, streak: 0, t0: performance.now(), gap: 10, gapStart: 10, qT: 8, qE: 0, q: null, lock: 0 };
+  C = { active: true, id, level: 1, lives: 3, score: 0, correct: 0, streak: 0, t0: performance.now(), gap: 10, gapStart: 10, qT: 8, qE: 0, q: null, lock: 0, finishing: false };
+  gate.setEnabled(false);
   H.teleport(0, RZ0 - 10, 0); H.setView(Math.PI);
   monster.root.position.set(0, 0, RZ0 + 2);
   $('chase').hidden = false; SFX.fanfare(); toast('Fugi! Răspunde repede!');
@@ -95,6 +103,7 @@ function start(id) {
 function drawTop() {
   $('chLives').textContent = '❤'.repeat(C.lives) + '♡'.repeat(3 - C.lives);
   $('chLvl').textContent = 'Nivel ' + C.level; $('chScore').textContent = C.score + ' p';
+  $('chGoalT').textContent = `Spre ieșire: ${Math.min(C.correct, GOAL)} / ${GOAL}`; $('chG').style.width = (100 * Math.min(1, C.correct / GOAL)) + '%';
 }
 function nextQ() {
   const p = SPEED[C.id], q = p.gen(); C.q = q; C.qT = timeFor(C.id, C.level, q.kind); C.qE = 0; C.gapStart = Math.max(3, C.gap); C.lock = 0;
@@ -110,7 +119,8 @@ function answer(k, btn) {
     const left = 1 - C.qE / C.qT; C.correct++; C.streak++;
     C.score += 10 * C.level + Math.round(left * 10) + (C.streak >= 5 ? 5 : 0);
     C.gap = Math.min(14, C.gap + 4 + left * 3); btn.classList.add('right'); SFX.ok();
-    if (C.correct % 5 === 0) { C.level++; toast(`Nivelul ${C.level}! Monstrul e tot mai rapid.`); SFX.star(); }
+    if (C.correct >= GOAL) { finish(); drawTop(); return; }
+    if (C.correct % 4 === 0) { C.level++; toast(`Nivelul ${C.level}! Monstrul e tot mai rapid.`); SFX.star(); }
   } else {
     C.streak = 0; C.gap *= 0.45; btn.classList.add('wrong'); SFX.no();
     $('chO').querySelectorAll('[data-k]').forEach((b, i) => { if (C.q.opts[i] === C.q.ans) b.classList.add('right'); });
@@ -118,26 +128,33 @@ function answer(k, btn) {
   drawTop();
   setTimeout(() => { if (!C || !C.active) return; if (C.gap < 1.2) caught(); else nextQ(); }, ok ? 250 : 900);
 }
+function finish() {
+  // ai rezolvat tot: apare portalul de ieșire în față și fugi spre el
+  C.finishing = true; C.lock = 1; $('chQ').textContent = 'Fugi spre portalul de ieșire!'; $('chO').innerHTML = '';
+  gate.position.set(0, 0, H.getZ() - 24); gate.setEnabled(true); SFX.fanfare();
+}
 function caught() {
   C.lives--; SFX.boing(); drawTop();
   if (C.lives <= 0) return end(false);
   toast(`Te-a prins! Mai ai ${C.lives} ${C.lives === 1 ? 'viață' : 'vieți'}.`);
   C.gap = 9; nextQ();
 }
-function end(quit) {
+function end(quit, win) {
   if (!C) return;
-  const c = C; c.active = false; $('chase').hidden = true;
+  const c = C; c.active = false; $('chase').hidden = true; gate.setEnabled(false);
+  const stars = win ? c.lives : 0; if (win) c.score += 20 * stars;
   const ms = Math.round(performance.now() - c.t0), coins = Math.floor(c.score / 15);
   S.coins += coins; S.xp = (S.xp || 0) + c.correct * 6;
   S.records = S.records || {}; const prev = S.records['portal-' + c.id], rec = !prev || c.score > prev.score;
-  if (rec && c.score > 0) S.records['portal-' + c.id] = { score: c.score, level: c.level };
+  if (rec && c.score > 0) S.records['portal-' + c.id] = { score: c.score, level: c.level, stars: Math.max(stars, (prev || {}).stars || 0) };
+  else if (prev && stars > (prev.stars || 0)) prev.stars = stars;
   save(); refreshHud();
   if (loggedIn() && c.score > 0) apiCall('score', 'POST', { board: 'portal-' + c.id, score: c.score, ms }).catch(() => {});
   if (rec && c.score > 0) { SFX.fanfare(); confetti(); }
   H.teleport(portals.find((p) => p.id === c.id).x * 0.8, portals.find((p) => p.id === c.id).z * 0.8, 0.5);
-  showPanel(`<div class="eyebrow">${esc(SPEED[c.id].name)}</div><h2>${quit ? 'Ai ieșit din cursă' : 'Monstrul te-a prins!'}</h2>
-    <div class="big">${c.score} p</div>
-    <p>${rec && c.score > 0 ? '<b>Record nou!</b> ' : ''}Nivelul ${c.level} · ${c.correct} răspunsuri corecte · ${Math.round(ms / 1000)} secunde. Ai câștigat <b>${coins} monede</b>.</p>
+  showPanel(`<div class="eyebrow">${esc(SPEED[c.id].name)}</div><h2>${win ? 'Misiune reușită! Ai scăpat!' : quit ? 'Ai ieșit din cursă' : 'Monstrul te-a prins. Misiune pierdută.'}</h2>
+    <div class="big">${win ? `<span class="stars" style="font-size:56px">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></span>` : Math.min(c.correct, GOAL) + ' / ' + GOAL}</div>
+    <p>${win ? `Ai ajuns la ieșire cu ${stars} ${stars === 1 ? 'viață' : 'vieți'}. ` : `Ai rezolvat ${Math.min(c.correct, GOAL)} din ${GOAL}. Mai încearcă! `}${rec && c.score > 0 ? '<b>Record nou!</b> ' : ''}${c.score} puncte · ${Math.round(ms / 1000)} secunde. Ai câștigat <b>${coins} monede</b>.</p>
     <div class="row"><button class="btn light" type="button" id="ceTop">Clasament</button><button class="btn light" type="button" data-close>Pe insulă</button><button class="btn" type="button" id="ceAgain">Încă o dată</button></div>`);
   $('ceAgain').onclick = () => { $('panel').hidden = true; start(c.id); };
   $('ceTop').onclick = () => showBoard('portal-' + c.id, SPEED[c.id].name);
@@ -148,17 +165,18 @@ function end(quit) {
 export function updateChase(dt, P) {
   if (!chasing()) { monster.update(dt, {}); return false; }
   if (!document.getElementById('panel').hidden) return true; // pauză cât e deschis un panou
-  C.qE += dt;
+  if (!C.finishing) C.qE += dt;
   const frac = Math.min(1, C.qE / C.qT);
   C.gap = C.lock ? C.gap : C.gapStart * (1 - frac);
   $('chT').style.width = (100 * (1 - frac)) + '%';
   $('chT').style.background = frac > 0.7 ? 'var(--bad)' : 'var(--accent)';
   P.z -= SPEEDV * dt; P.x += (0 - P.x) * Math.min(1, dt * 5); P.y = 0; P.vy = 0;
-  if (P.z < RZ0 - RLEN + 120) P.z += 400; // banda se repetă
+  if (P.z < RZ0 - RLEN + 120) { P.z += 400; if (C.finishing) gate.position.z += 400; } // banda se repetă
+  if (C.finishing) { C.gap = Math.min(16, C.gap + dt * 3); gate.getChildMeshes()[0].rotation.z += dt * 2; if (P.z <= gate.position.z) { end(false, true); return true; } }
   monster.root.position.set(0, 0, P.z + 1.3 + C.gap);
   monster.root.rotation.y = Math.PI;
   monster.update(dt, { speed: 1 });
-  if (!C.lock && frac >= 1) { C.lock = 1; caught(); }
+  if (!C.lock && !C.finishing && frac >= 1) { C.lock = 1; caught(); }
   return true;
 }
 export { RZ0 };

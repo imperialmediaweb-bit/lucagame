@@ -36,7 +36,7 @@ export const G3 = {
     const p=rnd(2,9),q=rnd(2,10),x=p*q;return {text:'Află numărul necunoscut:',expr:`a : ${p} = ${q}`,ans:x,opts:opts(x,[q+p,q-p>0?q-p:x+p,x+1]),steps:['Deîmpărțitul = câtul × împărțitorul',`a = ${q} × ${p} = ${x}`]};
   },
   gandesc() { // mersul invers
-    const T=[{v:8,t:'cel mai mare număr par de o cifră'},{v:9,t:'cel mai mare număr de o cifră'},{v:10,t:'cel mai mic număr de două cifre'},{v:7,t:'cel mai mare număr impar de o cifră, minus 2'}];
+    const T=[{v:8,t:'cel mai mare număr par de o cifră'},{v:9,t:'cel mai mare număr de o cifră'},{v:10,t:'cel mai mic număr de două cifre'},{v:5,t:'jumătate din 10'}];
     let n,m,d,s,v,tt,r; do{n=rnd(2,12);m=rnd(2,9);d=rnd(2,6);s=(n*m)%d+d*rnd(1,3);v=(n*m-s)/d;tt=pick(T);r=v-tt.v;}while(n*m-s<=0||r<1||!Number.isInteger(v));
     return {text:`Mă gândesc la un număr. Îl măresc de ${m} ori, noul rezultat îl micșorez cu ${s}, apoi împart ce am obținut la ${d}. Din noul rezultat scad ${tt.t} și obțin ${r}.\nLa ce număr m-am gândit?`,ans:n,
       opts:opts(n,[(r+tt.v)*d,n+1,Math.floor(((r+tt.v)*d)/m),n+2]),

@@ -34,6 +34,14 @@ function faceTexture(scene, face) {
   if (face === 'surprins') { eyes(); g.beginPath(); g.ellipse(64, 90, 9, 12, 0, 0, 7); g.stroke(); }
   if (face === 'cool') { g.fillRect(22, 42, 38, 20); g.fillRect(68, 42, 38, 20); g.fillRect(56, 46, 16, 6); g.beginPath(); g.moveTo(46, 86); g.quadraticCurveTo(70, 100, 88, 80); g.stroke(); }
   if (face === 'ninja') { g.fillStyle = '#2b2f38'; g.fillRect(0, 0, 128, 40); g.fillRect(0, 70, 128, 58); g.fillStyle = '#1f2b3a'; g.beginPath(); g.moveTo(30, 58); g.lineTo(54, 52); g.stroke(); g.beginPath(); g.moveTo(98, 58); g.lineTo(74, 52); g.stroke(); }
+  if (face === 'monstru') {
+    // ochi galbeni strălucitori, sprâncene încruntate, colți
+    g.fillStyle = '#FFC93C'; g.beginPath(); g.ellipse(40, 56, 13, 10, -0.2, 0, 7); g.ellipse(88, 56, 13, 10, 0.2, 0, 7); g.fill();
+    g.fillStyle = '#14101c'; g.beginPath(); g.ellipse(40, 57, 4, 8, 0, 0, 7); g.ellipse(88, 57, 4, 8, 0, 0, 7); g.fill();
+    g.strokeStyle = '#14101c'; g.lineWidth = 8; g.beginPath(); g.moveTo(22, 36); g.lineTo(54, 46); g.moveTo(106, 36); g.lineTo(74, 46); g.stroke();
+    g.fillStyle = '#14101c'; g.fillRect(30, 82, 68, 22); g.fillStyle = '#ffffff';
+    for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(34 + i * 13, 82); g.lineTo(40 + i * 13, 94); g.lineTo(46 + i * 13, 82); g.fill(); }
+  }
   if (face === 'robot') { g.fillStyle = '#42c0d8'; g.fillRect(28, 44, 26, 18); g.fillRect(74, 44, 26, 18); g.fillStyle = '#1f2b3a'; for (let i = 0; i < 5; i++) g.fillRect(36 + i * 12, 84, 8, 12); }
   t.update(); t.hasAlpha = true;
   return t;
@@ -123,6 +131,13 @@ function buildHat(scene, hat, type, name, shadow) {
     case 'bucatar': { C(0.16, 0.66, 0.66, '#ffffff').position.y = 0.05; C(0.36, 0.86, 0.66, '#ffffff').position.y = 0.3; break; }
     case 'ochelari': { const l = B(0.24, 0.16, 0.04, '#1f2b3a'); l.position.set(-0.16, -0.27, 0.34); const r = B(0.24, 0.16, 0.04, '#1f2b3a'); r.position.set(0.16, -0.27, 0.34); break; }
     case 'coroana': { C(0.22, 0.66, 0.66, '#f2b632', 8).position.y = 0.08; for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const s = C(0.22, 0, 0.14, '#f2b632', 4); s.position.set(0.3 * Math.cos(a), 0.3, 0.3 * Math.sin(a)); } break; }
+    case 'coarne': {
+      for (const sx of [-1, 1]) {
+        const h1 = C(0.34, 0.12, 0.2, '#14101c', 8); h1.position.set(sx * 0.24, 0.12, 0); h1.rotation.z = -sx * 0.5;
+        const h2 = C(0.3, 0, 0.12, '#7B5CF6', 8); h2.position.set(sx * 0.36, 0.38, 0); h2.rotation.z = -sx * 0.9;
+      }
+      break;
+    }
     case 'basma': { const h = B(0.72, 0.2, 0.68, '#d23a3a'); h.position.y = -0.02; const k = B(0.3, 0.3, 0.06, '#d23a3a'); k.position.set(0, -0.3, -0.34); k.rotation.z = Math.PI / 4; break; }
     default: break;
   }

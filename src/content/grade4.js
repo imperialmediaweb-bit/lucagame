@@ -47,12 +47,12 @@ export const G4 = {
       () => ['Câte zile are un an obișnuit?', 365, [366, 360, 300], 'Un an are 365 de zile (366 în anul bisect).']
     ];
     const [t, a, w, s] = pick(Q)();
-    return { text: 'Transformă:', expr: t, ans: a, opts: opts(a, w), steps: [s, `Deci ${t.replace('?', a)}`] };
+    return { text: t.includes('= ?') ? 'Transformă:' : 'Răspunde:', expr: t, ans: a, opts: opts(a, w), steps: t.includes('= ?') ? [s, `Deci ${t.replace('?', a)}`] : [s] };
   },
   corpuri() {
-    const C = [['cub', 6, 'Cubul are 6 fețe, toate pătrate.'], ['cuboid', 6, 'Cuboidul (ca o cutie de pantofi) are 6 fețe dreptunghiulare.'], ['piramidă cu baza pătrat', 5, 'Baza pătrată + 4 fețe triunghiulare = 5 fețe.']];
-    if (Math.random() < 0.5) { const [n, f, s] = pick(C); return { text: `Câte fețe are un ${n}?`, ans: f, opts: opts(f, [f + 2, 4, 8]), steps: [s] }; }
-    const O = [['minge', 'sferă'], ['cutie de pantofi', 'cuboid'], ['zar', 'cub'], ['conserva', 'cilindru'], ['cornet de înghețată', 'con']];
+    const C = [['un cub', 6, 'Cubul are 6 fețe, toate pătrate.'], ['un cuboid', 6, 'Cuboidul (ca o cutie de pantofi) are 6 fețe dreptunghiulare.'], ['o piramidă cu baza pătrat', 5, 'Baza pătrată + 4 fețe triunghiulare = 5 fețe.']];
+    if (Math.random() < 0.5) { const [n, f, s] = pick(C); return { text: `Câte fețe are ${n}?`, ans: f, opts: opts(f, [f + 2, 4, 8]), steps: [s] }; }
+    const O = [['minge', 'sferă'], ['cutie de pantofi', 'cuboid'], ['zar', 'cub'], ['conservă', 'cilindru'], ['cornet de înghețată', 'con']];
     const [o, a] = pick(O);
     return { text: 'Ce formă are obiectul?', expr: o, ans: a, opts: textOpts(a, ['sferă', 'cub', 'cuboid', 'cilindru', 'con'].filter((x) => x !== a).slice(0, 3)), steps: [`${o} → ${a}`] };
   },
@@ -73,7 +73,7 @@ export const G4 = {
   },
   numeral() {
     const N = [['Am trei mere.', 'trei'], ['Este al doilea în clasament.', 'al doilea'], ['Am citit cinci cărți.', 'cinci'], ['A sosit primul.', 'primul'], ['Avem două pisici.', 'două']];
-    const [p, a] = pick(N), words = p.replace(/[.,]/g, '').split(' ').filter((w) => w !== a && w.length > 2);
+    const [p, a] = pick(N), parts = a.split(' '), words = p.replace(/[.,]/g, '').split(' ').filter((w) => !parts.includes(w) && w.length > 2);
     return { text: 'Care este numeralul din propoziție?', expr: p, ans: a, opts: textOpts(a, words.slice(0, 3)), steps: ['Numeralul arată un număr sau ordinea (câți? al câtelea?).', `Numeralul: ${a}`] };
   },
   acordAdj() {

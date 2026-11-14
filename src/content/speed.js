@@ -30,7 +30,8 @@ export const SPEED = {
     if (t === 0) return { expr: `${a} + ${b} × ${c}`, ans: a + b * c, opts: opts(a + b * c, [(a + b) * c, a * b + c, a + b + c]) };
     if (t === 1) { const x = a * b; return { expr: `${x + c} − ${a} × ${b}`, ans: c, opts: opts(c, [(x + c - a) * b, c + 1, x - c]) }; }
     if (t === 2) return { expr: `(${a} + ${b}) × ${c}`, ans: (a + b) * c, opts: opts((a + b) * c, [a + b * c, (a + b) * c + c, a * c + b]) };
-    const q = rnd(2, 9), d = c * q; return { expr: `${a} × ${b} − ${d} : ${c}`, ans: a * b - q, opts: opts(a * b - q, [(a * b - d) / c > 0 && Number.isInteger((a * b - d) / c) ? (a * b - d) / c : a * b - q + 2, a * b + q, a * b - q - 1]) };
+    let q = rnd(2, 9); while (q >= a * b) q = rnd(1, Math.max(1, a * b - 1)); const d = c * q, r = a * b - q;
+    return { expr: `${a} × ${b} − ${d} : ${c}`, ans: r, opts: opts(r, [a * b + q, r + 1, r + c]) };
   } },
   orto: { name: 'Portalul Ortogramelor', sub: 's-a / sa, l-a / la…', color: '#2fae5f', base: 6, min: 3, text: true, gen() {
     const [t, a, w] = pick(ORTO); return { expr: t, ans: a, opts: textOpts(a, [w]) };
