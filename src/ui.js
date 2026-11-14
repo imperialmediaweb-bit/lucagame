@@ -82,7 +82,7 @@ export function openMenu() {
 
 /* ---------- tutorial ---------- */
 export function showTutorial(touch) {
-  showPanel(`<div class="eyebrow">Bun venit!</div><h2>Insula lui Luca</h2>
+  showPanel(`<div class="eyebrow">Bun venit!</div><h2>Bun venit în Mintoria!</h2>
     <div class="tut">
       <div class="st"><span>1</span><p>${touch ? 'Trage cu degetul în <b>stânga jos</b> ca să mergi. Butonul <b>Sari</b> te aruncă în sus.' : 'Mergi cu <b>W A S D</b> sau săgețile, sari cu <b>Spațiu</b>, rotești camera cu mouse-ul.'}</p></div>
       <div class="st"><span>2</span><p>Caută personajele cu <b>„!”</b> deasupra capului. Ele îți dau <b>misiuni</b>. Bara de sus îți arată unde e următoarea.</p></div>

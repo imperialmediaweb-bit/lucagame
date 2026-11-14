@@ -18,7 +18,7 @@ export function showStart(onSolo) {
   const invite = new URLSearchParams(location.search).get('camera');
   let grade = G();
   const draw = () => {
-    showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație' : 'Bun venit!'}</div><h2>Insula lui Luca</h2>
+    showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație' : 'Bun venit!'}</div><h2>Mintoria</h2>
       ${invite ? `<p>Un coleg te-a chemat să jucați împreună în camera <b>${esc(invite.toUpperCase())}</b>.</p>` : ''}
       <label for="stName"><b>Cum te cheamă?</b></label>
       <input id="stName" maxlength="14" autocomplete="off" value="${esc(S.name)}" placeholder="Prenumele tău" style="font:700 20px var(--font-b);padding:10px 12px;border:2px solid var(--ink);border-radius:12px">
@@ -63,7 +63,7 @@ export function openLobby() {
   if (!NET.room) { openCreate(); return; }
   const r = NET.room, host = amHost(), link = inviteLink();
   const hostName = (r.players.find((p) => p.host) || {}).name || 'gazda';
-  const msg = `Hai să ne jucăm împreună pe Insula lui Luca! Intră aici: ${link}`;
+  const msg = `Hai să ne jucăm împreună în Mintoria! Intră aici: ${link}`;
   showPanel(`<div id="lobby"></div><div class="eyebrow">Camera de joc · ${GRADES[r.grade]} · ${SUBJECTS[r.subject]}</div><h2>Camera ${esc(r.code)}</h2>
     <p>Trimite linkul colegilor:</p>
     <input readonly value="${esc(link)}" id="lnk" style="font:700 15px var(--font-b);padding:8px 10px;border:2px solid var(--ink);border-radius:10px;width:100%;box-sizing:border-box">
@@ -84,7 +84,7 @@ export function openLobby() {
       </div>${classButtons(r)}` : `<p>Așteaptă ca <b>${esc(hostName)}</b> să pornească jocul. Până atunci, plimbă-te pe insulă cu colegii!</p>`}
     <div class="row"><button class="btn light" type="button" id="lLeave">Ieși din cameră</button><button class="btn" type="button" data-close>Pe insulă</button></div>`);
   $('lCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Linkul e copiat. Lipește-l în mesaj.'); } catch { $('lnk').select(); toast('Selectat. Apasă Copiază din meniu.'); } };
-  if ($('lShare')) $('lShare').onclick = () => navigator.share({ title: 'Insula lui Luca', text: msg, url: link }).catch(() => {});
+  if ($('lShare')) $('lShare').onclick = () => navigator.share({ title: 'Mintoria', text: msg, url: link }).catch(() => {});
   $('panelCard').querySelectorAll('[data-e]').forEach((b) => b.onclick = () => { sendEmote(+b.dataset.e); SFX.tap(); });
   $('lLeave').onclick = () => { leave(); $('panel').hidden = true; toast('Ai ieșit din cameră.'); };
   if (host) {

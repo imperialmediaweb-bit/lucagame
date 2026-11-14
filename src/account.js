@@ -52,7 +52,7 @@ const pinOnly = (id) => { const el = $(id); if (el) el.addEventListener('input',
 const input = (id, ph, extra = '') => `<input id="${id}" ${extra} placeholder="${ph}" style="font:700 20px var(--font-b);padding:10px 12px;border:2px solid var(--ink);border-radius:12px;width:100%;box-sizing:border-box">`;
 
 function welcome(hooks, invite) {
-  showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație de la un coleg' : 'Bun venit!'}</div><h2>Insula lui Luca</h2>
+  showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație de la un coleg' : 'Bun venit!'}</div><img src="./logo.svg" alt="Mintoria" style="width:min(300px,100%);align-self:center">
     <p>${invite ? `Te așteaptă în camera <b>${esc(invite.toUpperCase())}</b>. ` : ''}Fă-ți un profil ca să-ți păstrezi monedele, stelele și hainele, pe telefon și pe calculator.</p>
     <div class="shopgrid">
       <button class="item" type="button" id="wNew"><b>Fac profil nou</b><span>username + PIN</span></button>

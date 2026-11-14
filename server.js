@@ -46,4 +46,4 @@ const server = http.createServer((req, res) => {
 });
 attachMultiplayer(server);
 db().then(() => console.log('Baza de date e gata')).catch((e) => console.error('Baza de date:', e.message));
-server.listen(process.env.PORT || 3000, () => console.log('Insula lui Luca pornită pe portul', process.env.PORT || 3000));
+server.listen(process.env.PORT || 3000, () => console.log('Mintoria pornită pe portul', process.env.PORT || 3000));

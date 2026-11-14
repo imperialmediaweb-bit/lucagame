@@ -1,4 +1,4 @@
-// Insula lui Luca: motorul jocului (Babylon.js), personajul, controalele și legătura cu ecranele.
+// Mintoria: motorul jocului (Babylon.js), personajul, controalele și legătura cu ecranele.
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';

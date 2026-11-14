@@ -35,7 +35,7 @@ export function buildWorld(scene, shadow) {
   const statue = createAvatar(scene, { skin: '#d8d2c4', shirt: '#d8d2c4', pants: '#d8d2c4', hat: 'coroana', face: 'fericit' }, shadow, 'statue');
   statue.root.position.set(0, 1.4, 0); statue.root.scaling.setAll(1.3);
   plat(0, 1.4, 0, 2.4, 2.4, '#cfc6b2', 1.3, { cast: true });
-  const hubLbl = makeLabel(scene, 'Insula lui Luca', 'Alege un portal colorat', '#ff7a2f', 4.6); hubLbl.position.set(0, 6.4, 0);
+  const hubLbl = makeLabel(scene, 'Mintoria', 'Orașul Minții · alege un portal', '#7B5CF6', 4.6); hubLbl.position.set(0, 6.4, 0);
 
   // poduri + portaluri spre insule
   const pads = [], gates = {};

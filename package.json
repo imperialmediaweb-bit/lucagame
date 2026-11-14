@@ -1,8 +1,8 @@
 {
-  "name": "lucagame",
+  "name": "mintoria",
   "version": "2.0.0",
   "private": true,
-  "description": "Insula lui Luca - joc de învățat pentru clasele I-III",
+  "description": "Mintoria - joc de învățat, pregătitoare – clasa a IV-a",
   "type": "module",
   "scripts": {
     "dev": "vite",
