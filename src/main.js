@@ -70,6 +70,8 @@ function physics(dt, mx, mz) {
 function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
 
 /* ---------- control ---------- */
+const CAM_SPEED = { incet: 0.0025, mediu: 0.0045, rapid: 0.007 };
+let dragAcc = 0, yawS = yaw0;
 const keys = {}; let yaw = yaw0, pitch = 0.38, camDist = 10, jx = 0, jy = 0, stickId = null, camId = null, sx = 0, sy = 0, lx = 0, ly = 0;
 const touch = matchMedia('(pointer:coarse)').matches;
 if (touch) $('jump').hidden = false; else $('keys').hidden = false;
@@ -85,12 +87,18 @@ canvas.addEventListener('pointerdown', (e) => {
   if (paused()) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.3 && stickId === null) {
     stickId = e.pointerId; sx = e.clientX; sy = e.clientY; const st = $('stick'); st.style.left = sx + 'px'; st.style.top = sy + 'px'; st.hidden = false;
-  } else if (camId === null) { camId = e.pointerId; lx = e.clientX; ly = e.clientY; }
+  } else if (camId === null) { camId = e.pointerId; lx = e.clientX; ly = e.clientY; dragAcc = 0; }
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stickId) { let dx = e.clientX - sx, dy = e.clientY - sy; const l = Math.hypot(dx, dy), m = 50; if (l > m) { dx *= m / l; dy *= m / l; } jx = dx / m; jy = dy / m; $('knob').style.transform = `translate(${dx}px,${dy}px)`; }
-  else if (e.pointerId === camId) { yaw -= (e.clientX - lx) * 0.008; pitch = Math.max(0.1, Math.min(1.1, pitch + (e.clientY - ly) * 0.005)); lx = e.clientX; ly = e.clientY; }
+  else if (e.pointerId === camId) {
+    // camera se rotește încet; primii pixeli sunt ignorați ca să nu se miște la o atingere scurtă
+    const dx = e.clientX - lx, dy = e.clientY - ly; dragAcc += Math.abs(dx) + Math.abs(dy); lx = e.clientX; ly = e.clientY;
+    if (dragAcc < 10) return;
+    const k = CAM_SPEED[S.camSpeed || 'incet'];
+    yaw -= dx * k; pitch = Math.max(0.15, Math.min(1.0, pitch + dy * k * 0.6));
+  }
 });
 const endPtr = (e) => { if (e.pointerId === stickId) { stickId = null; jx = jy = 0; $('stick').hidden = true; $('knob').style.transform = ''; } if (e.pointerId === camId) camId = null; };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
@@ -137,9 +145,10 @@ scene.registerBeforeRender(() => {
     side = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + jx;
   }
   const l = Math.hypot(fwd, side); if (l > 1) { fwd /= l; side /= l; }
-  // camera stă în spatele jucătorului, la unghiul yaw
+  // camera stă în spatele jucătorului; yawS urmează yaw lin, fără smucituri
+  { let d = yaw - yawS; while (d > Math.PI) { d -= 2 * Math.PI; yaw -= 2 * Math.PI; } while (d < -Math.PI) { d += 2 * Math.PI; yaw += 2 * Math.PI; } yawS += d * Math.min(1, dt * 7); }
   // Babylon e „mâna stângă”: dreapta ecranului este (-cos, sin)
-  const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = -Math.cos(yaw), rz = Math.sin(yaw);
+  const fx = -Math.sin(yawS), fz = -Math.cos(yawS), rx = -Math.cos(yawS), rz = Math.sin(yawS);
   const speed = 7.5, mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
   // platforme care se mișcă
   for (const mv of W.movers) {
@@ -154,7 +163,7 @@ scene.registerBeforeRender(() => {
   me.update(dt, { speed: moving ? Math.min(1, l) : 0, air: !P.ground && P.coyote <= 0, dance: cheerT > 0 && P.ground && !moving });
 
   const cd = camDist, tgt = new Vector3(P.x, P.y + 1.8, P.z);
-  camPos.set(P.x + Math.sin(yaw) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yaw) * cd * Math.cos(pitch));
+  camPos.set(P.x + Math.sin(yawS) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yawS) * cd * Math.cos(pitch));
   camera.position = Vector3.Lerp(camera.position, camPos, Math.min(1, dt * 8)); camera.setTarget(tgt);
   // umbra urmărește jucătorul
   sun.position.set(P.x + 30, 60, P.z + 25);
@@ -205,7 +214,7 @@ function updateQuest() {
   if (m !== qm) { qm = m; $('qTitle').textContent = m.title; }
   const n = W.npcs.find((x) => x.m.id === m.id), d = Math.round(Math.hypot(n.x - P.x, n.z - P.z));
   $('qSub').textContent = `${m.npc} · ${d} m`;
-  const ang = Math.atan2(n.x - P.x, n.z - P.z) - Math.atan2(-Math.sin(yaw), -Math.cos(yaw));
+  const ang = Math.atan2(n.x - P.x, n.z - P.z) - Math.atan2(-Math.sin(yawS), -Math.cos(yawS));
   $('qArrow').style.transform = `rotate(${ang}rad)`;
 }
 
