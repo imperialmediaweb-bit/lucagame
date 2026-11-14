@@ -2,6 +2,7 @@
 // Fără conturi, fără date personale: doar un prenume, ținut în memorie cât timp camera e deschisă.
 import { WebSocketServer } from 'ws';
 import { GEN, typesFor, TEST_ITEMS, ROMANA } from './src/content/missions.js';
+import { SPEED } from './src/content/speed.js';
 
 const rooms = new Map();
 const EMOTES = ['Bravo!', 'Hai!', 'Super!', 'Mulțumesc!', 'Ups!', 'Încă o rundă?', '👍', '🎉'];
@@ -107,6 +108,49 @@ function classEnd(r) {
   r.game = null;
 }
 
+/* ---------- cursa monștrilor: aceleași exerciții pentru toți, câștigă cine ajunge primul la ieșire ---------- */
+const RACE_GOAL = 12;
+function raceInvite(r, p, portal) {
+  if (r.game || r.race || !SPEED[portal]) return;
+  r.race = { portal, from: p.id, phase: 'invite', joined: new Set([p.id]), declined: new Set(), runners: new Map(), timer: null };
+  bcast(r, { t: 'raceInvite', from: p.id, name: p.name, portal });
+  r.race.timer = setTimeout(() => raceStart(r), 12000);
+}
+function raceReply(r, p, yes) {
+  const R = r.race; if (!R || R.phase !== 'invite') return;
+  (yes ? R.joined : R.declined).add(p.id);
+  bcast(r, { t: 'raceLobby', joined: [...R.joined], declined: [...R.declined] });
+  if (R.joined.size + R.declined.size >= r.players.size) raceStart(r);
+}
+function raceStart(r) {
+  const R = r.race; if (!R || R.phase !== 'invite') return;
+  clearTimeout(R.timer);
+  const ids = [...R.joined].filter((id) => r.players.has(id));
+  if (ids.length < 1) { r.race = null; return; }
+  R.phase = 'run'; R.t0 = Date.now();
+  const qs = Array.from({ length: 40 }, () => SPEED[R.portal].gen());
+  ids.forEach((id, i) => R.runners.set(id, { lane: i, correct: 0, lives: 3, done: false, out: false, ms: 0 }));
+  bcast(r, { t: 'raceStart', portal: R.portal, goal: RACE_GOAL, qs, lanes: ids.map((id, i) => ({ id, lane: i, name: r.players.get(id).name })) });
+  R.timer = setTimeout(() => raceEnd(r), 5 * 60 * 1000);
+}
+function raceProgress(r, p, m) {
+  const R = r.race; if (!R || R.phase !== 'run') return;
+  const x = R.runners.get(p.id); if (!x || x.done || x.out) return;
+  x.correct = Math.max(0, Math.min(RACE_GOAL, m.correct | 0)); x.lives = Math.max(0, Math.min(3, m.lives | 0));
+  if (m.finished && x.correct >= RACE_GOAL) { x.done = true; x.ms = Date.now() - R.t0; }
+  if (x.lives <= 0) { x.out = true; x.ms = Date.now() - R.t0; }
+  bcast(r, { t: 'raceProg', id: p.id, correct: x.correct, lives: x.lives, done: x.done, out: x.out, ms: x.ms });
+  if ([...R.runners.values()].every((y) => y.done || y.out)) raceEnd(r);
+}
+function raceEnd(r) {
+  const R = r.race; if (!R) return;
+  clearTimeout(R.timer);
+  const ranking = [...R.runners.entries()].map(([id, x]) => ({ id, name: (r.players.get(id) || {}).name || 'coleg', ...x }))
+    .sort((a, b) => (b.done - a.done) || (a.done ? a.ms - b.ms : b.correct - a.correct || b.ms - a.ms));
+  bcast(r, { t: 'raceEnd', portal: R.portal, ranking });
+  r.race = null;
+}
+
 function endGame(r) {
   if (r.game && r.game.mode === 'class') return classEnd(r);
   const g = r.game; if (!g) return;
@@ -150,14 +194,19 @@ export function attachMultiplayer(server) {
         if ([0, 1, 2, 3, 4].includes(+m.grade)) room.grade = +m.grade;
         if (['mate', 'romana', 'mix', 'test'].includes(m.subject)) room.subject = m.subject;
         bcast(room, { t: 'room', room: roomState(room) });
-      } else if (m.t === 'start' && me.host && !room.game && ['duel', 'team'].includes(m.mode)) startGame(room, m.mode);
-      else if (m.t === 'class' && me.host && !room.game) startClass(room, m.sub, m.level);
+      } else if (m.t === 'start' && me.host && !room.game && !room.race && ['duel', 'team'].includes(m.mode)) startGame(room, m.mode);
+      else if (m.t === 'class' && me.host && !room.game && !room.race) startClass(room, m.sub, m.level);
       else if (m.t === 'canswer') classAnswer(room, me, m.i | 0, m.c);
+      else if (m.t === 'race') raceInvite(room, me, String(m.portal || ''));
+      else if (m.t === 'raceReply') raceReply(room, me, !!m.yes);
+      else if (m.t === 'rprog') raceProgress(room, me, m);
+      else if (m.t === 'summon') { const x = +m.x, z = +m.z; if (Number.isFinite(x) && Number.isFinite(z)) bcast(room, { t: 'summon', from: me.id, name: me.name, x, z, place: String(m.place || '').slice(0, 40) }, ws); }
       else if (m.t === 'answer') answer(room, me, m.i | 0, m.c | 0);
       else if (m.t === 'stop' && me.host && room.game) endGame(room);
     });
     ws.on('close', () => {
       if (!room || !me) return;
+      if (room.race) { room.race.joined.delete(me.id); const x = room.race.runners.get(me.id); if (x) { x.out = true; } if (room.race.phase === 'run' && [...room.race.runners.values()].every((y) => y.done || y.out)) raceEnd(room); }
       room.players.delete(me.id);
       if (room.players.size === 0) { if (room.game) clearTimeout(room.game.timer); rooms.delete(room.code); return; }
       if (me.host) { const h = room.players.values().next().value; h.host = true; }

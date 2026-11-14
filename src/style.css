@@ -167,3 +167,8 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 #chase .chgoal{display:flex;flex-direction:column;gap:4px;font-family:var(--font-d);font-size:16px}
 #chase .chprog{height:14px;border-radius:7px;background:var(--line);overflow:hidden;border:2px solid var(--ink)}
 #chase .chprog i{display:block;height:100%;width:0;background:#2EC4A6;transition:width .3s}
+
+.chrace{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chrace span{background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:2px 10px;font-family:var(--font-d);font-size:15px}
+.chrace span.me{background:var(--accent);color:#fff}
+#chase .chrace{pointer-events:none}

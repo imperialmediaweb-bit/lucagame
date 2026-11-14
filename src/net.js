@@ -40,6 +40,10 @@ export const sendSettings = (grade, subject) => sendMsg({ t: 'settings', grade, 
 export const startGame = (mode) => sendMsg({ t: 'start', mode });
 export const startClass = (sub, level) => sendMsg({ t: 'class', sub, level });
 export const classAnswer = (i, c) => sendMsg({ t: 'canswer', i, c });
+export const raceInvite = (portal) => sendMsg({ t: 'race', portal });
+export const raceReply = (yes) => sendMsg({ t: 'raceReply', yes });
+export const raceProgress = (correct, lives, finished) => sendMsg({ t: 'rprog', correct, lives, finished });
+export const summon = (x, z, place) => sendMsg({ t: 'summon', x, z, place });
 export const stopGame = () => sendMsg({ t: 'stop' });
 export const sendEmote = (k) => sendMsg({ t: 'emote', k });
 export const sendLook = () => sendMsg({ t: 'look', look: S.look });
@@ -55,6 +59,7 @@ export function tick(dt, P, face, anim) {
     if (s !== lastSent) { lastSent = s; sendMsg({ t: 'pos', x: +P.x.toFixed(2), y: +P.y.toFixed(2), z: +P.z.toFixed(2), f: +face.toFixed(2), a: anim }); }
   }
   for (const o of NET.others.values()) {
+    if (o.race) { o.label.position.set(o.av.root.position.x, o.av.root.position.y + 3.4, o.av.root.position.z); continue; }
     const k = Math.min(1, dt * 10), r = o.av.root;
     const dx = o.tx - r.position.x, dz = o.tz - r.position.z, moving = Math.hypot(dx, dz) > 0.05;
     r.position.x += dx * k; r.position.y += (o.ty - r.position.y) * k; r.position.z += dz * k;
@@ -100,6 +105,12 @@ function onMsg(m) {
     case 'class': NET.game = { mode: 'class' }; ui.classStart(m); break;
     case 'cprog': ui.classProgress(m); break;
     case 'classEnd': NET.game = null; ui.classEnd(m); break;
+    case 'raceInvite': ui.raceInvite && ui.raceInvite(m); break;
+    case 'raceLobby': ui.raceLobby && ui.raceLobby(m); break;
+    case 'raceStart': ui.raceStart && ui.raceStart(m); break;
+    case 'raceProg': ui.raceProg && ui.raceProg(m); break;
+    case 'raceEnd': ui.raceEnd && ui.raceEnd(m); break;
+    case 'summon': ui.summon && ui.summon(m); break;
     default: break;
   }
 }

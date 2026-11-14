@@ -18,9 +18,10 @@ import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
-import { initChase, updateChase, updatePortals, portalPanel } from './chase.js';
+import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
+import { AREAS } from './content/missions.js';
 window.__portal = (id) => portalPanel(id);
-import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks } from './mpui.js';
+import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks, summonUI } from './mpui.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -146,7 +147,7 @@ missionsChanged();
 
 const multiplayer = () => (NET.room ? openLobby() : openCreate());
 initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
-initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd } });
+initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, raceInvite: raceInviteUI, raceLobby: raceLobbyUI, raceStart: raceStartUI, raceProg: raceProgUI, raceEnd: raceEndUI, summon: (m) => summonUI(m) } });
 let seated = false;
 initChase(scene, shadow, { getZ: () => P.z, teleport: (x, z, y = 0) => teleport(x, z, y), setView: (y) => { yaw = y; yawS = y; face = Math.PI; seated = false; } }, (l) => glow.addExcludedMesh(l));
 const CR = W.classroom;
@@ -155,7 +156,10 @@ setClassHooks({
   toPodium: (place) => { const p = CR.podium[place]; teleport(p.x, p.z, p.y + 0.05); face = 0; yaw = 0; seated = false; cheerT = 8; },
   toFront: (idx) => { teleport(CR.x - 8 + (idx % 10) * 1.7, CR.z - 2.5); face = 0; yaw = 0; seated = false; cheerT = 3; },
   backHub: () => { seated = false; teleport(W.spawn.x, W.spawn.z); yaw = yaw0; toast('Înapoi în piață!'); },
-  drawBoard: (t, lines) => CR.drawBoard(t, lines)
+  drawBoard: (t, lines) => CR.drawBoard(t, lines),
+  // „Cheamă colegii la mine”: unde sunt și ce loc e acolo
+  here: () => { const a = AREAS.find((q) => Math.abs(P.x - q.pos[0]) < 19 && Math.abs(P.z - q.pos[1]) < 19); return { x: P.x, z: P.z, area: a ? a.id : null, place: a ? a.name : P.x > 140 ? 'sala de clasă' : 'piața Mintoriei' }; },
+  goNear: (x, z, area) => { if (area && areaLocked(area)) { toast('Colegul e în lumea altei clase: acolo nu poți intra.'); return; } seated = false; teleport(x + 1.6, z + 1.6, 0.8); toast('Ai ajuns lângă coleg!'); }
 });
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {

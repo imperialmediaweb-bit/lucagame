@@ -4,7 +4,7 @@ import { SFX } from './audio.js';
 import { showPanel, toast, confetti, refreshHud } from './ui.js';
 import { NET, createRoom, joinRoom, leave, amHost, inviteLink, sendSettings, startGame, stopGame, sendEmote, sendAnswer, setName, EMOTES, esc } from './net.js';
 import { TYPE_NAMES } from './content/missions.js';
-import { classAnswer, startClass } from './net.js';
+import { classAnswer, startClass, summon } from './net.js';
 import { apiCall, loggedIn } from './account.js';
 
 
@@ -74,6 +74,7 @@ export function openLobby() {
     </div>
     <b>Jucători (${r.players.length})</b>
     <div class="tabs">${r.players.map((p) => `<span class="tab ${p.id === NET.you ? 'on' : ''}">${esc(p.name)}${p.host ? ' · gazdă' : ''}</span>`).join('')}</div>
+    <div class="row" style="justify-content:flex-start"><button class="btn light" type="button" id="lSummon">Cheamă colegii la mine</button></div>
     <b>Mesaje rapide</b><div class="tabs">${EMOTES.map((e, i) => `<button class="tab" type="button" data-e="${i}">${e}</button>`).join('')}</div>
     ${host ? `<b>Clasa</b><div class="tabs" id="lGrade">${pills({ [r.grade]: GRADES[r.grade] }, r.grade, 'data-g')}</div>
       <b>Ce exersăm?</b><div class="tabs" id="lSub">${pills(r.grade === 3 ? SUBJECTS : { mix: 'Amestecat', mate: 'Matematică', romana: 'Română' }, r.subject, 'data-s')}</div>
@@ -86,6 +87,7 @@ export function openLobby() {
   $('lCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Linkul e copiat. Lipește-l în mesaj.'); } catch { $('lnk').select(); toast('Selectat. Apasă Copiază din meniu.'); } };
   if ($('lShare')) $('lShare').onclick = () => navigator.share({ title: 'Mintoria', text: msg, url: link }).catch(() => {});
   $('panelCard').querySelectorAll('[data-e]').forEach((b) => b.onclick = () => { sendEmote(+b.dataset.e); SFX.tap(); });
+  $('lSummon').onclick = () => { const h = CH.here(); summon(h.x, h.z, h.area ? h.area + '|' + h.place : '|' + h.place); toast('I-ai chemat pe colegi la tine!'); };
   $('lLeave').onclick = () => { leave(); $('panel').hidden = true; toast('Ai ieșit din cameră.'); };
   if (host) {
     $('lGrade').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => sendSettings(+b.dataset.g, +b.dataset.g !== 3 && r.subject === 'test' ? 'mix' : r.subject));
@@ -257,3 +259,12 @@ export function classButtons(r) {
   </div>`;
 }
 export function bindClassButtons() { document.querySelectorAll('[data-cls]').forEach((b) => b.onclick = () => { const [sub, level] = b.dataset.cls.split('|'); startClass(sub, level); }); }
+
+/* ---------- un coleg te cheamă la el ---------- */
+export function summonUI(m) {
+  const [area, place] = String(m.place || '|').split('|');
+  SFX.talk();
+  showPanel(`<div class="eyebrow">Invitație</div><h2>${esc(m.name)} te cheamă!</h2><p>E la <b>${esc(place || 'insulă')}</b>. Mergi lângă el?</p>
+    <div class="row"><button class="btn light" type="button" data-close>Nu acum</button><button class="btn" type="button" id="smGo">Mergi</button></div>`);
+  $('smGo').onclick = () => { $('panel').hidden = true; CH.goNear(m.x, m.z, area || null); };
+}
