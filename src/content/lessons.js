@@ -55,4 +55,29 @@ export const LESSONS = {
   vorbire: [
     { h: 'Trei întrebări magice', p: 'Cine? Ce? → substantiv. Ce face? → verb. Cum este? → adjectiv.', x: L(['<mark>Câinele</mark> → cine? → substantiv', '<mark>aleargă</mark> → ce face? → verb', { t: '<mark>repede, frumos</mark> → cum este? → adjectiv', res: 1 }], 1) }
   ]
+,
+  numere10k: [
+    { h: 'Casa cifrelor', p: 'Fiecare cifră stă în camera ei: mii, sute, zeci, unități. Locul ei îi dă valoarea.', x: L(['3.452', '<mark>3</mark> mii = 3.000', '<mark>4</mark> sute = 400, <mark>5</mark> zeci = 50, <mark>2</mark> unități', { t: '3.000 + 400 + 50 + 2 = 3.452', res: 1 }], 0.9) },
+    { h: 'Rotunjirea', p: 'Te uiți la cifra din dreapta locului la care rotunjești. 5 sau mai mare → urci. Mai mică → cobori.', x: L(['347 la zeci: cifra unităților e <mark>7</mark> → urc', { t: '347 ≈ 350', res: 1 }, '347 la sute: cifra zecilor e <mark>4</mark> → cobor', { t: '347 ≈ 300', res: 1 }], 0.9) }
+  ],
+  inm: [
+    { h: 'Desface și înmulțește', p: 'Un număr mare îl desfaci în zeci și unități, înmulțești fiecare bucată, apoi aduni.', x: L(['23 × 4', '23 = <mark>20</mark> + <mark>3</mark>', '20 × 4 = 80 și 3 × 4 = 12', { t: '80 + 12 = 92', res: 1 }]) },
+    { h: 'Cu 10 și cu 100', p: '× 10 adaugă un zero, × 100 adaugă două zerouri.', x: L(['37 × 10 = 37<mark>0</mark>', { t: '37 × 100 = 37<mark>00</mark>', res: 1 }]) }
+  ],
+  rest: [
+    { h: 'Câte încap și ce rămâne', p: 'Împarți 23 bomboane la 5 copii: fiecare ia 4 (5 × 4 = 20) și mai rămân 3. Restul e mereu mai mic decât împărțitorul.', x: L(['23 : 5', '5 × 4 = <mark>20</mark> (cel mai aproape, fără să treci de 23)', '23 − 20 = <mark>3</mark>', { t: '23 : 5 = 4 rest 3', res: 1 }]) }
+  ],
+  figurativ: [
+    { h: 'Desenează benzi', p: 'Când știi suma și cu cât e unul mai mare, desenezi două benzi, tai bucata în plus și împarți la 2.', x: L(['Împreună 50, unul are cu 10 mai mult', 'Tai bucata în plus: 50 − 10 = <mark>40</mark>', 'Banda mică: 40 : 2 = <mark>20</mark>', { t: 'Banda mare: 20 + 10 = 30', res: 1 }], 1) },
+    { h: '„De atâtea ori mai mult”', p: '„de 3 ori mai multe” înseamnă 3 bucăți egale față de 1 bucată. Numeri câte bucăți sunt în total.', x: L(['Împreună 24, roșii de 3 ori mai multe decât albastre', 'albastre = 1 parte, roșii = 3 părți → 4 părți', 'o parte: 24 : 4 = <mark>6</mark>', { t: 'albastre 6, roșii 18', res: 1 }], 1) }
+  ],
+  perimetru: [
+    { h: 'Mergi pe margine', p: 'Perimetrul = drumul în jurul figurii = suma tuturor laturilor.', x: L(['Pătrat cu latura 5: 5 + 5 + 5 + 5 = <mark>20</mark>', 'Dreptunghi 8 și 3: 8 + 3 + 8 + 3 = <mark>22</mark>', { t: 'Triunghi 3, 4, 5: 3 + 4 + 5 = 12', res: 1 }], 1) }
+  ],
+  romane: [
+    { h: 'Cifrele romanilor', p: 'I = 1, V = 5, X = 10, L = 50. Mic înaintea unui mare se scade, mic după unul mare se adună.', x: L(['VI = 5 + 1 = 6', 'IV = 5 − 1 = 4', 'XI = 11, IX = 9', { t: 'XXVII = 10 + 10 + 5 + 1 + 1 = 27', res: 1 }], 0.9) }
+  ],
+  sinonime: [
+    { h: 'Prieteni și opuși', p: 'Sinonimele sunt cuvinte-prieteni (același înțeles). Antonimele sunt cuvinte opuse.', x: L(['vesel = bucuros (<mark>sinonime</mark>)', { t: 'vesel ≠ trist (antonime)', res: 1 }]) }
+  ]
 };

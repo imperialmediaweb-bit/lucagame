@@ -180,10 +180,23 @@ export function buildWorld(scene, shadow) {
   AREAS.forEach((a) => {
     const list = MISSIONS.filter((m) => m.area === a.id);
     const [ax, az] = a.pos;
-    list.forEach((m, i) => {
+    // locuri pentru personaje: un cerc interior (8) și unul exterior, ocolind traseul, trambulina și intrarea
+    const avoid = { '1': [[11, -11], [6, 14]], '2': [[11, 11], [-8, 14]], '3': [[-10, -10], [8, 10]], T: [] }[a.id];
+    const gate = Math.atan2(-Math.sign(az), -Math.sign(ax));
+    const spots = [], ring = list.filter((m) => !m.boss), inner = Math.min(8, ring.length), outer = ring.length - inner;
+    for (let k = 0; k < inner; k++) { const ang = gate + Math.PI / inner + (k / inner) * Math.PI * 2; spots.push([Math.cos(ang) * 7, Math.sin(ang) * 7]); }
+    for (let k = 0, tries = 0; spots.length < ring.length && tries < 400; tries++) {
+      const ang = gate + 0.35 + (tries / 400) * (Math.PI * 2 - 0.7), px = Math.cos(ang) * 12.5, pz = Math.sin(ang) * 12.5;
+      if (avoid.some(([ox, oz]) => Math.hypot(px - ox, pz - oz) < 6.8)) continue;
+      if (spots.some(([sx, sz]) => Math.hypot(px - sx, pz - sz) < 4.2)) continue;
+      spots.push([px, pz]); k++;
+    }
+    void outer;
+    let ri = 0;
+    list.forEach((m) => {
       let x, z, top = 0;
       if (m.boss) { x = ax; z = az; top = 0.6; }
-      else { const ang = -Math.PI / 2 + ((i + 0.5) / list.length) * Math.PI * 2 + (a.id === '2' ? Math.PI / 2 : 0); x = ax + Math.cos(ang) * 7; z = az + Math.sin(ang) * 7; }
+      else { const sp = spots[ri++] || [0, 7]; x = ax + sp[0]; z = az + sp[1]; }
       const [skin, shirt, pants, hat, face] = m.look;
       const av = createAvatar(scene, { skin, shirt, pants, hat, face }, shadow, 'npc' + m.id);
       av.root.position.set(x, top, z);

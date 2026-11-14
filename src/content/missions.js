@@ -1,8 +1,9 @@
 import { G1 } from './grade1.js';
 import { G2 } from './grade2.js';
 import { G3, TEST_ITEMS } from './grade3.js';
+import { G3B } from './grade3b.js';
 
-export const GEN = { ...G1, ...G2, ...G3 };
+export const GEN = { ...G1, ...G2, ...G3, ...G3B };
 export { TEST_ITEMS };
 
 export const AREAS = [
@@ -39,6 +40,19 @@ export const MISSIONS = [
   { id: 'g3-fractii', area: '3', npc: 'Bucătarul Tort', look: ['#f3c9a0', '#ffffff', '#2b2f38', 'bucatar', 'zambet'], title: 'Fracții', desc: 'Jumătăți, sferturi și felii de tort.', types: ['fractii'], lesson: 'fractii' },
   { id: 'g3-vorbire', area: '3', npc: 'Bibliotecara Ema', look: ['#f3c9a0', '#2fae5f', '#2b3a55', 'ochelari', 'zambet'], title: 'Părțile de vorbire', desc: 'Substantiv, verb sau adjectiv?', types: ['partivorbire'], lesson: 'vorbire' },
 
+  { id: 'g3-numere', area: '3', npc: 'Contesa Miilor', look: ['#f3c9a0', '#f2b632', '#2b2f38', 'coroana', 'zambet'], title: 'Numere până la 10.000', desc: 'Mii, sute, zeci, unități, comparare, rotunjire.', types: ['numere10k', 'rotunjire'], lesson: 'numere10k' },
+  { id: 'g3-calcule', area: '3', npc: 'Strajerul Coloană', look: ['#c98e5f', '#9aa4b2', '#4a4f5a', 'coif', 'zambet'], title: 'Adunări și scăderi mari', desc: 'Calcule până la 10.000, în coloană.', types: ['adun10k'] },
+  { id: 'g3-inmultire', area: '3', npc: 'Fierarul Fix', look: ['#8a5a3b', '#7a5a3b', '#2b2f38', 'casca', 'cool'], title: 'Înmulțirea mare', desc: 'Număr de 2 cifre × 1 cifră, × 10, × 100.', types: ['inm'], lesson: 'inm' },
+  { id: 'g3-rest', area: '3', npc: 'Grădinarul Rest', look: ['#e0b48a', '#2fae5f', '#7a5a3b', 'palarie', 'zambet'], title: 'Împărțirea cu rest', desc: 'Câte încap și ce rămâne.', types: ['impRest'], lesson: 'rest' },
+  { id: 'g3-figurativ', area: '3', npc: 'Pictorița Bandă', look: ['#f3c9a0', '#ff8ac0', '#2b3a55', 'fundita', 'fericit'], title: 'Metoda figurativă', desc: 'Suma și diferența, „de atâtea ori mai mult”.', types: ['sumadif', 'sumacat'], lesson: 'figurativ' },
+  { id: 'g3-masuri', area: '3', npc: 'Negustorul Cântar', look: ['#c98e5f', '#e07a2f', '#3b3b3b', 'palarie', 'zambet'], title: 'Unități de măsură', desc: 'm, km, kg, l, lei, ore, secol.', types: ['masuri3'] },
+  { id: 'g3-perimetru', area: '3', npc: 'Arhitectul Latură', look: ['#f3c9a0', '#42c0d8', '#2b2f38', 'casca', 'cool'], title: 'Perimetrul', desc: 'Pătrat, dreptunghi, triunghi.', types: ['perimetru'], lesson: 'perimetru' },
+  { id: 'g3-romane', area: '3', npc: 'Centurionul Marcus', look: ['#e0b48a', '#d23a3a', '#7a5a3b', 'coif', 'cool'], title: 'Cifre romane', desc: 'I, V, X, L.', types: ['romane'], lesson: 'romane' },
+  { id: 'g3-sinonime', area: '3', npc: 'Poetul Rima', look: ['#f3c9a0', '#4b3cc4', '#2b2f38', 'palarie', 'fericit'], title: 'Sinonime și antonime', desc: 'Cuvinte la fel și cuvinte opuse.', types: ['sinonime'], lesson: 'sinonime' },
+  { id: 'g3-substantiv', area: '3', npc: 'Scribul Nume', look: ['#e0b48a', '#7a5a3b', '#2b3a55', 'ochelari', 'zambet'], title: 'Substantivul', desc: 'Comun sau propriu, singular sau plural.', types: ['substantiv'], lesson: 'vorbire' },
+  { id: 'g3-propozitie', area: '3', npc: 'Crainicul Glas', look: ['#f3c9a0', '#ffb020', '#2b3a55', 'sapca', 'surprins'], title: 'Propoziția și dialogul', desc: 'Enunțiativă, interogativă, exclamativă.', types: ['propozitie'] },
+
+  { id: 'atelier', area: 'T', npc: 'Antrenorul Pas-cu-Pas', look: ['#c98e5f', '#23935a', '#2b2f38', 'sapca', 'fericit'], title: 'Atelierul problemelor', desc: 'Problemele din test, învățate pas cu pas.', atelier: true },
   { id: 'test-mate', area: 'T', npc: 'Profesorul Calcul', look: ['#f0c8a8', '#2b2f38', '#2b2f38', 'coroana', 'cool'], title: 'TESTUL: matematică', desc: 'Testul tău, cu numere noi de fiecare dată. Primești notă, ca la școală!', test: true, boss: true }
 ];
 
@@ -54,10 +68,13 @@ export const TYPE_NAMES = {
   primul: 'Ce operație e prima', ordine1: 'Paranteze (test 1 a)', ordine2: 'Înmulțiri înaintea scăderilor', ordine3: 'Capcana „+ ×”',
   necunoscut1: 'Necunoscuta în paranteze (test 1 b)', necunoscut2: 'Află numărul necunoscut', gandesc: '„Mă gândesc la un număr” (test 2)',
   veverite: 'Veverițele (test 3)', abc: 'a + b + c (test 1 c)', piata1: 'Mere și pere (test 4)', bunica: 'Bunica la piață (test 5)', rest: 'Rest de bani',
-  fractii: 'Fracții', partivorbire: 'Părți de vorbire'
+  fractii: 'Fracții', partivorbire: 'Părți de vorbire',
+  numere10k: 'Numere până la 10.000', rotunjire: 'Rotunjiri', adun10k: 'Calcule până la 10.000', inm: 'Înmulțirea mare', impRest: 'Împărțirea cu rest',
+  sumadif: 'Suma și diferența', sumacat: '„de atâtea ori mai mult”', masuri3: 'Unități de măsură', perimetru: 'Perimetrul', romane: 'Cifre romane',
+  sinonime: 'Sinonime și antonime', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
 };
 
-export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire']);
+export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire', 'sinonime', 'substantiv', 'propozitie']);
 /** Tipurile de exerciții pentru o clasă și o materie: 'mate', 'romana', 'mix' sau 'test'. */
 export function typesFor(grade, subject = 'mix') {
   if (subject === 'test') return TEST_ITEMS.map((i) => i.type);

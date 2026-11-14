@@ -5,7 +5,7 @@ export const S = {
   look: { skin: '#f3c9a0', shirt: '#e04848', pants: '#2b3a55', hat: 'sapca', face: 'zambet' },
   owned: ['shirt:#e04848', 'pants:#2b3a55', 'hat:nimic', 'hat:sapca', 'face:zambet'],
   stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
-  testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: ''
+  testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: '', atelier: {}
 };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, s); } catch (e) { /* fără salvare */ }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } }

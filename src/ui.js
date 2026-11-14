@@ -5,6 +5,8 @@ import { GEN, MISSIONS, AREAS, TEST_ITEMS, TYPE_NAMES, missionById, areaById, ty
 import { LESSONS } from './content/lessons.js';
 import { COLORS, SKINS, HATS, FACES } from './avatar.js';
 import { pick, shuffle } from './content/util.js';
+import { openAtelier } from './atelier.js';
+import { atelierByType } from './content/guided.js';
 
 const $ = (id) => document.getElementById(id);
 const NM = () => S.name || 'campionule';
@@ -45,6 +47,7 @@ function bind() {
   document.addEventListener('open-draft', () => openDraft()); document.addEventListener('close-draft', () => closeDraft());
   $('openDaily').onclick = () => { SFX.tap(); openDaily(); };
   $('openJournal').onclick = () => { SFX.tap(); openJournal(); };
+  $('openAtelier').onclick = () => { SFX.tap(); openAtelier(); };
   $('openShop').onclick = () => { SFX.tap(); openShop(); };
   $('openProg').onclick = () => { SFX.tap(); openProgress(); };
   $('mute').onclick = () => { S.mute = !S.mute; save(); refreshHud(); SFX.tap(); };
@@ -61,6 +64,7 @@ export function openMenu() {
       <button class="item" type="button" id="mS"><b>Garderoba</b><span>haine și pălării</span></button>
       <button class="item" type="button" id="mP"><b>Progres</b><span>pentru părinți</span></button>
       <button class="item" type="button" id="mM"><b>Sunet</b><span>${S.mute ? 'oprit' : 'pornit'}</span></button>
+      <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
       <button class="item" type="button" id="mG"><b>Clasa mea</b><span>${['', 'I', 'a II-a', 'a III-a'][S.grade || 3]}</span></button>
       <button class="item" type="button" id="mV"><b>Viteza camerei</b><span>${{ incet: 'încet', mediu: 'mediu', rapid: 'rapid' }[S.camSpeed || 'incet']}</span></button>
@@ -69,6 +73,7 @@ export function openMenu() {
   $('mJ').onclick = () => openJournal(); $('mS').onclick = () => openShop(); $('mP').onclick = () => openProgress();
   $('mM').onclick = () => { S.mute = !S.mute; save(); refreshHud(); openMenu(); };
   $('mC').onclick = () => H.multiplayer();
+  $('mA').onclick = () => openAtelier();
   $('mG').onclick = () => { S.grade = (S.grade || 3) % 3 + 1; save(); openMenu(); toast(`Misiunile și antrenamentul sunt acum pentru clasa ${['', 'I', 'a II-a', 'a III-a'][S.grade]}.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
@@ -89,6 +94,7 @@ export function showTutorial(touch) {
 /* ---------- dialog cu un personaj ---------- */
 export function talkTo(m) {
   SFX.talk();
+  if (m.atelier) { openAtelier(); return; }
   const a = areaById(m.area), st = (S.missions[m.id] || {}).stars || 0;
   const greet = m.test
     ? `Bună, ${esc(NM())}! Eu sunt <b>${esc(m.npc)}</b>. Am pregătit testul tău de matematică: aceleași exerciții, dar cu alte numere. Primești notă de la 1 la 10. ${S.testBest ? `Cea mai bună notă a ta: <b>${fmtNota(S.testBest)}</b>.` : 'Ești gata?'}`
@@ -121,6 +127,7 @@ export function showLesson(key, title, after) {
 let Q = null, combo = 0, goalShown = false;
 const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t) }, GEN[t](), extra);
 export function startMission(m) {
+  if (m.atelier) { openAtelier(); return; }
   if (m.test) {
     const qs = TEST_ITEMS.map((it) => mk(it.type, { pts: it.pts, label: it.label }));
     Q = { mode: 'test', m, qs, i: 0, ok: 0, res: [], score: 1 };
@@ -135,7 +142,7 @@ export function openDaily() {
   const due = shuffle(dueTypes()).slice(0, 4), qs = due.map((t) => mk(t));
   const byArea = { 1: { 1: 1, 2: 0, 3: 0, T: 0 }, 2: { 1: 1, 2: 3, 3: 0, T: 0 }, 3: { 1: 0.4, 2: 1, 3: 3, T: 0 } }[S.grade || 3];
   while (qs.length < 10) {
-    const ms = MISSIONS.filter((m) => !m.test); const w = ms.map((m) => byArea[m.area]);
+    const ms = MISSIONS.filter((m) => m.types); const w = ms.map((m) => byArea[m.area]);
     let r = Math.random() * w.reduce((a, b) => a + b, 0), mm = ms[0];
     for (let i = 0; i < ms.length; i++) { r -= w[i]; if (r <= 0) { mm = ms[i]; break; } }
     qs.push(mk(pickWeighted(mm.types)));
@@ -214,7 +221,9 @@ function finish() {
       <div class="big">${Q.ok} / ${n}</div><p>${Q.nrev ? `Ai făcut ${Q.nrev} ${Q.nrev === 1 ? 'recapitulare' : 'recapitulări'}. ` : ''}Ce ai greșit revine mâine, apoi peste 3 zile și peste o săptămână. Așa se lipește de creier.</p>`;
   }
   const again = Q.mode === 'daily' ? openDaily : () => startMission(Q.m);
-  $('quizCard').innerHTML = html + `<div class="row"><button class="btn light" type="button" id="again">Încă o dată</button><button class="btn" type="button" id="back">Înapoi pe insulă</button></div>`;
+  const weak = Q.mode === 'test' ? (Q.qs.find((q, i) => !Q.res[i] && atelierByType(q.type)) || {}).type : null;
+  $('quizCard').innerHTML = html + `<div class="row">${weak ? '<button class="btn" type="button" id="toAt">Învață metoda în Atelier</button>' : ''}<button class="btn light" type="button" id="again">Încă o dată</button><button class="btn${weak ? ' light' : ''}" type="button" id="back">Înapoi pe insulă</button></div>`;
+  if (weak) $('toAt').onclick = () => openAtelier(weak);
   const m = Q.m;
   $('again').onclick = () => (Q.mode === 'daily' ? openDaily() : startMission(m));
   $('back').onclick = () => { $('quiz').hidden = true; Q = null; checkGoal(); };
@@ -252,7 +261,7 @@ export function openJournal(tab) {
 }
 export function nextMission() {
   const g = String(S.grade || 3), mine = MISSIONS.filter((m) => m.area === g || (g === '3' && m.area === 'T'));
-  return mine.find((m) => !m.test && !((S.missions[m.id] || {}).stars)) || mine.find((m) => ((S.missions[m.id] || {}).stars || 0) < 3) || null;
+  return mine.find((m) => m.types && !((S.missions[m.id] || {}).stars)) || mine.find((m) => (m.types || m.test) && ((S.missions[m.id] || {}).stars || 0) < 3) || null;
 }
 
 /* ---------- garderoba ---------- */
@@ -279,7 +288,7 @@ export function openShop(tab) {
 export function openProgress() {
   const rows = Object.keys(TYPE_NAMES).filter((t) => S.stats[t]).map((t) => { const s = S.stats[t], n = s.ok + s.bad, p = Math.round(100 * s.ok / n); return [p, `<div class="bar"><span>${TYPE_NAMES[t]}</span><span class="tr"><i style="width:${p}%"></i></span><span class="n">${p}% · ${n}</span></div>`]; }).sort((a, b) => a[0] - b[0]).map((r) => r[1]).join('');
   showPanel(`<div class="eyebrow">Pentru părinți</div><h2>Unde mai are de lucrat</h2>
-    <p><b>Azi:</b> ${Math.floor(S.today.sec / 60)} din 20 de minute · <b>Serie:</b> ${S.streak} ${S.streak === 1 ? 'zi' : 'zile'} · <b>Stele:</b> ${starsTotal()} din ${(MISSIONS.length) * 3} · <b>Cea mai bună notă la test:</b> ${S.testBest ? fmtNota(S.testBest) : '–'} · <b>Recapitulări programate:</b> ${Object.keys(S.review).length} (${dueTypes().length} azi)</p>
+    <p><b>Azi:</b> ${Math.floor(S.today.sec / 60)} din 20 de minute · <b>Serie:</b> ${S.streak} ${S.streak === 1 ? 'zi' : 'zile'} · <b>Stele:</b> ${starsTotal()} din ${MISSIONS.filter((m) => m.types || m.test).length * 3} · <b>Cea mai bună notă la test:</b> ${S.testBest ? fmtNota(S.testBest) : '–'} · <b>Recapitulări programate:</b> ${Object.keys(S.review).length} (${dueTypes().length} azi)</p>
     <p>Procentul de răspunsuri corecte pe fiecare tip, de la cel mai slab la cel mai bun. Tipurile slabe apar mai des.</p>
     <div style="display:flex;flex-direction:column;gap:8px">${rows || '<p>Încă nu s-a jucat nicio misiune.</p>'}</div>
     <div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
