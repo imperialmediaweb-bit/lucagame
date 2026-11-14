@@ -20,6 +20,9 @@ export function loadState(st) {
   if (S.today.day !== DAY()) S.today = { day: DAY(), sec: 0 };
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ }
 }
+/** Clasele mai mici decât clasa copilului sunt închise (nu se mai strâng monede ușoare). Arena e pentru clasa a III-a. */
+export const areaLocked = (areaId) => { const g = S.grade || 3; return areaId === 'T' ? g < 3 : +areaId < g; };
+export const GRADE_NAMES = ['', 'clasa I', 'clasa a II-a', 'clasa a III-a'];
 export const level = () => Math.floor(Math.sqrt((S.xp || 0) / 40)) + 1;
 export const xpFor = (l) => 40 * (l - 1) * (l - 1);
 export const DAY = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);

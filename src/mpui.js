@@ -42,7 +42,7 @@ export function openCreate() {
   const draw = () => {
     showPanel(`<div class="eyebrow">Joacă cu colegii</div><h2>Fă o cameră de joc</h2>
       <p>Alegi clasa și materia, apoi trimiți linkul colegilor. Ei intră doar cu prenumele, fără cont.</p>
-      <b>Clasa</b><div class="tabs" id="cGrade">${pills(GRADES, grade, 'data-g')}</div>
+      <b>Clasa</b><div class="tabs" id="cGrade">${pills({ [S.grade || 3]: GRADES[S.grade || 3] }, grade, 'data-g')}</div>
       <b>Ce exersăm?</b><div class="tabs" id="cSub">${pills(grade === 3 ? SUBJECTS : { mix: 'Amestecat', mate: 'Matematică', romana: 'Română' }, subject, 'data-s')}</div>
       <div class="row"><button class="btn light" type="button" data-close>Înapoi</button><button class="btn" type="button" id="cGo">Fă camera</button></div>`);
     $('cGrade').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => { grade = +b.dataset.g; if (grade !== 3 && subject === 'test') subject = 'mix'; draw(); });
@@ -75,7 +75,7 @@ export function openLobby() {
     <b>Jucători (${r.players.length})</b>
     <div class="tabs">${r.players.map((p) => `<span class="tab ${p.id === NET.you ? 'on' : ''}">${esc(p.name)}${p.host ? ' · gazdă' : ''}</span>`).join('')}</div>
     <b>Mesaje rapide</b><div class="tabs">${EMOTES.map((e, i) => `<button class="tab" type="button" data-e="${i}">${e}</button>`).join('')}</div>
-    ${host ? `<b>Clasa</b><div class="tabs" id="lGrade">${pills(GRADES, r.grade, 'data-g')}</div>
+    ${host ? `<b>Clasa</b><div class="tabs" id="lGrade">${pills({ [r.grade]: GRADES[r.grade] }, r.grade, 'data-g')}</div>
       <b>Ce exersăm?</b><div class="tabs" id="lSub">${pills(r.grade === 3 ? SUBJECTS : { mix: 'Amestecat', mate: 'Matematică', romana: 'Română' }, r.subject, 'data-s')}</div>
       <b>Alege jocul</b>
       <div class="shopgrid">

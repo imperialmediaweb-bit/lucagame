@@ -11,7 +11,7 @@ import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 import { GlowLayer } from '@babylonjs/core/Layers/glowLayer';
 import '@babylonjs/core/Layers/effectLayerSceneComponent';
 import { LABELS } from './avatar.js';
-import { S, save } from './state.js';
+import { S, save, areaLocked, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
@@ -130,7 +130,15 @@ function goTo(m) {
   yaw = Math.atan2(P.x - n.x, P.z - n.z);
   toast(`Ai ajuns la ${m.npc}!`);
 }
+function applyLocks() {
+  for (const [id, g] of Object.entries(W.gates)) {
+    const locked = areaLocked(id);
+    g.bar.isVisible = locked; g.lbl.isVisible = locked; g.col.y1 = locked ? g.y1 : -100; g.col.y2 = locked ? g.y2 : -99;
+  }
+  W.pads.forEach((p) => { p.ring.isVisible = !areaLocked(p.area.id); });
+}
 function missionsChanged() {
+  applyLocks();
   W.npcs.forEach((n) => { const st = (S.missions[n.m.id] || {}).stars || 0; n.bang.isVisible = st === 0; n.done.isVisible = st > 0; });
 }
 missionsChanged();
@@ -211,7 +219,10 @@ scene.registerBeforeRender(() => {
   updatePortals(dt, P, t);
   for (const p of W.pads) {
     p.ring.rotation.y += dt; p.ring.position.y = 1.6 + Math.sin(t * 2) * 0.2;
-    if (Math.hypot(p.x - P.x, p.z - P.z) < 1.4 && P.y < 0.6) {
+    const dp = Math.hypot(p.x - P.x, p.z - P.z);
+    if (dp > 2.5) p.armed = true;
+    if (dp < 1.4 && P.y < 0.6 && areaLocked(p.area.id)) { if (p.armed) { p.armed = false; SFX.no(); toast(`Poarta spre ${p.area.short} e închisă: tu ești în ${GRADE_NAMES[S.grade || 3]}.`); } }
+    else if (dp < 1.4 && P.y < 0.6) {
       const [ax, az] = p.area.pos; teleport(ax - Math.sign(ax) * 13, az - Math.sign(az) * 13); yaw = Math.atan2(-Math.sign(ax), -Math.sign(az));
       SFX.star(); toast(`Bun venit în ${p.area.name}!`);
     }

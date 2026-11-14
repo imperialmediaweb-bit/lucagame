@@ -38,7 +38,7 @@ export function buildWorld(scene, shadow) {
   const hubLbl = makeLabel(scene, 'Insula lui Luca', 'Alege un portal colorat', '#ff7a2f', 4.6); hubLbl.position.set(0, 6.4, 0);
 
   // poduri + portaluri spre insule
-  const pads = [];
+  const pads = [], gates = {};
   AREAS.forEach((a) => {
     const [ax, az] = a.pos, dx = Math.sign(ax), dz = Math.sign(az);
     // pod
@@ -58,6 +58,11 @@ export function buildWorld(scene, shadow) {
     pads.push({ area: a, x: px, z: pz, ring });
     // indicator la capătul podului
     const sign = makeLabel(scene, a.short, 'pe aici →', a.color, 2.6); sign.position.set(dx * 19, 2.6, dz * 19);
+    // barieră pe pod, pentru clasele închise
+    const gx = dx * 20.8, gz = dz * 20.8, gw = dx ? 0.5 : 4.6, gd = dx ? 4.6 : 0.5;
+    const bar = box(gx, 1.5, gz, gw, 3, gd, '#d23a3a', { dynamic: true, cast: true });
+    const lockLbl = makeLabel(scene, 'Închis', 'nu e clasa ta', '#d23a3a', 2.2); lockLbl.position.set(gx, 3.6, gz);
+    gates[a.id] = { bar, col: colliders[colliders.length - 1], lbl: lockLbl, y1: 0, y2: 3 };
   });
 
   // nori
@@ -252,7 +257,7 @@ export function buildWorld(scene, shadow) {
   });
 
   statics.forEach((m) => m.freezeWorldMatrix());
-  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, spawn: { x: 5, y: 0.5, z: -5 } };
+  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, gates, spawn: { x: 5, y: 0.5, z: -5 } };
 }
 
 export { Mesh };

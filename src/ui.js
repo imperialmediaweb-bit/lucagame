@@ -1,5 +1,5 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
-import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted } from './state.js';
+import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { GEN, MISSIONS, AREAS, TEST_ITEMS, TYPE_NAMES, missionById, areaById, typeArea } from './content/missions.js';
 import { LESSONS } from './content/lessons.js';
@@ -76,7 +76,7 @@ export function openMenu() {
   $('mC').onclick = () => H.multiplayer();
   $('mA').onclick = () => openAtelier();
   $('mPr').onclick = () => window.__profile && window.__profile();
-  $('mG').onclick = () => { S.grade = (S.grade || 3) % 3 + 1; save(); openMenu(); toast(`Misiunile și antrenamentul sunt acum pentru clasa ${['', 'I', 'a II-a', 'a III-a'][S.grade]}.`); };
+  $('mG').onclick = () => { toast(`Ești în ${GRADE_NAMES[S.grade || 3]}. Când termini toată lumea clasei tale, se deschide clasa următoare.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
 
@@ -129,6 +129,7 @@ export function showLesson(key, title, after) {
 let Q = null, combo = 0, goalShown = false;
 const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t) }, GEN[t](), extra);
 export function startMission(m) {
+  if (areaLocked(m.area)) { toast(`Misiunea e pentru ${areaById(m.area).short}. Tu ești în ${GRADE_NAMES[S.grade || 3]}.`); return; }
   if (m.atelier) { openAtelier(); return; }
   if (m.test) {
     const qs = TEST_ITEMS.map((it) => mk(it.type, { pts: it.pts, label: it.label }));
@@ -142,7 +143,7 @@ export function startMission(m) {
 }
 export function openDaily() {
   const due = shuffle(dueTypes()).slice(0, 4), qs = due.map((t) => mk(t));
-  const byArea = { 1: { 1: 1, 2: 0, 3: 0, T: 0 }, 2: { 1: 1, 2: 3, 3: 0, T: 0 }, 3: { 1: 0.4, 2: 1, 3: 3, T: 0 } }[S.grade || 3];
+  const byArea = { 1: { 1: 1, 2: 0, 3: 0, T: 0 }, 2: { 1: 0, 2: 1, 3: 0, T: 0 }, 3: { 1: 0, 2: 0, 3: 1, T: 0 } }[S.grade || 3];
   while (qs.length < 10) {
     const ms = MISSIONS.filter((m) => m.types); const w = ms.map((m) => byArea[m.area]);
     let r = Math.random() * w.reduce((a, b) => a + b, 0), mm = ms[0];
@@ -256,7 +257,7 @@ export function openJournal(tab) {
   showPanel(`<div class="eyebrow">Jurnalul de misiuni · ${starsTotal()} stele în total</div><h2>Misiuni</h2>
     <div class="tabs">${AREAS.map((x) => `<button class="tab ${x.id === journalTab ? 'on' : ''}" type="button" data-tab="${x.id}">${esc(x.short)}</button>`).join('')}</div>
     <div class="jgrade"><h3><span>${esc(a.name)}</span>${starsHtml(Math.round(got / (list.length * 3) * 3))}</h3>
-    ${list.map((m) => { const st = (S.missions[m.id] || {}).stars || 0; return `<div class="jrow"><div><b>${esc(m.title)}</b><small>${esc(m.npc)} · ${esc(m.desc)}</small></div>${m.test ? `<small>${S.testBest ? 'nota ' + fmtNota(S.testBest) : ''}</small>` : starsHtml(st)}<div class="row" style="gap:6px"><button class="iconbtn" type="button" data-go="${m.id}">Du-mă</button><button class="btn" type="button" data-play="${m.id}">Joacă</button></div></div>`; }).join('')}
+    ${list.map((m) => { const st = (S.missions[m.id] || {}).stars || 0; return `<div class="jrow"><div><b>${esc(m.title)}</b><small>${esc(m.npc)} · ${esc(m.desc)}</small></div>${m.test ? `<small>${S.testBest ? 'nota ' + fmtNota(S.testBest) : ''}</small>` : starsHtml(st)}${areaLocked(m.area) ? '<small>Închis</small>' : `<div class="row" style="gap:6px"><button class="iconbtn" type="button" data-go="${m.id}">Du-mă</button><button class="btn" type="button" data-play="${m.id}">Joacă</button></div>`}</div>`; }).join('')}
     </div><div class="row"><button class="btn light" type="button" data-close>Închide</button></div>`);
   $('panelCard').querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => openJournal(b.dataset.tab));
   $('panelCard').querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { hidePanel(); H.goTo(missionById(b.dataset.go)); });
