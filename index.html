@@ -87,7 +87,18 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 #paper{position:relative;flex:1;border:2px solid var(--ink);border-radius:10px;overflow:hidden;background-color:#fdfdf8;
   background-image:linear-gradient(#cfe0f5 1px,transparent 1px),linear-gradient(90deg,#cfe0f5 1px,transparent 1px);background-size:22px 22px}
 #paper::before{content:"";position:absolute;top:0;bottom:0;left:44px;width:2px;background:#f0a0a0}
-#paperC{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#paperC{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:1}
+#paperT{position:absolute;inset:0;width:100%;height:100%;z-index:2;background:transparent;border:0;resize:none;outline:none;color:#2456b8;
+  font:700 20px/22px var(--font-d);padding:2px 10px 0 54px;box-sizing:border-box;-webkit-user-select:text;user-select:text;touch-action:auto}
+#draft.draw #paperT{pointer-events:none} #draft.type #paperC{pointer-events:none}
+.keys{display:flex;gap:6px;flex-wrap:wrap}
+.keys button{min-width:40px;height:38px;border-radius:10px;background:#fff;border:2px solid var(--ink);font-family:var(--font-d);font-size:20px;box-shadow:0 2px 0 var(--ink);padding:0 8px}
+@media (min-width:900px){
+  #draft{left:auto;top:0;width:46%;height:auto;border-top:0;border-left:3px solid var(--ink);border-radius:18px 0 0 18px;padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .overlay.withdraft{justify-content:flex-start;align-items:center}
+  .overlay.withdraft .card{max-height:100%;width:min(560px,50%)}
+}
+#draft.draw .keys,#draft.draw .typeonly{display:none} #draft.type .drawonly{display:none}
 .lesson .ln{font-family:var(--font-d);font-size:22px;line-height:1.35;padding:6px 10px;border-radius:10px;background:#fff;border:2px solid var(--line);animation:rise .5s ease both}
 .lesson .ln mark{background:#ffe08a;border-radius:6px;padding:0 4px;color:var(--ink)}
 .lesson .ln.res{border-color:var(--good);background:var(--good-bg)}
@@ -145,13 +156,16 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <div id="draft" hidden>
   <div class="tools">
     <span class="ttl">Ciornă</span>
-    <button class="tool on" type="button" data-pen="#2456b8" aria-label="Pix albastru"><span class="sw2" style="background:#2456b8"></span></button>
-    <button class="tool" type="button" data-pen="#d23a3a" aria-label="Pix roșu"><span class="sw2" style="background:#d23a3a"></span></button>
-    <button class="tool" type="button" data-pen="erase">Radieră</button>
+    <button class="tool" type="button" id="mType">Scriu cu tastatura</button>
+    <button class="tool" type="button" id="mDraw">Desenez</button>
+    <button class="tool on drawonly" type="button" data-pen="#2456b8" aria-label="Pix albastru"><span class="sw2" style="background:#2456b8"></span></button>
+    <button class="tool drawonly" type="button" data-pen="#d23a3a" aria-label="Pix roșu"><span class="sw2" style="background:#d23a3a"></span></button>
+    <button class="tool drawonly" type="button" data-pen="erase">Radieră</button>
     <button class="tool" type="button" id="draftClear">Șterge tot</button>
     <button class="tool" type="button" id="draftClose">Închide</button>
   </div>
-  <div id="paper"><canvas id="paperC"></canvas></div>
+  <div class="keys"><button type="button" data-ins="+">+</button><button type="button" data-ins="−">−</button><button type="button" data-ins="×">×</button><button type="button" data-ins=":">:</button><button type="button" data-ins="=">=</button><button type="button" data-ins="(">(</button><button type="button" data-ins=")">)</button><button type="button" data-ins="[">[</button><button type="button" data-ins="]">]</button><button type="button" data-ins="↵">↵</button></div>
+  <div id="paper"><canvas id="paperC"></canvas><textarea id="paperT" spellcheck="false" autocomplete="off" aria-label="Ciornă scrisă" placeholder="Scrie aici calculele, de ex. 32 : 8 = 4"></textarea></div>
 </div>
 <div id="confetti"></div>
 
@@ -630,8 +644,18 @@ pc.addEventListener('pointerdown',e=>{const r=pc.getBoundingClientRect();cur={c:
 pc.addEventListener('pointermove',e=>{if(!cur)return;const r=pc.getBoundingClientRect();cur.p.push([e.clientX-r.left,e.clientY-r.top]);const s={c:cur.c,p:cur.p.slice(-2)};drawStroke(s);});
 const endS=()=>{cur=null;}; pc.addEventListener('pointerup',endS); pc.addEventListener('pointercancel',endS);
 document.querySelectorAll('#draft [data-pen]').forEach(b=>b.addEventListener('click',()=>{pen=b.dataset.pen;document.querySelectorAll('#draft [data-pen]').forEach(x=>x.classList.toggle('on',x===b));}));
-function draftClear(){strokes=[];redraw();}
-function openDraft(){$('draft').hidden=false;$('quiz').classList.add('withdraft');requestAnimationFrame(fitPaper);}
+const pt=$('paperT');
+function draftClear(){strokes=[];redraw();pt.value='';}
+let dMode=matchMedia('(pointer:fine)').matches?'type':'draw';
+function setMode(m){dMode=m;$('draft').classList.toggle('type',m==='type');$('draft').classList.toggle('draw',m==='draw');
+  $('mType').classList.toggle('on',m==='type');$('mDraw').classList.toggle('on',m==='draw');if(m==='type')pt.focus({preventScroll:true});}
+$('mType').onclick=()=>setMode('type'); $('mDraw').onclick=()=>setMode('draw');
+// * devine ×, / devine :, - devine −
+pt.addEventListener('input',()=>{const p=pt.selectionStart,v=pt.value.replace(/\*/g,'×').replace(/\//g,':').replace(/-/g,'−');if(v!==pt.value){pt.value=v;pt.setSelectionRange(p,p);}});
+document.querySelectorAll('#draft [data-ins]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();
+  const k=b.dataset.ins==='↵'?'\n':' '+b.dataset.ins+' ',a=pt.selectionStart??pt.value.length,z=pt.selectionEnd??a;
+  pt.value=pt.value.slice(0,a)+k+pt.value.slice(z);const c=a+k.length;pt.focus({preventScroll:true});pt.setSelectionRange(c,c);}));
+function openDraft(){$('draft').hidden=false;$('quiz').classList.add('withdraft');setMode(dMode);requestAnimationFrame(fitPaper);}
 function closeDraft(){$('draft').hidden=true;$('quiz').classList.remove('withdraft');}
 $('draftClear').onclick=draftClear; $('draftClose').onclick=closeDraft;
 addEventListener('resize',()=>{if(!$('draft').hidden)fitPaper();});
