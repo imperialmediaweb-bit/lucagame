@@ -1,14 +1,27 @@
 // Progresul lui Luca, salvat în browser.
 const KEY = 'insula-luca-v2';
-export const S = {
+const DEFAULTS = {
   coins: 0, missions: {}, // id -> {stars, best}
   look: { skin: '#f3c9a0', shirt: '#e04848', pants: '#2b3a55', hat: 'sapca', face: 'zambet' },
   owned: ['shirt:#e04848', 'pants:#2b3a55', 'hat:nimic', 'hat:sapca', 'face:zambet'],
   stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
   testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: '', atelier: {}
 };
+DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {};
+export const S = JSON.parse(JSON.stringify(DEFAULTS));
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, s); } catch (e) { /* fără salvare */ }
-export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } }
+let onSave = null;
+export const setOnSave = (f) => { onSave = f; };
+export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } if (onSave) onSave(); }
+/** Înlocuiește progresul cu cel din profil (păstrând valorile implicite pentru câmpuri noi). */
+export function loadState(st) {
+  for (const k of Object.keys(S)) delete S[k];
+  Object.assign(S, JSON.parse(JSON.stringify(DEFAULTS)), st || {});
+  if (S.today.day !== DAY()) S.today = { day: DAY(), sec: 0 };
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ }
+}
+export const level = () => Math.floor(Math.sqrt((S.xp || 0) / 40)) + 1;
+export const xpFor = (l) => 40 * (l - 1) * (l - 1);
 export const DAY = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 export const GOAL = 20 * 60;
 if (S.today.day !== DAY()) S.today = { day: DAY(), sec: 0 };

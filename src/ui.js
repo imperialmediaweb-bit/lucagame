@@ -64,6 +64,7 @@ export function openMenu() {
       <button class="item" type="button" id="mS"><b>Garderoba</b><span>haine și pălării</span></button>
       <button class="item" type="button" id="mP"><b>Progres</b><span>pentru părinți</span></button>
       <button class="item" type="button" id="mM"><b>Sunet</b><span>${S.mute ? 'oprit' : 'pornit'}</span></button>
+      <button class="item" type="button" id="mPr"><b>Profilul meu</b><span>${esc(S.name || 'fără profil')}</span></button>
       <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
       <button class="item" type="button" id="mG"><b>Clasa mea</b><span>${['', 'I', 'a II-a', 'a III-a'][S.grade || 3]}</span></button>
@@ -74,6 +75,7 @@ export function openMenu() {
   $('mM').onclick = () => { S.mute = !S.mute; save(); refreshHud(); openMenu(); };
   $('mC').onclick = () => H.multiplayer();
   $('mA').onclick = () => openAtelier();
+  $('mPr').onclick = () => window.__profile && window.__profile();
   $('mG').onclick = () => { S.grade = (S.grade || 3) % 3 + 1; save(); openMenu(); toast(`Misiunile și antrenamentul sunt acum pentru clasa ${['', 'I', 'a II-a', 'a III-a'][S.grade]}.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
@@ -187,6 +189,7 @@ function answer(k) {
   const st = S.stats[q.type] || (S.stats[q.type] = { ok: 0, bad: 0 }); ok ? st.ok++ : st.bad++;
   reviewMark(q.type, ok);
   let gain = 0;
+  S.xp = (S.xp || 0) + (ok ? 10 : 2);
   if (ok) { combo++; gain = Math.max(1, 5 - q.used * 2) * (combo >= 3 ? 2 : 1); Q.ok++; S.coins += gain; if (Q.mode === 'test') Q.score += q.pts; SFX.ok(); confetti(); H.cheer && H.cheer(); }
   else { combo = 0; SFX.no(); }
   Q.res[Q.i] = ok; save(); refreshHud();

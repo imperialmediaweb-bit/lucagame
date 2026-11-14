@@ -16,7 +16,8 @@ import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
-import { initNet, tick as netTick, sendLook, NET } from './net.js';
+import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
+import { startFlow, profileMenu } from './account.js';
 import { showStart, openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } from './mpui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -136,7 +137,12 @@ const multiplayer = () => (NET.room ? openLobby() : openCreate());
 initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
 initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } });
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
-showStart(() => { if (!S.tutorial) showTutorial(touch); });
+const hooks = {
+  reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
+  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else if (!S.tutorial) showTutorial(touch); }
+};
+window.__profile = () => profileMenu(hooks);
+startFlow(hooks);
 
 /* ---------- bucla ---------- */
 let t = 0, face = 0, hudT = 0;
