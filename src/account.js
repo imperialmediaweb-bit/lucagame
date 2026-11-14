@@ -46,6 +46,9 @@ export async function startFlow(hooks) {
 }
 function lock() { $('panel').dataset.lock = '1'; }
 function unlock() { delete $('panel').dataset.lock; $('panel').hidden = true; }
+const PIN_ATTR = 'maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"';
+// lasă doar cifre în câmpul de PIN (oricum ar tasta copilul)
+const pinOnly = (id) => { const el = $(id); if (el) el.addEventListener('input', () => { const v = el.value.replace(/\D/g, '').slice(0, 4); if (v !== el.value) el.value = v; }); };
 const input = (id, ph, extra = '') => `<input id="${id}" ${extra} placeholder="${ph}" style="font:700 20px var(--font-b);padding:10px 12px;border:2px solid var(--ink);border-radius:12px;width:100%;box-sizing:border-box">`;
 
 function welcome(hooks, invite) {
@@ -69,18 +72,19 @@ function register(hooks, invite) {
     showPanel(`<div class="eyebrow">Profil nou</div><h2>Cum vrei să te cheme în joc?</h2>
       <p>Alege o poreclă (username), de exemplu <b>LucaNinja</b>. Fără numele de familie! 3–16 litere sau cifre, fără spații.</p>
       ${input('rU', 'Username', 'maxlength="16" autocomplete="off" autocapitalize="off"')}
-      <p><b>PIN</b>: 4 cifre pe care le ții minte (ca la telefon).</p>
-      <div style="display:flex;gap:8px">${input('rP', 'PIN', 'maxlength="4" inputmode="numeric" type="password" autocomplete="new-password"')}${input('rP2', 'Încă o dată', 'maxlength="4" inputmode="numeric" type="password" autocomplete="new-password"')}</div>
       <b>Clasa</b><div class="tabs" id="rG">${Object.entries(GRADES).map(([k, v]) => `<button class="tab ${+k === grade ? 'on' : ''}" type="button" data-g="${k}">${v}</button>`).join('')}</div>
+      <p><b>PIN</b>: 4 cifre pe care le ții minte (ca la telefon). Scrie-l de două ori.</p>
+      <div style="display:flex;gap:8px">${input('rP', 'PIN', PIN_ATTR)}${input('rP2', 'Încă o dată', PIN_ATTR)}</div>
       <div id="rErr"></div>
       <div class="row"><button class="btn light" type="button" id="rBack">Înapoi</button><button class="btn" type="button" id="rGo">Fac profilul</button></div>`);
     lock();
-    $('rG').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => { const u = $('rU').value; grade = +b.dataset.g; draw(); $('rU').value = u; });
+    $('rG').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => { grade = +b.dataset.g; $('rG').querySelectorAll('[data-g]').forEach((x) => x.classList.toggle('on', x === b)); });
+    pinOnly('rP'); pinOnly('rP2');
     $('rBack').onclick = () => welcome(hooks, invite);
     $('rGo').onclick = async () => {
       const u = $('rU').value.trim(), p = $('rP').value, p2 = $('rP2').value, e = (m) => { $('rErr').innerHTML = `<div class="fb no"><b>${esc(m)}</b></div>`; };
       if (!/^[A-Za-z0-9_]{3,16}$/.test(u)) return e('Username-ul are 3–16 litere fără diacritice, cifre sau _.');
-      if (!/^\d{4}$/.test(p)) return e('PIN-ul are exact 4 cifre.');
+      if (!/^\d{4}$/.test(p)) return e(`PIN-ul are exact 4 cifre. Acum are ${p.length}.`);
       if (p !== p2) return e('Cele două PIN-uri nu sunt la fel.');
       $('rGo').disabled = true;
       try {
@@ -102,10 +106,11 @@ function register(hooks, invite) {
 function login(hooks, invite) {
   showPanel(`<div class="eyebrow">Am deja profil</div><h2>Intră în joc</h2>
     ${input('lU', 'Username', 'maxlength="16" autocomplete="username" autocapitalize="off"')}
-    ${input('lP', 'PIN (4 cifre)', 'maxlength="4" inputmode="numeric" type="password" autocomplete="current-password"')}
+    ${input('lP', 'PIN (4 cifre)', PIN_ATTR)}
     <div id="lErr"></div>
     <div class="row"><button class="btn light" type="button" id="lForgot">Am uitat PIN-ul</button><button class="btn light" type="button" id="lBack">Înapoi</button><button class="btn" type="button" id="lGo">Intră</button></div>`);
   lock();
+  pinOnly('lP');
   $('lBack').onclick = () => welcome(hooks, invite);
   $('lForgot').onclick = () => recover(hooks, invite);
   $('lGo').onclick = async () => {
@@ -118,7 +123,7 @@ function login(hooks, invite) {
 function recover(hooks, invite) {
   showPanel(`<div class="eyebrow">Am uitat PIN-ul</div><h2>Schimbă PIN-ul</h2>
     <p>Ai nevoie de codul de recuperare primit când ai făcut profilul (îl are un părinte).</p>
-    ${input('vU', 'Username', 'maxlength="16" autocapitalize="off"')}${input('vR', 'Cod de recuperare (ex. ABCD-1234)', 'maxlength="9" autocapitalize="characters"')}${input('vP', 'PIN nou (4 cifre)', 'maxlength="4" inputmode="numeric" type="password"')}
+    ${input('vU', 'Username', 'maxlength="16" autocapitalize="off"')}${input('vR', 'Cod de recuperare (ex. ABCD-1234)', 'maxlength="9" autocapitalize="characters"')}${input('vP', 'PIN nou (4 cifre)', PIN_ATTR)}
     <div id="vErr"></div>
     <div class="row"><button class="btn light" type="button" id="vBack">Înapoi</button><button class="btn" type="button" id="vGo">Schimbă PIN-ul</button></div>`);
   lock();
