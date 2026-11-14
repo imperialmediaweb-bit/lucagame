@@ -146,7 +146,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 #openMenu{display:none}
 @media (max-width:640px){
   #openMenu{display:inline-block}
-  #openJournal,#openAtelier,#openShop,#openProg,#mute,#openMulti,.hud .daybar,.hud #streakPill{display:none}
+  #openJournal,#openAtelier,#openShop,#openProg,#mute,#musicBtn,#openMulti,.hud .daybar,.hud #streakPill{display:none}
   .hud #roomBtn:not([hidden])~#openDaily{display:none}
   #quest .qt span{font-size:12px}
   .hud{gap:6px;flex-wrap:nowrap}

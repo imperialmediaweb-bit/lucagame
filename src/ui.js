@@ -1,6 +1,7 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
 import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES, G } from './state.js';
 import { SFX } from './audio.js';
+import { Music } from './music.js';
 import { GEN, MISSIONS, AREAS, TEST_ITEMS, TYPE_NAMES, missionById, areaById, typeArea } from './content/missions.js';
 import { LESSONS } from './content/lessons.js';
 import { COLORS, SKINS, HATS, FACES } from './avatar.js';
@@ -33,6 +34,7 @@ export function refreshHud() {
   $('streak').textContent = 'Serie ' + S.streak;
   const m = Math.min(20, Math.floor(S.today.sec / 60)); $('dayMin').textContent = m + '/20'; $('dayFill').style.width = (m / 20 * 100) + '%';
   $('mute').textContent = 'Sunet: ' + (S.mute ? 'nu' : 'da');
+  $('musicBtn').textContent = 'Muzică: ' + (Music.on() ? 'da' : 'nu');
 }
 export function showPanel(html, onClose) {
   $('panelCard').innerHTML = html; $('panel').hidden = false; H.stop && H.stop();
@@ -51,6 +53,7 @@ function bind() {
   $('openShop').onclick = () => { SFX.tap(); openShop(); };
   $('openProg').onclick = () => { SFX.tap(); openProgress(); };
   $('mute').onclick = () => { S.mute = !S.mute; save(); refreshHud(); SFX.tap(); };
+  $('musicBtn').onclick = () => { Music.toggle(); refreshHud(); };
   $('openMenu').onclick = () => { SFX.tap(); openMenu(); };
   bindDraft();
 }
@@ -63,7 +66,8 @@ export function openMenu() {
       <button class="item" type="button" id="mJ"><b>Misiuni</b><span>toate clasele</span></button>
       <button class="item" type="button" id="mS"><b>Garderoba</b><span>haine și pălării</span></button>
       <button class="item" type="button" id="mP"><b>Progres</b><span>pentru părinți</span></button>
-      <button class="item" type="button" id="mM"><b>Sunet</b><span>${S.mute ? 'oprit' : 'pornit'}</span></button>
+      <button class="item" type="button" id="mM"><b>Sunete</b><span>${S.mute ? 'oprite' : 'pornite'}</span></button>
+      <button class="item" type="button" id="mMu"><b>Muzică</b><span>${Music.on() ? 'pornită' : 'oprită'}</span></button>
       <button class="item" type="button" id="mPr"><b>Profilul meu</b><span>${esc(S.name || 'fără profil')}</span></button>
       <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
@@ -73,6 +77,7 @@ export function openMenu() {
     </div><div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
   $('mJ').onclick = () => openJournal(); $('mS').onclick = () => openShop(); $('mP').onclick = () => openProgress();
   $('mM').onclick = () => { S.mute = !S.mute; save(); refreshHud(); openMenu(); };
+  $('mMu').onclick = () => { Music.toggle(); refreshHud(); openMenu(); };
   $('mC').onclick = () => H.multiplayer();
   $('mA').onclick = () => openAtelier();
   $('mPr').onclick = () => window.__profile && window.__profile();

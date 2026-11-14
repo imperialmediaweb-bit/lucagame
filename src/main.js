@@ -18,6 +18,8 @@ import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
+import { Music } from './music.js';
+import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
 window.__portal = (id) => portalPanel(id);
@@ -244,6 +246,7 @@ scene.registerBeforeRender(() => {
   if (!near || paused()) act.hidden = true;
   else { act.textContent = near.type === 'npc' ? `Vorbește cu ${near.n.m.npc}` : 'Deschide comoara'; act.hidden = false; }
   netTick(dt, P, face, seated ? 4 : !P.ground && P.coyote <= 0 ? 2 : cheerT > 0 ? 3 : 0);
+  Music.setMode(chasing() ? 'chase' : 'chill'); Music.setQuiet(!$('quiz').hidden);
   updateQuest();
 });
 
