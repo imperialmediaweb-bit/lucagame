@@ -3,7 +3,7 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { mat, createAvatar, makeLabel } from './avatar.js';
 import { SPEED, SPEED_IDS, timeFor } from './content/speed.js';
-import { S, save } from './state.js';
+import { S, save, G, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { toast, confetti, refreshHud, showPanel } from './ui.js';
 import { apiCall, loggedIn } from './account.js';
@@ -72,11 +72,11 @@ export function portalPanel(id) {
 }
 
 export async function showBoard(board, title, back) {
-  showPanel(`<div class="eyebrow">Clasament · ${['', 'clasa I', 'clasa a II-a', 'clasa a III-a'][S.grade || 3]}</div><h2>${esc(title)}</h2><p>Se încarcă…</p>`);
+  showPanel(`<div class="eyebrow">Clasament · ${GRADE_NAMES[G()]}</div><h2>${esc(title)}</h2><p>Se încarcă…</p>`);
   try {
-    const j = await apiCall(`top?board=${encodeURIComponent(board)}&grade=${S.grade || 3}`);
+    const j = await apiCall(`top?board=${encodeURIComponent(board)}&grade=${G()}`);
     const medal = ['🥇', '🥈', '🥉'];
-    showPanel(`<div class="eyebrow">Clasament · ${['', 'clasa I', 'clasa a II-a', 'clasa a III-a'][S.grade || 3]}</div><h2>${esc(title)}</h2>
+    showPanel(`<div class="eyebrow">Clasament · ${GRADE_NAMES[G()]}</div><h2>${esc(title)}</h2>
       ${j.top.length ? `<div class="jgrade">${j.top.map((r) => `<div class="jrow" style="grid-template-columns:34px minmax(0,1fr) auto${r.username === S.name ? ';border-color:var(--accent)' : ''}"><b>${medal[r.rank - 1] || r.rank + '.'}</b><span>${esc(r.username)}</span><b>${r.score}</b></div>`).join('')}</div>` : '<p>Încă nu e nimeni în clasament. Fii primul!</p>'}
       <p>${loggedIn() ? (j.me ? `Locul tău: <b>${j.me.rank}</b> cu ${j.me.score} puncte.` : 'Încă nu ai scor aici.') : 'Fă-ți profil (din Meniu) ca să apari în clasament.'}</p>
       <div class="row"><button class="btn" type="button" id="bBack">Înapoi</button></div>`);

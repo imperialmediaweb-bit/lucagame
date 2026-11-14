@@ -2,11 +2,15 @@ import { G1 } from './grade1.js';
 import { G2 } from './grade2.js';
 import { G3, TEST_ITEMS } from './grade3.js';
 import { G3B } from './grade3b.js';
+import { G0 } from './grade0.js';
+import { G4 } from './grade4.js';
 
-export const GEN = { ...G1, ...G2, ...G3, ...G3B };
+export const GEN = { ...G0, ...G1, ...G2, ...G3, ...G3B, ...G4 };
 export { TEST_ITEMS };
 
 export const AREAS = [
+  { id: '0', name: 'Grădina Pregătitoare', short: 'Pregătitoare', color: '#ff8ac0', ground: '#a8e88a', pos: [-52, -52], portalOnly: true },
+  { id: '4', name: 'Munții Clasei a IV-a', short: 'Clasa a IV-a', color: '#42c0d8', ground: '#b9c7cf', pos: [52, -52], portalOnly: true },
   { id: '1', name: 'Pajiștea Clasei I', short: 'Clasa I', color: '#4cb05a', ground: '#8fdc6f', pos: [0, -52] },
   { id: '2', name: 'Pădurea Clasei a II-a', short: 'Clasa a II-a', color: '#2f7fd8', ground: '#6fc0a0', pos: [52, 0] },
   { id: '3', name: 'Castelul Clasei a III-a', short: 'Clasa a III-a', color: '#8a5cf6', ground: '#c9b38a', pos: [-52, 0] },
@@ -15,6 +19,27 @@ export const AREAS = [
 
 // look: [piele, tricou, pantaloni, pălărie, față]
 export const MISSIONS = [
+  { id: 'g0-numar', area: '0', npc: 'Zâna Ina', look: ['#f3c9a0', '#ff8ac0', '#5a3b7a', 'coroana', 'fericit'], title: 'Numărăm', desc: 'Numeri obiecte și afli vecinii numerelor.', types: ['numarare', 'vecini31'] },
+  { id: 'g0-compar', area: '0', npc: 'Ursulețul Bubu', look: ['#a8501f', '#f2b632', '#7a3b1f', 'urechi', 'fericit'], title: 'Mai mare, mai mic', desc: 'Care număr e mai mare?', types: ['compara10'] },
+  { id: 'g0-adun', area: '0', npc: 'Pisica Mimi', look: ['#f0e0d0', '#ff7a2f', '#2b3a55', 'urechi', 'zambet'], title: 'Adunări până la 10', desc: 'Pui împreună buline.', types: ['adun10'] },
+  { id: 'g0-scad', area: '0', npc: 'Clovnul Pufi', look: ['#f3c9a0', '#42c0d8', '#e04848', 'palarie', 'fericit'], title: 'Scăderi până la 10', desc: 'Baloane care zboară.', types: ['scad10'] },
+  { id: 'g0-forme', area: '0', npc: 'Robo Formă', look: ['#9aa4b2', '#3b7ddd', '#2b2f38', 'casca', 'robot'], title: 'Forme', desc: 'Triunghi, pătrat, cerc, dreptunghi.', types: ['forme'] },
+  { id: 'g0-sunete', area: '0', npc: 'Bufnița Hu', look: ['#c98e5f', '#7a5a3b', '#3b3b3b', 'ochelari', 'surprins'], title: 'Primul sunet', desc: 'Cu ce sunet începe cuvântul?', types: ['sunetInitial'] },
+  { id: 'g0-rime', area: '0', npc: 'Greierele Cântăreț', look: ['#6fd04a', '#2fae5f', '#2b2f38', 'palarie', 'fericit'], title: 'Rime', desc: 'Cuvinte care sună la fel la sfârșit.', types: ['rima'] },
+
+  { id: 'g4-numere', area: '4', npc: 'Alpinistul Milion', look: ['#c98e5f', '#e04848', '#2b2f38', 'casca', 'cool'], title: 'Numere până la 1.000.000', desc: 'Cifre, clase, comparare, rotunjire.', types: ['numere1m'] },
+  { id: 'g4-calc', area: '4', npc: 'Ciobanul Socoteală', look: ['#e0b48a', '#f1e6d0', '#7a5a3b', 'palarie', 'zambet'], title: 'Adunări și scăderi uriașe', desc: 'Până la 1.000.000.', types: ['calc1m'] },
+  { id: 'g4-inm', area: '4', npc: 'Vulturul Produs', look: ['#7a5a3b', '#2b2f38', '#f2b632', 'nimic', 'cool'], title: 'Înmulțirea cu 2 cifre', desc: 'Desfaci și înmulțești pe bucăți.', types: ['inm2c'], lesson: 'inm' },
+  { id: 'g4-imp', area: '4', npc: 'Pădurarul Cât', look: ['#c98e5f', '#2fae5f', '#3b3b3b', 'palarie', 'zambet'], title: 'Împărțirea mare', desc: 'Împărțire la o cifră, cu și fără rest.', types: ['imp1c'], lesson: 'rest' },
+  { id: 'g4-fractii', area: '4', npc: 'Bucătăreasa Felia', look: ['#f3c9a0', '#ffffff', '#ff8ac0', 'bucatar', 'fericit'], title: 'Fracții', desc: 'Fracție dintr-un număr, comparare, fracții egale.', types: ['fractiiIV'], lesson: 'fractii' },
+  { id: 'g4-masuri', area: '4', npc: 'Negustorul de Munte', look: ['#c98e5f', '#e07a2f', '#3b3b3b', 'palarie', 'zambet'], title: 'Măsuri mari', desc: 'km, mm, tone, hectolitri, secole.', types: ['masuriIV'] },
+  { id: 'g4-corpuri', area: '4', npc: 'Arhitecta Cub', look: ['#f3c9a0', '#42c0d8', '#2b2f38', 'casca', 'cool'], title: 'Corpuri geometrice', desc: 'Cub, cuboid, sferă, cilindru, con.', types: ['corpuri'] },
+  { id: 'g4-ipoteza', area: '4', npc: 'Fermierul Iepurilă', look: ['#e0b48a', '#7a5a3b', '#2b3a55', 'palarie', 'surprins'], title: 'Găini și iepuri', desc: 'Metoda falsei ipoteze.', types: ['ipoteza', 'sumadif'] },
+  { id: 'g4-verb', area: '4', npc: 'Cronicarul Timp', look: ['#f3c9a0', '#8a5cf6', '#2b2f38', 'vrajitor', 'cool'], title: 'Verbul și timpul', desc: 'Prezent, trecut, viitor.', types: ['verbTimp'] },
+  { id: 'g4-pronume', area: '4', npc: 'Ecoul Munților', look: ['#e0b48a', '#9aa4b2', '#2b2f38', 'nimic', 'surprins'], title: 'Pronumele și numeralul', desc: 'Persoana I, a II-a, a III-a; câți? al câtelea?', types: ['pronume', 'numeral'] },
+  { id: 'g4-adjectiv', area: '4', npc: 'Pictorul Acord', look: ['#f3c9a0', '#ffb020', '#2b3a55', 'palarie', 'fericit'], title: 'Acordul adjectivului', desc: 'Florile sunt frumoase, nu frumoasă.', types: ['acordAdj'] },
+  { id: 'g4-cuvinte', area: '4', npc: 'Bibliotecarul Sens', look: ['#c98e5f', '#2fae5f', '#2b2f38', 'ochelari', 'zambet'], title: 'Omonime și tipuri de text', desc: 'Cuvinte cu două înțelesuri; narativ, descriptiv.', types: ['omonime', 'textTip', 'sinonime'] },
+
   { id: 'g1-compara', area: '1', npc: 'Ana', look: ['#f3c9a0', '#ff6b8a', '#3b4a7a', 'fundita', 'zambet'], title: 'Mai mare sau mai mic?', desc: 'Compari numere și găsești vecinii.', types: ['compara', 'vecini'] },
   { id: 'g1-adun', area: '1', npc: 'Bobo', look: ['#c98e5f', '#ffb020', '#2b3a55', 'sapca', 'zambet'], title: 'Adunări până la 20', desc: 'Aduni rapid, cu trucul „până la 10”.', types: ['adun20'], lesson: 'adun20' },
   { id: 'g1-scad', area: '1', npc: 'Mira', look: ['#f3c9a0', '#42c0d8', '#5a3b7a', 'nimic', 'zambet'], title: 'Scăderi până la 20', desc: 'Scazi și verifici cu adunarea.', types: ['scad20'] },
@@ -71,10 +96,13 @@ export const TYPE_NAMES = {
   fractii: 'Fracții', partivorbire: 'Părți de vorbire',
   numere10k: 'Numere până la 10.000', rotunjire: 'Rotunjiri', adun10k: 'Calcule până la 10.000', inm: 'Înmulțirea mare', impRest: 'Împărțirea cu rest',
   sumadif: 'Suma și diferența', sumacat: '„de atâtea ori mai mult”', masuri3: 'Unități de măsură', perimetru: 'Perimetrul', romane: 'Cifre romane',
-  sinonime: 'Sinonime și antonime', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
+  sinonime: 'Sinonime și antonime',
+  numarare: 'Numărare', vecini31: 'Vecinii numerelor (0–31)', compara10: 'Mai mare / mai mic', adun10: 'Adunări până la 10', scad10: 'Scăderi până la 10', forme: 'Forme geometrice', sunetInitial: 'Primul sunet', rima: 'Rime',
+  numere1m: 'Numere până la 1.000.000', calc1m: 'Calcule până la 1.000.000', inm2c: 'Înmulțirea cu 2 cifre', imp1c: 'Împărțirea la o cifră', fractiiIV: 'Fracții (clasa a IV-a)', masuriIV: 'Măsuri mari', corpuri: 'Corpuri geometrice', ipoteza: 'Metoda falsei ipoteze',
+  verbTimp: 'Timpul verbului', pronume: 'Pronumele personal', numeral: 'Numeralul', acordAdj: 'Acordul adjectivului', omonime: 'Omonime', textTip: 'Tipuri de text', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
 };
 
-export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire', 'sinonime', 'substantiv', 'propozitie']);
+export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire', 'sinonime', 'substantiv', 'propozitie', 'sunetInitial', 'rima', 'verbTimp', 'pronume', 'numeral', 'acordAdj', 'omonime', 'textTip']);
 /** Tipurile de exerciții pentru o clasă și o materie: 'mate', 'romana', 'mix' sau 'test'. */
 export function typesFor(grade, subject = 'mix') {
   if (subject === 'test') return TEST_ITEMS.map((i) => i.type);

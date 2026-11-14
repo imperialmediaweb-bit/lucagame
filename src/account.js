@@ -1,5 +1,5 @@
 // Profilul copilului: username + PIN, progres salvat pe server, cod de recuperare pentru părinte.
-import { S, save, loadState, setOnSave, level } from './state.js';
+import { S, save, loadState, setOnSave, level, G, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, refreshHud } from './ui.js';
 import { TYPE_NAMES, MISSIONS } from './content/missions.js';
@@ -10,7 +10,7 @@ const TK = 'luca-token';
 let token = null; try { token = localStorage.getItem(TK); } catch { /* fără salvare */ }
 export const ACC = { user: null };
 export const loggedIn = () => !!ACC.user;
-const GRADES = { 1: 'Clasa I', 2: 'Clasa a II-a', 3: 'Clasa a III-a' };
+const GRADES = { 0: 'Pregătitoare', 1: 'Clasa I', 2: 'Clasa a II-a', 3: 'Clasa a III-a', 4: 'Clasa a IV-a' };
 
 async function api(path, method = 'GET', body) {
   const r = await fetch('/api/' + path, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined, keepalive: method === 'PUT' });
@@ -30,7 +30,7 @@ addEventListener('pagehide', () => { if (dirty) push(); });
 
 function enter(j, hooks) {
   ACC.user = j.profile.username;
-  loadState({ ...j.state, name: j.profile.username, grade: j.state.grade || j.profile.grade });
+  loadState({ ...j.state, name: j.profile.username, grade: j.state.grade ?? j.profile.grade });
   S.name = j.profile.username; save();
   refreshHud(); hooks.reload();
 }
@@ -67,7 +67,7 @@ function welcome(hooks, invite) {
 }
 
 function register(hooks, invite) {
-  let grade = S.grade || 3;
+  let grade = G();
   const draw = () => {
     showPanel(`<div class="eyebrow">Profil nou</div><h2>Cum vrei să te cheme în joc?</h2>
       <p>Alege o poreclă (username), de exemplu <b>LucaNinja</b>. Fără numele de familie! 3–16 litere sau cifre, fără spații.</p>
@@ -138,13 +138,16 @@ function guest(hooks, invite) {
   showPanel(`<div class="eyebrow">Joc fără profil</div><h2>Cum te cheamă?</h2>
     <p>Fără profil, progresul rămâne doar pe acest dispozitiv. Îți poți face profil oricând din meniu.</p>
     ${input('gN', 'Prenume sau poreclă', `maxlength="14" value="${esc(S.name)}"`)}
+    <b>Clasa</b><div class="tabs" id="gG">${Object.entries(GRADES).map(([k, v]) => `<button class="tab ${+k === G() ? 'on' : ''}" type="button" data-g="${k}">${v}</button>`).join('')}</div>
     <div class="row"><button class="btn light" type="button" id="gBack">Înapoi</button><button class="btn" type="button" id="gGo">Joacă</button></div>`);
   lock();
+  let gg = G();
+  $('gG').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => { gg = +b.dataset.g; $('gG').querySelectorAll('[data-g]').forEach((x) => x.classList.toggle('on', x === b)); });
   $('gBack').onclick = () => welcome(hooks, invite);
   $('gGo').onclick = () => {
     const n = $('gN').value.replace(/[^\p{L}\p{N} -]/gu, '').trim().slice(0, 14);
     if (!n) { toast('Scrie-ți prenumele.'); return; }
-    S.name = n; if (!S.grade) S.grade = 3; save(); unlock(); hooks.ready(invite);
+    S.name = n; S.grade = gg; save(); hooks.reload(); unlock(); hooks.ready(invite);
   };
 }
 
@@ -152,7 +155,7 @@ function guest(hooks, invite) {
 export function profileMenu(hooks) {
   if (!ACC.user) { welcome(hooks, null); return; }
   showPanel(`<div class="eyebrow">Profilul meu</div><h2>${esc(ACC.user)}</h2>
-    <p>Nivel <b>${level()}</b> · ${S.coins} monede · ${GRADES[S.grade || 3]}. Progresul se salvează automat pe server.</p>
+    <p>Nivel <b>${level()}</b> · ${S.coins} monede · ${GRADES[G()]}. Progresul se salvează automat pe server.</p>
     <div class="row"><button class="btn light" type="button" id="pOut">Ieși din profil</button><button class="btn" type="button" data-close>Închide</button></div>`);
   $('pOut').onclick = () => { if (dirty) push(); setToken(null); ACC.user = null; location.href = location.pathname; };
 }

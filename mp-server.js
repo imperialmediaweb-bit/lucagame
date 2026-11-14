@@ -127,7 +127,7 @@ export function attachMultiplayer(server) {
       if (m.t === 'create' || m.t === 'join') {
         if (room) return;
         if (m.t === 'create') {
-          const c = code(); room = { code: c, grade: [1, 2, 3].includes(+m.grade) ? +m.grade : 3, subject: ['mate', 'romana', 'mix', 'test'].includes(m.subject) ? m.subject : 'mix', players: new Map(), game: null };
+          const c = code(); room = { code: c, grade: [0, 1, 2, 3, 4].includes(+m.grade) ? +m.grade : 3, subject: ['mate', 'romana', 'mix', 'test'].includes(m.subject) ? m.subject : 'mix', players: new Map(), game: null };
           rooms.set(c, room);
         } else {
           room = rooms.get(String(m.code || '').toUpperCase());
@@ -147,7 +147,7 @@ export function attachMultiplayer(server) {
       } else if (m.t === 'look') { me.look = cleanLook(m.look); bcast(room, { t: 'look', id: me.id, look: me.look }); }
       else if (m.t === 'emote') { const k = EMOTES[m.k | 0]; if (k) bcast(room, { t: 'emote', id: me.id, text: k }); }
       else if (m.t === 'settings' && me.host && !room.game) {
-        if ([1, 2, 3].includes(+m.grade)) room.grade = +m.grade;
+        if ([0, 1, 2, 3, 4].includes(+m.grade)) room.grade = +m.grade;
         if (['mate', 'romana', 'mix', 'test'].includes(m.subject)) room.subject = m.subject;
         bcast(room, { t: 'room', room: roomState(room) });
       } else if (m.t === 'start' && me.host && !room.game && ['duel', 'team'].includes(m.mode)) startGame(room, m.mode);

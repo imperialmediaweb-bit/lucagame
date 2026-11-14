@@ -1,5 +1,5 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
-import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES } from './state.js';
+import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES, G } from './state.js';
 import { SFX } from './audio.js';
 import { GEN, MISSIONS, AREAS, TEST_ITEMS, TYPE_NAMES, missionById, areaById, typeArea } from './content/missions.js';
 import { LESSONS } from './content/lessons.js';
@@ -67,7 +67,7 @@ export function openMenu() {
       <button class="item" type="button" id="mPr"><b>Profilul meu</b><span>${esc(S.name || 'fără profil')}</span></button>
       <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
-      <button class="item" type="button" id="mG"><b>Clasa mea</b><span>${['', 'I', 'a II-a', 'a III-a'][S.grade || 3]}</span></button>
+      <button class="item" type="button" id="mG"><b>Clasa mea</b><span>${GRADE_NAMES[G()]}</span></button>
       <button class="item" type="button" id="mV"><b>Viteza camerei</b><span>${{ incet: 'încet', mediu: 'mediu', rapid: 'rapid' }[S.camSpeed || 'incet']}</span></button>
       <button class="item" type="button" id="mH"><b>Cum se joacă</b><span>ajutor</span></button>
     </div><div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
@@ -76,7 +76,7 @@ export function openMenu() {
   $('mC').onclick = () => H.multiplayer();
   $('mA').onclick = () => openAtelier();
   $('mPr').onclick = () => window.__profile && window.__profile();
-  $('mG').onclick = () => { toast(`Ești în ${GRADE_NAMES[S.grade || 3]}. Când termini toată lumea clasei tale, se deschide clasa următoare.`); };
+  $('mG').onclick = () => { toast(`Ești în ${GRADE_NAMES[G()]}. Când termini toată lumea clasei tale, se deschide clasa următoare.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
 
@@ -129,7 +129,7 @@ export function showLesson(key, title, after) {
 let Q = null, combo = 0, goalShown = false;
 const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t) }, GEN[t](), extra);
 export function startMission(m) {
-  if (areaLocked(m.area)) { toast(`Misiunea e pentru ${areaById(m.area).short}. Tu ești în ${GRADE_NAMES[S.grade || 3]}.`); return; }
+  if (areaLocked(m.area)) { toast(`Misiunea e pentru ${areaById(m.area).short}. Tu ești în ${GRADE_NAMES[G()]}.`); return; }
   if (m.atelier) { openAtelier(); return; }
   if (m.test) {
     const qs = TEST_ITEMS.map((it) => mk(it.type, { pts: it.pts, label: it.label }));
@@ -143,7 +143,7 @@ export function startMission(m) {
 }
 export function openDaily() {
   const due = shuffle(dueTypes()).slice(0, 4), qs = due.map((t) => mk(t));
-  const byArea = { 1: { 1: 1, 2: 0, 3: 0, T: 0 }, 2: { 1: 0, 2: 1, 3: 0, T: 0 }, 3: { 1: 0, 2: 0, 3: 1, T: 0 } }[S.grade || 3];
+  const byArea = new Proxy({}, { get: (_, k) => (String(k) === String(G()) ? 1 : 0) });
   while (qs.length < 10) {
     const ms = MISSIONS.filter((m) => m.types); const w = ms.map((m) => byArea[m.area]);
     let r = Math.random() * w.reduce((a, b) => a + b, 0), mm = ms[0];
@@ -202,6 +202,14 @@ function answer(k) {
   $('fbBox').scrollIntoView({ block: 'nearest' });
 }
 
+function checkUnlock() {
+  const g = G(); if (g >= 4) return;
+  const mine = MISSIONS.filter((m) => (m.area === String(g) && m.types) || (g === 3 && m.test));
+  S.unlocked = S.unlocked || {};
+  if (S.unlocked[g + 1] || !mine.every((m) => ((S.missions[m.id] || {}).stars || 0) > 0)) return;
+  S.unlocked[g + 1] = true; save(); H.missionsChanged && H.missionsChanged(); SFX.fanfare(); confetti();
+  setTimeout(() => toast(`Ai terminat lumea clasei tale! S-a deschis portalul spre ${GRADE_NAMES[g + 1]}.`), 600);
+}
 function finish() {
   const n = Q.qs.length;
   let html;
@@ -230,6 +238,7 @@ function finish() {
   if (weak) $('toAt').onclick = () => openAtelier(weak);
   const m = Q.m;
   $('again').onclick = () => (Q.mode === 'daily' ? openDaily() : startMission(m));
+  checkUnlock();
   $('back').onclick = () => { $('quiz').hidden = true; Q = null; checkGoal(); };
   void again;
 }
@@ -251,7 +260,7 @@ function checkGoal() {
 /* ---------- jurnalul de misiuni ---------- */
 let journalTab = null;
 export function openJournal(tab) {
-  if (tab) journalTab = tab; if (!journalTab) journalTab = String(S.grade || 3);
+  if (tab) journalTab = tab; if (!journalTab) journalTab = String(G());
   const a = areaById(journalTab), list = MISSIONS.filter((m) => m.area === journalTab);
   const got = list.reduce((s, m) => s + ((S.missions[m.id] || {}).stars || 0), 0);
   showPanel(`<div class="eyebrow">Jurnalul de misiuni · ${starsTotal()} stele în total</div><h2>Misiuni</h2>
@@ -264,7 +273,7 @@ export function openJournal(tab) {
   $('panelCard').querySelectorAll('[data-play]').forEach((b) => b.onclick = () => { hidePanel(); startMission(missionById(b.dataset.play)); });
 }
 export function nextMission() {
-  const g = String(S.grade || 3), mine = MISSIONS.filter((m) => m.area === g || (g === '3' && m.area === 'T'));
+  const g = String(G()), mine = MISSIONS.filter((m) => m.area === g || (g === '3' && m.area === 'T'));
   return mine.find((m) => m.types && !((S.missions[m.id] || {}).stars)) || mine.find((m) => (m.types || m.test) && ((S.missions[m.id] || {}).stars || 0) < 3) || null;
 }
 

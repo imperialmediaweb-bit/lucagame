@@ -7,22 +7,33 @@ const DEFAULTS = {
   stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
   testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: '', atelier: {}
 };
-DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {};
+DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {}; DEFAULTS.grade = null; DEFAULTS.gv = 2; DEFAULTS.unlocked = {};
+const migrate = (o) => { if (o.gv !== 2) { if (o.grade === 0) o.grade = null; o.gv = 2; } return o; };
 export const S = JSON.parse(JSON.stringify(DEFAULTS));
-try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, s); } catch (e) { /* fără salvare */ }
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, migrate(s)); } catch (e) { /* fără salvare */ }
 let onSave = null;
 export const setOnSave = (f) => { onSave = f; };
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } if (onSave) onSave(); }
 /** Înlocuiește progresul cu cel din profil (păstrând valorile implicite pentru câmpuri noi). */
 export function loadState(st) {
   for (const k of Object.keys(S)) delete S[k];
-  Object.assign(S, JSON.parse(JSON.stringify(DEFAULTS)), st || {});
+  Object.assign(S, JSON.parse(JSON.stringify(DEFAULTS)), migrate({ ...(st || {}) }));
   if (S.today.day !== DAY()) S.today = { day: DAY(), sec: 0 };
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ }
 }
 /** Clasele mai mici decât clasa copilului sunt închise (nu se mai strâng monede ușoare). Arena e pentru clasa a III-a. */
-export const areaLocked = (areaId) => { const g = S.grade || 3; return areaId === 'T' ? g < 3 : +areaId < g; };
-export const GRADE_NAMES = ['', 'clasa I', 'clasa a II-a', 'clasa a III-a'];
+/** Clasa copilului: 0 = pregătitoare … 4 = clasa a IV-a (implicit a III-a). */
+export const G = () => (S.grade === null || S.grade === undefined ? 3 : S.grade);
+export const GRADE_NAMES = ['clasa pregătitoare', 'clasa I', 'clasa a II-a', 'clasa a III-a', 'clasa a IV-a'];
+/** Clasele mai mici sunt închise. Clasa următoare se deschide după ce termini lumea clasei tale. Arena e pentru clasa a III-a. */
+export const areaLocked = (areaId) => {
+  const g = G();
+  if (areaId === 'T') return g !== 3;
+  const n = +areaId;
+  if (n < g) return true;
+  if (n > g) return !(S.unlocked || {})[n];
+  return false;
+};
 export const level = () => Math.floor(Math.sqrt((S.xp || 0) / 40)) + 1;
 export const xpFor = (l) => 40 * (l - 1) * (l - 1);
 export const DAY = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);

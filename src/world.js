@@ -43,19 +43,21 @@ export function buildWorld(scene, shadow) {
     const [ax, az] = a.pos, dx = Math.sign(ax), dz = Math.sign(az);
     // pod
     const len = 16, mid = 20 + len / 2 - 0.5;
-    if (dx) { plat(dx * mid, 0, 0, len + 1, 4.4, '#b07a45', 0.5); [-2.4, 2.4].forEach((o) => box(dx * mid, 0.45, o, len + 1, 0.9, 0.25, '#8a5a2b')); }
+    if (a.portalOnly) { /* insulă la care se ajunge doar prin portal */ }
+    else if (dx) { plat(dx * mid, 0, 0, len + 1, 4.4, '#b07a45', 0.5); [-2.4, 2.4].forEach((o) => box(dx * mid, 0.45, o, len + 1, 0.9, 0.25, '#8a5a2b')); }
     else { plat(0, 0, dz * mid, 4.4, len + 1, '#b07a45', 0.5); [-2.4, 2.4].forEach((o) => box(o, 0.45, dz * mid, 0.25, 0.9, len + 1, '#8a5a2b')); }
     // insula zonei
     plat(ax, 0, az, 36, 36, a.ground, 3);
     plat(ax, -0.3, az, 39, 39, '#f1dca0', 3);
     // portal în piață
-    const px = dx * 9, pz = dz * 9;
+    const px = a.portalOnly ? dx * 4.6 : dx * 9, pz = a.portalOnly ? dz * 4.6 : dz * 9;
     const pad = MeshBuilder.CreateCylinder('pad' + a.id, { height: 0.25, diameter: 3.2, tessellation: 32 }, scene);
     pad.position.set(px, 0.13, pz); pad.material = mat(scene, a.color, 0.2);
     const ring = MeshBuilder.CreateTorus('ring' + a.id, { diameter: 3.2, thickness: 0.2, tessellation: 40 }, scene);
     ring.position.set(px, 1.6, pz); ring.material = mat(scene, a.color, 0.35);
     const lb = makeLabel(scene, a.short, a.name, a.color, 3.4); lb.position.set(px, 3.6, pz);
     pads.push({ area: a, x: px, z: pz, ring });
+    if (a.portalOnly) return;
     // indicator la capătul podului
     const sign = makeLabel(scene, a.short, 'pe aici →', a.color, 2.6); sign.position.set(dx * 19, 2.6, dz * 19);
     // barieră pe pod, pentru clasele închise
@@ -167,6 +169,21 @@ export function buildWorld(scene, shadow) {
       obby('3', ax - 10, az - 10, '#8a5cf6', 10);
       tramp(ax + 8, az + 10);
     }
+    if (a.id === '0') {
+      // grădina: flori, cuburi colorate de joacă, copaci cu flori
+      for (let i = 0; i < 50; i++) { const x = ax + (Math.random() - 0.5) * 32, z = az + (Math.random() - 0.5) * 32; if (Math.hypot(x - ax, z - az) < 9) continue; box(x, 0.2, z, 0.3, 0.4, 0.3, ['#ff6b8a', '#ffd04f', '#ffffff', '#b07ae0', '#42c0d8'][i % 5], { collide: false }); }
+      [[-14, -14], [14, -14], [-14, 14], [14, 14], [0, -15], [-15, 0]].forEach(([ox, oz]) => tree(ax + ox, az + oz, 0, 2));
+      [[8, 13], [11, 10], [13, 7]].forEach(([ox, oz], i) => box(ax + ox, 0.5 + i * 0.4, az + oz, 2, 1 + i * 0.8, 2, ['#ff6b6b', '#ffd04f', '#5bc0eb'][i], { cast: true }));
+      tramp(ax - 9, az + 13);
+    }
+    if (a.id === '4') {
+      // munți cu zăpadă pe margini, brazi
+      [[-15, -15, 6], [15, -15, 8], [-15, 15, 5], [0, -16, 7], [-16, 0, 6], [16, 2, 5]].forEach(([ox, oz, h]) => {
+        box(ax + ox, h / 2, az + oz, 6, h, 6, '#8d97a3', { cast: true }); box(ax + ox, h + 0.6, az + oz, 3.6, 1.2, 3.6, '#ffffff', { cast: true });
+      });
+      for (let i = 0; i < 14; i++) { const x = ax + (Math.random() - 0.5) * 30, z = az + (Math.random() - 0.5) * 30; if (Math.hypot(x - ax, z - az) < 11) continue; tree(x, z, 0, 1); }
+      obby('4', ax + 11, az + 11, '#42c0d8', 10);
+    }
     if (a.id === 'T') {
       // tribune în jurul arenei
       for (let r = 0; r < 3; r++) for (let i = 0; i < 16; i++) {
@@ -186,7 +203,7 @@ export function buildWorld(scene, shadow) {
     const list = MISSIONS.filter((m) => m.area === a.id);
     const [ax, az] = a.pos;
     // locuri pentru personaje: un cerc interior (8) și unul exterior, ocolind traseul, trambulina și intrarea
-    const avoid = { '1': [[11, -11], [6, 14]], '2': [[11, 11], [-8, 14]], '3': [[-10, -10], [8, 10]], T: [] }[a.id];
+    const avoid = { '0': [], '4': [], '1': [[11, -11], [6, 14]], '2': [[11, 11], [-8, 14]], '3': [[-10, -10], [8, 10]], T: [] }[a.id] || [];
     const gate = Math.atan2(-Math.sign(az), -Math.sign(ax));
     const spots = [], ring = list.filter((m) => !m.boss), inner = Math.min(8, ring.length), outer = ring.length - inner;
     for (let k = 0; k < inner; k++) { const ang = gate + Math.PI / inner + (k / inner) * Math.PI * 2; spots.push([Math.cos(ang) * 7, Math.sin(ang) * 7]); }

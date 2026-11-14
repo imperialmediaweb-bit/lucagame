@@ -1,5 +1,5 @@
 // Ecranele pentru start și pentru jocul cu colegii: alegerea clasei, camera cu link, Duel, Echipă contra Boss-ului.
-import { S, save } from './state.js';
+import { S, save, G } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, confetti, refreshHud } from './ui.js';
 import { NET, createRoom, joinRoom, leave, amHost, inviteLink, sendSettings, startGame, stopGame, sendEmote, sendAnswer, setName, EMOTES, esc } from './net.js';
@@ -9,14 +9,14 @@ import { apiCall, loggedIn } from './account.js';
 
 
 const $ = (id) => document.getElementById(id);
-const GRADES = { 1: 'Clasa I', 2: 'Clasa a II-a', 3: 'Clasa a III-a' };
+const GRADES = { 0: 'Pregătitoare', 1: 'Clasa I', 2: 'Clasa a II-a', 3: 'Clasa a III-a', 4: 'Clasa a IV-a' };
 const SUBJECTS = { mix: 'Amestecat', mate: 'Matematică', romana: 'Română', test: 'Ca la test' };
 const pills = (obj, cur, attr) => Object.entries(obj).map(([k, v]) => `<button class="tab ${String(k) === String(cur) ? 'on' : ''}" type="button" ${attr}="${k}">${v}</button>`).join('');
 
 /* ---------- ecranul de start ---------- */
 export function showStart(onSolo) {
   const invite = new URLSearchParams(location.search).get('camera');
-  let grade = S.grade || 3;
+  let grade = G();
   const draw = () => {
     showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație' : 'Bun venit!'}</div><h2>Insula lui Luca</h2>
       ${invite ? `<p>Un coleg te-a chemat să jucați împreună în camera <b>${esc(invite.toUpperCase())}</b>.</p>` : ''}
@@ -38,11 +38,11 @@ const unlock = () => { delete $('panel').dataset.lock; $('panel').hidden = true;
 
 /* ---------- creare cameră ---------- */
 export function openCreate() {
-  let grade = S.grade || 3, subject = 'mix';
+  let grade = G(), subject = 'mix';
   const draw = () => {
     showPanel(`<div class="eyebrow">Joacă cu colegii</div><h2>Fă o cameră de joc</h2>
       <p>Alegi clasa și materia, apoi trimiți linkul colegilor. Ei intră doar cu prenumele, fără cont.</p>
-      <b>Clasa</b><div class="tabs" id="cGrade">${pills({ [S.grade || 3]: GRADES[S.grade || 3] }, grade, 'data-g')}</div>
+      <b>Clasa</b><div class="tabs" id="cGrade">${pills({ [G()]: GRADES[G()] }, grade, 'data-g')}</div>
       <b>Ce exersăm?</b><div class="tabs" id="cSub">${pills(grade === 3 ? SUBJECTS : { mix: 'Amestecat', mate: 'Matematică', romana: 'Română' }, subject, 'data-s')}</div>
       <div class="row"><button class="btn light" type="button" data-close>Înapoi</button><button class="btn" type="button" id="cGo">Fă camera</button></div>`);
     $('cGrade').querySelectorAll('[data-g]').forEach((b) => b.onclick = () => { grade = +b.dataset.g; if (grade !== 3 && subject === 'test') subject = 'mix'; draw(); });

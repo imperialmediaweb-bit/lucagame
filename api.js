@@ -51,7 +51,7 @@ export async function handleApi(req, res, urlPath) {
       if (limited('reg|' + ip)) return err(res, 429, 'Prea multe încercări. Mai încearcă peste câteva minute.');
       fail('reg|' + ip);
       if (await D.getProfile(u)) return err(res, 409, 'Username-ul e deja luat. Alege altul.');
-      const rec = recCode(), grade = [1, 2, 3].includes(+b.grade) ? +b.grade : 3;
+      const rec = recCode(), grade = [0, 1, 2, 3, 4].includes(+b.grade) ? +b.grade : 3;
       const state = b.state && typeof b.state === 'object' ? b.state : {};
       try { await D.createProfile({ username: u, display, pin_hash: hashSecret(String(b.pin)), rec_hash: hashSecret(rec.replace('-', '')), grade, state, points: pointsOf(state) }); }
       catch (e) { if (e.code === '23505') return err(res, 409, 'Username-ul e deja luat. Alege altul.'); throw e; }
@@ -71,7 +71,7 @@ export async function handleApi(req, res, urlPath) {
     if (urlPath === '/api/state' && req.method === 'PUT') {
       const u = await auth(D, req); if (!u) return err(res, 401, 'Nu ești conectat.');
       const b = await readBody(req); if (!b.state || typeof b.state !== 'object') return err(res, 400, 'Date lipsă.');
-      const grade = [1, 2, 3].includes(+b.state.grade) ? +b.state.grade : undefined;
+      const grade = [0, 1, 2, 3, 4].includes(+b.state.grade) ? +b.state.grade : undefined;
       await D.updateProfile(u, { state: b.state, points: pointsOf(b.state), ...(grade ? { grade } : {}) });
       return json(res, 200, { ok: true });
     }
@@ -101,7 +101,7 @@ export async function handleApi(req, res, urlPath) {
       return json(res, 200, { ok: true, rank: await D.rankOf(board, p.grade, u) });
     }
     if (urlPath === '/api/top' && req.method === 'GET') {
-      const q = new URL(req.url, 'http://x').searchParams, board = q.get('board') || 'general', grade = [1, 2, 3].includes(+q.get('grade')) ? +q.get('grade') : 3;
+      const q = new URL(req.url, 'http://x').searchParams, board = q.get('board') || 'general', grade = [0, 1, 2, 3, 4].includes(+q.get('grade')) ? +q.get('grade') : 3;
       if (!BOARDS.test(board)) return err(res, 400, 'Clasament necunoscut.');
       const u = await auth(D, req);
       const top = (await D.top(board, grade, 20)).map((r, i) => ({ rank: i + 1, username: r.display, score: r.score, ms: r.ms }));
