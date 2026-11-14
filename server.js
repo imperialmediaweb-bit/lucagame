@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { attachMultiplayer } from './mp-server.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(here, process.env.STATIC_DIR || 'dist');
@@ -15,7 +16,7 @@ const TYPES = {
 const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg']);
 const cache = new Map();
 
-http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   let p = decodeURIComponent((req.url || '/').split('?')[0]);
   if (p === '/health') { res.writeHead(200); return res.end('ok'); }
   if (p.endsWith('/')) p += 'index.html';
@@ -39,4 +40,6 @@ http.createServer((req, res) => {
     res.writeHead(200, headers);
     res.end(data);
   });
-}).listen(process.env.PORT || 3000, () => console.log('Insula lui Luca pornită pe portul', process.env.PORT || 3000));
+});
+attachMultiplayer(server);
+server.listen(process.env.PORT || 3000, () => console.log('Insula lui Luca pornită pe portul', process.env.PORT || 3000));

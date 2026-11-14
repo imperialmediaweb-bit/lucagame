@@ -16,6 +16,8 @@ import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
+import { initNet, tick as netTick, sendLook, NET } from './net.js';
+import { showStart, openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } from './mpui.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -130,8 +132,11 @@ function missionsChanged() {
 }
 missionsChanged();
 
-initUI({ setLook: (l) => me.setLook(l), goTo, stop, missionsChanged, cheer: () => { cheerT = 1.4; } });
-if (!S.tutorial) showTutorial(touch);
+const multiplayer = () => (NET.room ? openLobby() : openCreate());
+initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
+initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } });
+$('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
+showStart(() => { if (!S.tutorial) showTutorial(touch); });
 
 /* ---------- bucla ---------- */
 let t = 0, face = 0, hudT = 0;
@@ -201,6 +206,7 @@ scene.registerBeforeRender(() => {
   const act = $('act');
   if (!near || paused()) act.hidden = true;
   else { act.textContent = near.type === 'npc' ? `Vorbește cu ${near.n.m.npc}` : 'Deschide comoara'; act.hidden = false; }
+  netTick(dt, P, face, !P.ground && P.coyote <= 0 ? 2 : cheerT > 0 ? 3 : 0);
   updateQuest();
 });
 

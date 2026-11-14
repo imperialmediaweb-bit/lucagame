@@ -7,6 +7,7 @@ import { COLORS, SKINS, HATS, FACES } from './avatar.js';
 import { pick, shuffle } from './content/util.js';
 
 const $ = (id) => document.getElementById(id);
+const NM = () => S.name || 'campionule';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let H = {}; // legături către lumea 3D
 export function initUI(hooks) { H = hooks; bind(); refreshHud(); }
@@ -39,8 +40,9 @@ export function showPanel(html, onClose) {
 const hidePanel = () => { $('panel').hidden = true; };
 
 function bind() {
-  $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') hidePanel(); });
-  addEventListener('keydown', (e) => { if (e.code === 'Escape' && !$('panel').hidden) hidePanel(); });
+  $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel' && !$('panel').dataset.lock) hidePanel(); });
+  addEventListener('keydown', (e) => { if (e.code === 'Escape' && !$('panel').hidden && !$('panel').dataset.lock) hidePanel(); });
+  document.addEventListener('open-draft', () => openDraft()); document.addEventListener('close-draft', () => closeDraft());
   $('openDaily').onclick = () => { SFX.tap(); openDaily(); };
   $('openJournal').onclick = () => { SFX.tap(); openJournal(); };
   $('openShop').onclick = () => { SFX.tap(); openShop(); };
@@ -51,7 +53,7 @@ function bind() {
 }
 
 /* ---------- meniul de pe telefon ---------- */
-function openMenu() {
+export function openMenu() {
   const m = Math.min(20, Math.floor(S.today.sec / 60));
   showPanel(`<div class="eyebrow">Azi: ${m} din 20 de minute · Serie: ${S.streak} ${S.streak === 1 ? 'zi' : 'zile'}</div><h2>Meniu</h2>
     <div class="shopgrid">
@@ -59,10 +61,16 @@ function openMenu() {
       <button class="item" type="button" id="mS"><b>Garderoba</b><span>haine și pălării</span></button>
       <button class="item" type="button" id="mP"><b>Progres</b><span>pentru părinți</span></button>
       <button class="item" type="button" id="mM"><b>Sunet</b><span>${S.mute ? 'oprit' : 'pornit'}</span></button>
+      <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
+      <button class="item" type="button" id="mG"><b>Clasa mea</b><span>${['', 'I', 'a II-a', 'a III-a'][S.grade || 3]}</span></button>
+      <button class="item" type="button" id="mV"><b>Viteza camerei</b><span>${{ incet: 'încet', mediu: 'mediu', rapid: 'rapid' }[S.camSpeed || 'incet']}</span></button>
       <button class="item" type="button" id="mH"><b>Cum se joacă</b><span>ajutor</span></button>
     </div><div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
   $('mJ').onclick = () => openJournal(); $('mS').onclick = () => openShop(); $('mP').onclick = () => openProgress();
-  $('mM').onclick = () => { S.mute = !S.mute; save(); refreshHud(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
+  $('mM').onclick = () => { S.mute = !S.mute; save(); refreshHud(); openMenu(); };
+  $('mC').onclick = () => H.multiplayer();
+  $('mG').onclick = () => { S.grade = (S.grade || 3) % 3 + 1; save(); openMenu(); toast(`Misiunile și antrenamentul sunt acum pentru clasa ${['', 'I', 'a II-a', 'a III-a'][S.grade]}.`); };
+  $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
 
 /* ---------- tutorial ---------- */
@@ -83,8 +91,8 @@ export function talkTo(m) {
   SFX.talk();
   const a = areaById(m.area), st = (S.missions[m.id] || {}).stars || 0;
   const greet = m.test
-    ? `Bună, Luca! Eu sunt <b>${esc(m.npc)}</b>. Am pregătit testul tău de matematică: aceleași exerciții, dar cu alte numere. Primești notă de la 1 la 10. ${S.testBest ? `Cea mai bună notă a ta: <b>${fmtNota(S.testBest)}</b>.` : 'Ești gata?'}`
-    : st === 3 ? `Bravo, Luca! Ai 3 stele la mine. Mai joci o rundă pentru monede?` : `Salut, Luca! Eu sunt <b>${esc(m.npc)}</b>. ${esc(m.desc)} ${st ? 'Hai să luăm toate cele 3 stele!' : 'Ai 5 provocări. Răspunde bine și primești stele!'}`;
+    ? `Bună, ${esc(NM())}! Eu sunt <b>${esc(m.npc)}</b>. Am pregătit testul tău de matematică: aceleași exerciții, dar cu alte numere. Primești notă de la 1 la 10. ${S.testBest ? `Cea mai bună notă a ta: <b>${fmtNota(S.testBest)}</b>.` : 'Ești gata?'}`
+    : st === 3 ? `Bravo, ${esc(NM())}! Ai 3 stele la mine. Mai joci o rundă pentru monede?` : `Salut, ${esc(NM())}! Eu sunt <b>${esc(m.npc)}</b>. ${esc(m.desc)} ${st ? 'Hai să luăm toate cele 3 stele!' : 'Ai 5 provocări. Răspunde bine și primești stele!'}`;
   showPanel(`<div class="eyebrow">${esc(a.name)}</div>
     <div class="npc"><div class="av" style="background:${a.color}">${esc(m.npc[0])}</div><div class="bubble">${greet}</div></div>
     <h2>${esc(m.title)}</h2>${m.test ? '' : starsHtml(st)}
@@ -125,7 +133,7 @@ export function startMission(m) {
 }
 export function openDaily() {
   const due = shuffle(dueTypes()).slice(0, 4), qs = due.map((t) => mk(t));
-  const byArea = { 1: 1, 2: 1.5, 3: 3, T: 0 };
+  const byArea = { 1: { 1: 1, 2: 0, 3: 0, T: 0 }, 2: { 1: 1, 2: 3, 3: 0, T: 0 }, 3: { 1: 0.4, 2: 1, 3: 3, T: 0 } }[S.grade || 3];
   while (qs.length < 10) {
     const ms = MISSIONS.filter((m) => !m.test); const w = ms.map((m) => byArea[m.area]);
     let r = Math.random() * w.reduce((a, b) => a + b, 0), mm = ms[0];
@@ -191,14 +199,14 @@ function finish() {
     S.testBest = Math.max(S.testBest || 0, nota); S.missions[Q.m.id] = { stars: Math.max(prev.stars, stars) };
     if (nota >= 9) { SFX.fanfare(); confetti(); } save(); refreshHud(); H.missionsChanged && H.missionsChanged();
     const wrong = Q.qs.filter((_, i) => !Q.res[i]).map((q) => q.label + ' ' + (TYPE_NAMES[q.type] || '')).join(', ');
-    html = `<div class="eyebrow">Arena Testului</div><h2>${nota >= 9 ? 'Excepțional, Luca!' : nota >= 7 ? 'Foarte bine!' : nota >= 5 ? 'Ai trecut! Mai antrenează-te.' : 'Mai exersăm puțin.'}</h2>
+    html = `<div class="eyebrow">Arena Testului</div><h2>${nota >= 9 ? `Excepțional, ${esc(NM())}!` : nota >= 7 ? 'Foarte bine!' : nota >= 5 ? 'Ai trecut! Mai antrenează-te.' : 'Mai exersăm puțin.'}</h2>
       <div class="grade">${fmtNota(nota)}</div><p style="text-align:center">nota ta (1 punct din oficiu) · ${starsHtml(stars)}</p>
       ${wrong ? `<p>De lucrat: <b>${esc(wrong)}</b>. Aceste tipuri vor apărea mai des la antrenament și la misiunile din Castelul Clasei a III-a.</p>` : '<p>Toate exercițiile corecte! Ești pregătit pentru test.</p>'}`;
   } else if (Q.mode === 'mission') {
     const stars = Q.ok >= 5 ? 3 : Q.ok >= 4 ? 2 : Q.ok >= 3 ? 1 : 0, prev = (S.missions[Q.m.id] || {}).stars || 0;
     if (stars > prev) { S.missions[Q.m.id] = { stars }; SFX.star(); confetti(); H.missionsChanged && H.missionsChanged(); }
     save(); refreshHud();
-    html = `<div class="eyebrow">${esc(Q.m.title)}</div><h2>${stars === 3 ? 'Perfect, Luca!' : stars ? 'Bravo!' : 'Aproape!'}</h2>
+    html = `<div class="eyebrow">${esc(Q.m.title)}</div><h2>${stars === 3 ? `Perfect, ${esc(NM())}!` : stars ? 'Bravo!' : 'Aproape!'}</h2>
       <div class="big">${Q.ok} / ${n}</div><p style="text-align:center">${starsHtml(stars)}</p>
       <p>${stars > prev ? `Ai câștigat ${stars - prev} ${stars - prev === 1 ? 'stea nouă' : 'stele noi'}!` : stars < 3 ? '5 din 5 înseamnă 3 stele. Mai încerci?' : 'Ai deja toate stelele aici. Monedele sunt ale tale!'}</p>`;
   } else {
@@ -228,9 +236,9 @@ function checkGoal() {
 }
 
 /* ---------- jurnalul de misiuni ---------- */
-let journalTab = '3';
+let journalTab = null;
 export function openJournal(tab) {
-  if (tab) journalTab = tab;
+  if (tab) journalTab = tab; if (!journalTab) journalTab = String(S.grade || 3);
   const a = areaById(journalTab), list = MISSIONS.filter((m) => m.area === journalTab);
   const got = list.reduce((s, m) => s + ((S.missions[m.id] || {}).stars || 0), 0);
   showPanel(`<div class="eyebrow">Jurnalul de misiuni · ${starsTotal()} stele în total</div><h2>Misiuni</h2>
@@ -243,7 +251,8 @@ export function openJournal(tab) {
   $('panelCard').querySelectorAll('[data-play]').forEach((b) => b.onclick = () => { hidePanel(); startMission(missionById(b.dataset.play)); });
 }
 export function nextMission() {
-  return MISSIONS.find((m) => !m.test && !((S.missions[m.id] || {}).stars)) || MISSIONS.find((m) => ((S.missions[m.id] || {}).stars || 0) < 3) || null;
+  const g = String(S.grade || 3), mine = MISSIONS.filter((m) => m.area === g || (g === '3' && m.area === 'T'));
+  return mine.find((m) => !m.test && !((S.missions[m.id] || {}).stars)) || mine.find((m) => ((S.missions[m.id] || {}).stars || 0) < 3) || null;
 }
 
 /* ---------- garderoba ---------- */

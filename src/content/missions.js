@@ -56,3 +56,13 @@ export const TYPE_NAMES = {
   veverite: 'Veverițele (test 3)', abc: 'a + b + c (test 1 c)', piata1: 'Mere și pere (test 4)', bunica: 'Bunica la piață (test 5)', rest: 'Rest de bani',
   fractii: 'Fracții', partivorbire: 'Părți de vorbire'
 };
+
+export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire']);
+/** Tipurile de exerciții pentru o clasă și o materie: 'mate', 'romana', 'mix' sau 'test'. */
+export function typesFor(grade, subject = 'mix') {
+  if (subject === 'test') return TEST_ITEMS.map((i) => i.type);
+  const all = [...new Set(MISSIONS.filter((m) => m.area === String(grade) && m.types).flatMap((m) => m.types))];
+  if (subject === 'mate') return all.filter((t) => !ROMANA.has(t));
+  if (subject === 'romana') return all.filter((t) => ROMANA.has(t));
+  return all;
+}
