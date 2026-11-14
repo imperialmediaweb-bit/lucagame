@@ -38,6 +38,8 @@ export function leave(silent) {
 }
 export const sendSettings = (grade, subject) => sendMsg({ t: 'settings', grade, subject });
 export const startGame = (mode) => sendMsg({ t: 'start', mode });
+export const startClass = (sub, level) => sendMsg({ t: 'class', sub, level });
+export const classAnswer = (i, c) => sendMsg({ t: 'canswer', i, c });
 export const stopGame = () => sendMsg({ t: 'stop' });
 export const sendEmote = (k) => sendMsg({ t: 'emote', k });
 export const sendLook = () => sendMsg({ t: 'look', look: S.look });
@@ -57,7 +59,7 @@ export function tick(dt, P, face, anim) {
     const dx = o.tx - r.position.x, dz = o.tz - r.position.z, moving = Math.hypot(dx, dz) > 0.05;
     r.position.x += dx * k; r.position.y += (o.ty - r.position.y) * k; r.position.z += dz * k;
     let d = o.tf - r.rotation.y; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; r.rotation.y += d * k;
-    o.av.update(dt, { speed: moving ? 1 : 0, air: o.a === 2, dance: o.a === 3 });
+    o.av.update(dt, { speed: moving && o.a !== 4 ? 1 : 0, air: o.a === 2, dance: o.a === 3, sit: o.a === 4 });
     o.label.position.set(r.position.x, r.position.y + 3.4, r.position.z);
     if (o.bubble) { o.bubble.position.set(r.position.x, r.position.y + 4.3, r.position.z); o.bubbleT -= dt; if (o.bubbleT <= 0) { o.bubble.dispose(); o.bubble = null; } }
   }
@@ -95,6 +97,9 @@ function onMsg(m) {
     case 'answered': ui.mpAnswered(m); break;
     case 'reveal': if (NET.game) { NET.game.bossHp = m.bossHp; } ui.mpReveal(m); break;
     case 'end': NET.game = null; NET.q = null; ui.mpEnd(m); break;
+    case 'class': NET.game = { mode: 'class' }; ui.classStart(m); break;
+    case 'cprog': ui.classProgress(m); break;
+    case 'classEnd': NET.game = null; ui.classEnd(m); break;
     default: break;
   }
 }

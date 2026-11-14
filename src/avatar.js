@@ -85,7 +85,8 @@ export function createAvatar(scene, look, shadow, name = 'av') {
     const sp = st.speed || 0;
     phase += dt * (6 + 8 * sp) * (sp > 0.05 ? 1 : 0);
     let la = 0, ra = 0, ll = 0, lr = 0, bob = 0, rz = 0, lz = 0;
-    if (st.dance) {
+    if (st.sit) { ll = -1.45; lr = -1.45; la = -0.9; ra = -0.9; bob = -0.45; }
+    else if (st.dance) {
       la = -2.6 + Math.sin(t * 10) * 0.5; ra = -2.6 - Math.sin(t * 10) * 0.5; bob = Math.abs(Math.sin(t * 10)) * 0.15;
       body.rotation.y = Math.sin(t * 5) * 0.6;
     } else {

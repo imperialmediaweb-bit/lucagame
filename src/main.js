@@ -18,7 +18,7 @@ import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
-import { showStart, openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } from './mpui.js';
+import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks } from './mpui.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -74,7 +74,7 @@ function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
 
 /* ---------- control ---------- */
 const CAM_SPEED = { incet: 0.0025, mediu: 0.0045, rapid: 0.007 };
-let dragAcc = 0, yawS = yaw0;
+let dragAcc = 0, yawS = yaw0, face = 0;
 const keys = {}; let yaw = yaw0, pitch = 0.38, camDist = 10, jx = 0, jy = 0, stickId = null, camId = null, sx = 0, sy = 0, lx = 0, ly = 0;
 const touch = matchMedia('(pointer:coarse)').matches;
 if (touch) $('jump').hidden = false; else $('keys').hidden = false;
@@ -135,7 +135,16 @@ missionsChanged();
 
 const multiplayer = () => (NET.room ? openLobby() : openCreate());
 initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
-initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd } });
+initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd } });
+let seated = false;
+const CR = W.classroom;
+setClassHooks({
+  toSeat: (i) => { const st = CR.seats[i % CR.seats.length]; teleport(st.x, st.z, st.y); face = Math.PI; yaw = 0; seated = true; },
+  toPodium: (place) => { const p = CR.podium[place]; teleport(p.x, p.z, p.y + 0.05); face = 0; yaw = 0; seated = false; cheerT = 8; },
+  toFront: (idx) => { teleport(CR.x - 8 + (idx % 10) * 1.7, CR.z - 2.5); face = 0; yaw = 0; seated = false; cheerT = 3; },
+  backHub: () => { seated = false; teleport(W.spawn.x, W.spawn.z); yaw = yaw0; toast('Înapoi în piață!'); },
+  drawBoard: (t, lines) => CR.drawBoard(t, lines)
+});
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
   reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
@@ -145,7 +154,7 @@ window.__profile = () => profileMenu(hooks);
 startFlow(hooks);
 
 /* ---------- bucla ---------- */
-let t = 0, face = 0, hudT = 0;
+let t = 0, hudT = 0;
 const camPos = new Vector3(0, 8, 16);
 scene.registerBeforeRender(() => {
   const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
@@ -171,7 +180,8 @@ scene.registerBeforeRender(() => {
   if (moving) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
   cheerT = Math.max(0, cheerT - dt);
   me.root.position.set(P.x, P.y, P.z); me.root.rotation.y = face;
-  me.update(dt, { speed: moving ? Math.min(1, l) : 0, air: !P.ground && P.coyote <= 0, dance: cheerT > 0 && P.ground && !moving });
+  if (moving) seated = false;
+  me.update(dt, { speed: moving ? Math.min(1, l) : 0, air: !P.ground && P.coyote <= 0 && !seated, dance: cheerT > 0 && P.ground && !moving && !seated, sit: seated });
 
   const cd = camDist, tgt = new Vector3(P.x, P.y + 1.8, P.z);
   camPos.set(P.x + Math.sin(yawS) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yawS) * cd * Math.cos(pitch));
@@ -212,7 +222,7 @@ scene.registerBeforeRender(() => {
   const act = $('act');
   if (!near || paused()) act.hidden = true;
   else { act.textContent = near.type === 'npc' ? `Vorbește cu ${near.n.m.npc}` : 'Deschide comoara'; act.hidden = false; }
-  netTick(dt, P, face, !P.ground && P.coyote <= 0 ? 2 : cheerT > 0 ? 3 : 0);
+  netTick(dt, P, face, seated ? 4 : !P.ground && P.coyote <= 0 ? 2 : cheerT > 0 ? 3 : 0);
   updateQuest();
 });
 
@@ -221,7 +231,7 @@ let qm = null;
 $('qGo').onclick = () => { if (qm) goTo(qm); };
 function updateQuest() {
   const m = nextMission(), el = $('quest');
-  if (!m || paused()) { el.hidden = true; return; }
+  if (!m || paused() || P.x > 140) { el.hidden = true; return; }
   el.hidden = false;
   if (m !== qm) { qm = m; $('qTitle').textContent = m.title; }
   const n = W.npcs.find((x) => x.m.id === m.id), d = Math.round(Math.hypot(n.x - P.x, n.z - P.z));

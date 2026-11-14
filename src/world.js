@@ -210,8 +210,49 @@ export function buildWorld(scene, shadow) {
     });
   });
 
+  // ---------- sala de clasă (departe, pe o insulă separată; se ajunge prin teleport) ----------
+  const CX = 170, CZ = 0, classroom = { x: CX, z: CZ, seats: [], podium: [] };
+  plat(CX, 0, CZ, 28, 24, '#c8a27a', 1);
+  plat(CX, -0.4, CZ, 36, 32, '#7ccf6a', 1);
+  [[CX, CZ - 12, 28, 1], [CX, CZ + 12, 28, 1]].forEach(([x, z, w]) => box(x, 3, z, w, 6, 0.6, '#f3ead8', { cast: true }));
+  [[CX - 14, CZ], [CX + 14, CZ]].forEach(([x, z]) => box(x, 3, z, 0.6, 6, 24, '#f3ead8', { cast: true }));
+  for (let i = -1; i <= 1; i++) box(CX + 14.31, 3.3, CZ + i * 7, 0.05, 2.4, 3.6, '#9fd6f2', { collide: false });
+  // tabla
+  const boardTex = new DynamicTexture('board', { width: 1024, height: 512 }, scene, true);
+  const boardM = MeshBuilder.CreatePlane('boardP', { width: 12, height: 6 }, scene); boardM.position.set(CX, 3.4, CZ - 11.55);
+  boardM.rotation.y = Math.PI; const bm = new StandardMaterial('boardm', scene); bm.emissiveTexture = boardTex; bm.disableLighting = true; boardM.material = bm;
+  box(CX, 3.4, CZ - 11.75, 12.6, 6.6, 0.2, '#7a5a3b', { collide: false });
+  classroom.drawBoard = (title, lines) => {
+    const g = boardTex.getContext(); g.fillStyle = '#1f4d3a'; g.fillRect(0, 0, 1024, 512);
+    g.fillStyle = '#ffffff'; g.font = '800 54px "Baloo 2", sans-serif'; g.textAlign = 'center'; g.fillText(title, 512, 80);
+    g.font = '700 34px Nunito, sans-serif'; g.textAlign = 'left';
+    lines.slice(0, 10).forEach((l, i) => { g.fillStyle = l.done ? '#ffd04f' : '#e8f0ea'; g.fillText(l.text, 60 + (i >= 5 ? 470 : 0), 150 + (i % 5) * 68); });
+    boardTex.update();
+  };
+  classroom.drawBoard('Clasa a III-a', [{ text: 'Așteptăm testul…' }]);
+  // catedra și profesorul
+  box(CX, 0.55, CZ - 8.5, 4, 1.1, 1.6, '#8a5a2b', { cast: true });
+  const prof = createAvatar(scene, { skin: '#f0c8a8', shirt: '#2b2f38', pants: '#2b2f38', hat: 'ochelari', face: 'zambet' }, shadow, 'prof');
+  prof.root.position.set(CX + 3.2, 0, CZ - 9.2); prof.root.rotation.y = 0;
+  classroom.prof = prof;
+  // bănci: 5 rânduri × 6 locuri; elevii privesc spre tablă (-z)
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) {
+    const x = CX - 10 + c * 4, z = CZ - 4 + r * 3.4;
+    box(x, 1.1, z - 0.95, 2.2, 0.15, 1.0, '#c98e5f', { cast: true });
+    box(x, 0.55, z - 0.95, 0.12, 1.0, 0.9, '#7a5a3b', { collide: false });
+    box(x, 0.25, z, 1.1, 0.5, 1.1, '#3b7ddd', { cast: true });
+    box(x, 0.95, z + 0.5, 1.1, 1.0, 0.12, '#3b7ddd', { collide: false });
+    classroom.seats.push({ x, z, y: 0.5 });
+  }
+  // podiumul: 2, 1, 3
+  [[CX - 3, 1.0, 2], [CX, 1.6, 1], [CX + 3, 0.7, 3]].forEach(([x, h, place]) => {
+    box(x, h / 2, CZ - 6.2, 2.6, h, 2.2, ['', '#f2b632', '#c0c6d0', '#d08a4a'][place], { cast: true });
+    const l = makeLabel(scene, String(place), null, '#1f2b3a', 1.7); l.position.set(x, h / 2, CZ - 5.08); l.billboardMode = 0; l.rotation.y = Math.PI;
+    classroom.podium[place] = { x, z: CZ - 6.2, y: h };
+  });
+
   statics.forEach((m) => m.freezeWorldMatrix());
-  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, spawn: { x: 5, y: 0.5, z: 5 } };
+  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, spawn: { x: 5, y: 0.5, z: 5 } };
 }
 
 export { Mesh };

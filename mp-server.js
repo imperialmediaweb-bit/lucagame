@@ -1,7 +1,7 @@
 // Multiplayer: camere de joc cu cod, poziții în timp real, Duel și Echipă contra Boss-ului.
 // Fără conturi, fără date personale: doar un prenume, ținut în memorie cât timp camera e deschisă.
 import { WebSocketServer } from 'ws';
-import { GEN, typesFor } from './src/content/missions.js';
+import { GEN, typesFor, TEST_ITEMS, ROMANA } from './src/content/missions.js';
 
 const rooms = new Map();
 const EMOTES = ['Bravo!', 'Hai!', 'Super!', 'Mulțumesc!', 'Ups!', 'Încă o rundă?', '👍', '🎉'];
@@ -70,7 +70,45 @@ function reveal(r) {
   bcast(r, { t: 'reveal', i: g.i, ans: q.ans, ansText: q.kind === 'tap' ? q.toks[q.ans] : q.ans, steps: q.steps, res, bossHp: g.bossHp, bossMax: g.bossMax });
   g.timer = setTimeout(() => nextQ(r), 7000 + q.steps.length * 1200);
 }
+/* ---------- testul în clasă: același test pentru toți, fiecare în ritmul lui ---------- */
+function startClass(r, subject, level) {
+  const sub = subject === 'romana' ? 'romana' : 'mate';
+  let qs;
+  if (sub === 'mate' && level === 'test' && r.grade === 3) qs = TEST_ITEMS.map((it) => ({ type: it.type, pts: it.pts, ...GEN[it.type]() }));
+  else {
+    const types = typesFor(r.grade, sub === 'romana' ? 'romana' : 'mate').filter((t) => (level === 'usor' ? !['necunoscut1', 'gandesc', 'veverite', 'bunica', 'piata1', 'sumadif', 'sumacat'].includes(t) : true));
+    qs = Array.from({ length: 8 }, (_, i) => { const t = types[i % types.length] && types[Math.floor(Math.random() * types.length)]; return { type: t, pts: 9 / 8, ...GEN[t]() }; });
+  }
+  const seats = [...r.players.values()].map((p, i) => ({ id: p.id, seat: i }));
+  r.game = { mode: 'class', sub, level, qs, t0: Date.now(), limit: 20 * 60 * 1000, sheets: new Map(), timer: null };
+  for (const p of r.players.values()) { p.score = 0; r.game.sheets.set(p.id, { ans: [], done: 0, ms: 0, finished: false }); }
+  bcast(r, { t: 'class', sub, level, qs: qs.map(publicQ), seats, limitMs: r.game.limit });
+  r.game.timer = setTimeout(() => classEnd(r), r.game.limit + 2000);
+}
+function classAnswer(r, p, i, c) {
+  const g = r.game; if (!g || g.mode !== 'class') return;
+  const sh = g.sheets.get(p.id); if (!sh || sh.finished || i !== sh.done || i >= g.qs.length) return;
+  sh.ans[i] = c | 0; sh.done++;
+  if (sh.done >= g.qs.length) { sh.finished = true; sh.ms = Date.now() - g.t0; }
+  bcast(r, { t: 'cprog', id: p.id, done: sh.done, n: g.qs.length, ms: sh.ms });
+  if ([...g.sheets.values()].every((x) => x.finished)) classEnd(r);
+}
+function classEnd(r) {
+  const g = r.game; if (!g || g.mode !== 'class') return;
+  clearTimeout(g.timer);
+  const res = [...r.players.values()].map((p) => {
+    const sh = g.sheets.get(p.id) || { ans: [], ms: 0 };
+    const right = g.qs.map((q, i) => isRight(q, sh.ans[i]));
+    const nota = Math.round((1 + g.qs.reduce((a, q, i) => a + (right[i] ? q.pts : 0), 0)) * 100) / 100;
+    return { id: p.id, name: p.name, nota, correct: right.filter(Boolean).length, ms: sh.ms || (Date.now() - g.t0), finished: !!sh.finished, right, ans: sh.ans };
+  }).sort((a, b) => b.nota - a.nota || a.ms - b.ms);
+  const key = g.qs.map((q) => ({ ans: q.ans, ansText: q.kind === 'tap' ? q.toks[q.ans] : q.ans, steps: q.steps }));
+  bcast(r, { t: 'classEnd', sub: g.sub, n: g.qs.length, res, key });
+  r.game = null;
+}
+
 function endGame(r) {
+  if (r.game && r.game.mode === 'class') return classEnd(r);
   const g = r.game; if (!g) return;
   const ranking = [...r.players.values()].map((p) => ({ id: p.id, name: p.name, score: p.score })).sort((a, b) => b.score - a.score);
   bcast(r, { t: 'end', mode: g.mode, ranking, won: g.mode === 'team' ? g.bossHp <= 0 : null, bossHp: g.bossHp, bossMax: g.bossMax });
@@ -113,6 +151,8 @@ export function attachMultiplayer(server) {
         if (['mate', 'romana', 'mix', 'test'].includes(m.subject)) room.subject = m.subject;
         bcast(room, { t: 'room', room: roomState(room) });
       } else if (m.t === 'start' && me.host && !room.game && ['duel', 'team'].includes(m.mode)) startGame(room, m.mode);
+      else if (m.t === 'class' && me.host && !room.game) startClass(room, m.sub, m.level);
+      else if (m.t === 'canswer') classAnswer(room, me, m.i | 0, m.c);
       else if (m.t === 'answer') answer(room, me, m.i | 0, m.c | 0);
       else if (m.t === 'stop' && me.host && room.game) endGame(room);
     });
@@ -122,7 +162,8 @@ export function attachMultiplayer(server) {
       if (room.players.size === 0) { if (room.game) clearTimeout(room.game.timer); rooms.delete(room.code); return; }
       if (me.host) { const h = room.players.values().next().value; h.host = true; }
       bcast(room, { t: 'left', id: me.id, room: roomState(room) });
-      if (room.game && room.game.answers.size >= room.players.size) reveal(room);
+      if (room.game && room.game.mode === 'class') { room.game.sheets.delete(me.id); if ([...room.game.sheets.values()].every((x) => x.finished)) classEnd(room); }
+      else if (room.game && room.game.answers.size >= room.players.size) reveal(room);
     });
   });
 }
