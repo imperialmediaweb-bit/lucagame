@@ -83,7 +83,8 @@ export const MISSIONS = [
 
 export const missionById = (id) => MISSIONS.find((m) => m.id === id);
 export const areaById = (id) => AREAS.find((a) => a.id === id);
-export const typeArea = (t) => (MISSIONS.find((m) => m.types && m.types.includes(t)) || {}).area;
+/** Clasa unui tip de exercițiu; dacă tipul e în mai multe clase, o preferă pe cea dată. */
+export const typeArea = (t, pref) => { const ms = MISSIONS.filter((m) => m.types && m.types.includes(t)); return ((pref !== undefined && ms.find((m) => m.area === String(pref))) || ms[0] || {}).area; };
 
 export const TYPE_NAMES = {
   compara: 'Comparare și vecini', vecini: 'Numărul dinainte / de după', adun20: 'Adunări până la 20', scad20: 'Scăderi până la 20', zeci: 'Zeci și unități',

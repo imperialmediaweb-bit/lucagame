@@ -127,7 +127,8 @@ export function showLesson(key, title, after) {
 
 /* ---------- quiz: misiune, antrenament, test ---------- */
 let Q = null, combo = 0, goalShown = false;
-const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t) }, GEN[t](), extra);
+if (location.hostname === 'localhost') window.__ui = { Q: () => Q, S, startMission: (id) => startMission(missionById(id)), openDaily: () => openDaily() };
+const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t, G()) }, GEN[t](), extra);
 export function startMission(m) {
   if (areaLocked(m.area)) { toast(`Misiunea e pentru ${areaById(m.area).short}. Tu ești în ${GRADE_NAMES[G()]}.`); return; }
   if (m.atelier) { openAtelier(); return; }

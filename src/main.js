@@ -73,6 +73,7 @@ function physics(dt, mx, mz) {
   if (P.y < -6) { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); }
 }
 function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
+if (location.hostname === 'localhost') window.__dbg = { P, teleport: (x, z, y) => teleport(x, z, y), setYaw: (y) => { yaw = y; yawS = y; }, W, areaLocked };
 
 /* ---------- control ---------- */
 const CAM_SPEED = { incet: 0.0025, mediu: 0.0045, rapid: 0.007 };

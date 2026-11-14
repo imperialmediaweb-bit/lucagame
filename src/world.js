@@ -64,7 +64,8 @@ export function buildWorld(scene, shadow) {
     const gx = dx * 20.8, gz = dz * 20.8, gw = dx ? 0.5 : 4.6, gd = dx ? 4.6 : 0.5;
     const bar = box(gx, 1.5, gz, gw, 3, gd, '#d23a3a', { dynamic: true, cast: true });
     const lockLbl = makeLabel(scene, 'Închis', 'nu e clasa ta', '#d23a3a', 2.2); lockLbl.position.set(gx, 3.6, gz);
-    gates[a.id] = { bar, col: colliders[colliders.length - 1], lbl: lockLbl, y1: 0, y2: 3 };
+    const gcol = colliders[colliders.length - 1]; gcol.y2 = 9; gcol.z1 -= dx ? 0.3 : 0; gcol.z2 += dx ? 0.3 : 0; gcol.x1 -= dz ? 0.3 : 0; gcol.x2 += dz ? 0.3 : 0;
+    gates[a.id] = { bar, col: gcol, lbl: lockLbl, y1: 0, y2: 9 };
   });
 
   // ---------- pereți pe margini, ca să nu cazi în apă ----------
