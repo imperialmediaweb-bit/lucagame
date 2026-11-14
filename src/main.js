@@ -18,6 +18,8 @@ import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
+import { initChase, updateChase, updatePortals, portalPanel } from './chase.js';
+window.__portal = (id) => portalPanel(id);
 import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks } from './mpui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -44,7 +46,7 @@ const glow = new GlowLayer('glow', scene, { blurKernelSize: 32 }); glow.intensit
 const W = buildWorld(scene, shadow);
 const me = createAvatar(scene, S.look, shadow, 'luca');
 LABELS.forEach((l) => glow.addExcludedMesh(l));
-let yaw0 = Math.atan2(5, 5);
+let yaw0 = Math.atan2(W.spawn.x, W.spawn.z);
 
 /* ---------- fizică simplă cu cutii ---------- */
 const P = { x: W.spawn.x, y: W.spawn.y, z: W.spawn.z, vy: 0, ground: false, coyote: 0 }, R = 0.42, HGT = 2.5;
@@ -137,6 +139,7 @@ const multiplayer = () => (NET.room ? openLobby() : openCreate());
 initUI({ setLook: (l) => { me.setLook(l); sendLook(); }, goTo, stop, missionsChanged, multiplayer, cheer: () => { cheerT = 1.4; } });
 initNet({ scene, shadow, glow, ui: { toast, roomChanged, openLobby, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd } });
 let seated = false;
+initChase(scene, shadow, { teleport: (x, z, y = 0) => teleport(x, z, y), setView: (y) => { yaw = y; yawS = y; face = Math.PI; seated = false; } }, (l) => glow.addExcludedMesh(l));
 const CR = W.classroom;
 setClassHooks({
   toSeat: (i) => { const st = CR.seats[i % CR.seats.length]; teleport(st.x, st.z, st.y); face = Math.PI; yaw = 0; seated = true; },
@@ -175,13 +178,14 @@ scene.registerBeforeRender(() => {
     const nxp = mv.base + Math.sin(t * mv.sp) * mv.amp, d = nxp - mv.m.position.x; mv.m.position.x = nxp; mv.c.x1 += d; mv.c.x2 += d;
     if (standing === mv.c) P.x += d;
   }
-  physics(dt, mx, mz);
-  const moving = Math.hypot(mx, mz) > 0.3;
-  if (moving) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
+  const chase = updateChase(dt, P);
+  if (!chase) physics(dt, mx, mz); else face = Math.PI;
+  const moving = chase || Math.hypot(mx, mz) > 0.3;
+  if (moving && !chase) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
   cheerT = Math.max(0, cheerT - dt);
   me.root.position.set(P.x, P.y, P.z); me.root.rotation.y = face;
   if (moving) seated = false;
-  me.update(dt, { speed: moving ? Math.min(1, l) : 0, air: !P.ground && P.coyote <= 0 && !seated, dance: cheerT > 0 && P.ground && !moving && !seated, sit: seated });
+  me.update(dt, { speed: chase ? 1 : moving ? Math.min(1, l) : 0, air: !chase && !P.ground && P.coyote <= 0 && !seated, dance: cheerT > 0 && P.ground && !moving && !seated, sit: seated });
 
   const cd = camDist, tgt = new Vector3(P.x, P.y + 1.8, P.z);
   camPos.set(P.x + Math.sin(yawS) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yawS) * cd * Math.cos(pitch));
@@ -204,6 +208,7 @@ scene.registerBeforeRender(() => {
     if (c.open > 0 && c.open < 1) { c.open = Math.min(1, c.open + dt * 1.5); c.piv.rotation.x = -1.9 * c.open; }
     if (Math.hypot(c.x - P.x, c.z - P.z) < 2.8 && Math.abs(P.y - c.top) < 1.2) near = { type: 'chest', c };
   }
+  updatePortals(dt, P, t);
   for (const p of W.pads) {
     p.ring.rotation.y += dt; p.ring.position.y = 1.6 + Math.sin(t * 2) * 0.2;
     if (Math.hypot(p.x - P.x, p.z - P.z) < 1.4 && P.y < 0.6) {
@@ -231,7 +236,7 @@ let qm = null;
 $('qGo').onclick = () => { if (qm) goTo(qm); };
 function updateQuest() {
   const m = nextMission(), el = $('quest');
-  if (!m || paused() || P.x > 140) { el.hidden = true; return; }
+  if (!m || paused() || P.x > 140 || P.z < -300) { el.hidden = true; return; }
   el.hidden = false;
   if (m !== qm) { qm = m; $('qTitle').textContent = m.title; }
   const n = W.npcs.find((x) => x.m.id === m.id), d = Math.round(Math.hypot(n.x - P.x, n.z - P.z));

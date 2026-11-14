@@ -252,7 +252,7 @@ export function buildWorld(scene, shadow) {
   });
 
   statics.forEach((m) => m.freezeWorldMatrix());
-  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, spawn: { x: 5, y: 0.5, z: 5 } };
+  return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, spawn: { x: 5, y: 0.5, z: -5 } };
 }
 
 export { Mesh };
