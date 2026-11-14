@@ -74,10 +74,26 @@ function scheduleStep() {
 function targetVol() { return S.music === false ? 0 : (quiet ? 0.26 : 0.45); }
 function applyVol(sec = 1.2) { if (!master) return; const t = AC.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(targetVol(), t + sec); }
 
+// iPhone: cu butonul de silențios pornit, sunetul din Web Audio e tăiat. Un <audio> mut, în buclă,
+// trece telefonul pe „redare media”, iar muzica se aude ca la YouTube.
+function unmuteIOS() {
+  try {
+    const n = 4410, b = new DataView(new ArrayBuffer(44 + n * 2));
+    const w = (o, t) => [...t].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF'); b.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true);
+    b.setUint32(24, 44100, true); b.setUint32(28, 88200, true); b.setUint16(32, 2, true); b.setUint16(34, 16, true); w(36, 'data'); b.setUint32(40, n * 2, true);
+    const el = document.createElement('audio'); el.src = URL.createObjectURL(new Blob([b.buffer], { type: 'audio/wav' }));
+    el.loop = true; el.setAttribute('playsinline', ''); el.setAttribute('x-webkit-airplay', 'deny'); el.volume = 0.01;
+    el.play().catch(() => {});
+    document.addEventListener('visibilitychange', () => { document.hidden ? el.pause() : el.play().catch(() => {}); });
+  } catch (e) { /* nu e nevoie pe alte telefoane */ }
+}
+
 export const Music = {
   start() {
     if (started) return; started = true;
     try { setup(); } catch (e) { return; }
+    unmuteIOS(); if (AC.state === 'suspended') AC.resume();
     nextT = AC.currentTime + 0.1; timer = setInterval(schedule, 90); applyVol(3);
     document.addEventListener('visibilitychange', () => { if (!AC) return; document.hidden ? AC.suspend() : AC.resume(); });
   },
