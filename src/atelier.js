@@ -12,7 +12,7 @@ const LV = ['', 'Privește', 'Completează', 'Singur, pas cu pas', 'Ca la test',
 const lvlOf = (t) => (S.atelier && S.atelier[t] ? S.atelier[t] : 1);
 const setLvl = (t, l) => { S.atelier = S.atelier || {}; S.atelier[t] = Math.max(lvlOf(t), l); save(); };
 const card = () => $('quizCard');
-const show = (html) => { $('panel').hidden = true; $('quiz').hidden = false; card().innerHTML = html; card().scrollTop = 0; };
+const show = (html) => { document.body.dataset.act = 'atelier'; $('panel').hidden = true; $('quiz').hidden = false; card().innerHTML = html; card().scrollTop = 0; };
 const close = () => { document.dispatchEvent(new CustomEvent('close-draft')); $('quiz').hidden = true; };
 
 export function openAtelier(focus) {

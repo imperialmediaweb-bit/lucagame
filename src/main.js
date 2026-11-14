@@ -141,6 +141,14 @@ function applyLocks() {
   }
   W.pads.forEach((p) => { p.ring.isVisible = !areaLocked(p.area.id); });
 }
+// ce muzică se potrivește acum: fugă, exerciții, test, duel, atelier sau lumea în care ești
+const AREA_MUSIC = { '0': 'playful', '1': 'playful', '2': 'forest', '3': 'castle', '4': 'mountain', T: 'arena' };
+function musicFor() {
+  if (chasing()) return 'chase';
+  if (!$('quiz').hidden) return { test: 'test', class: 'test', duel: 'boss', team: 'boss', atelier: 'think', mission: 'mission', daily: 'mission' }[document.body.dataset.act] || 'mission';
+  const a = AREAS.find((q) => Math.abs(P.x - q.pos[0]) < 19 && Math.abs(P.z - q.pos[1]) < 19);
+  return a ? AREA_MUSIC[a.id] || 'chill' : 'chill';
+}
 function missionsChanged() {
   applyLocks();
   W.npcs.forEach((n) => { const st = (S.missions[n.m.id] || {}).stars || 0; n.bang.isVisible = st === 0; n.done.isVisible = st > 0; });
@@ -246,7 +254,7 @@ scene.registerBeforeRender(() => {
   if (!near || paused()) act.hidden = true;
   else { act.textContent = near.type === 'npc' ? `Vorbește cu ${near.n.m.npc}` : 'Deschide comoara'; act.hidden = false; }
   netTick(dt, P, face, seated ? 4 : !P.ground && P.coyote <= 0 ? 2 : cheerT > 0 ? 3 : 0);
-  Music.setMode(chasing() ? 'chase' : 'chill'); Music.setQuiet(!$('quiz').hidden);
+  Music.setMode(musicFor()); Music.setQuiet(!$('quiz').hidden && !['duel', 'team'].includes(document.body.dataset.act));
   updateQuest();
 });
 

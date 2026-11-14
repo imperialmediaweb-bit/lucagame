@@ -6,10 +6,20 @@ let AC = null, master = null, bus = null, delay = null, timer = null, started = 
 let mode = 'chill', step = 0, nextT = 0, quiet = false;
 
 const N = (m) => 440 * Math.pow(2, (m - 69) / 12); // notă MIDI → frecvență
-// acorduri (note MIDI); chill: Fmaj7 – Em7 – Dm7 – Cmaj7; fugă: Am – F – C – G
+// Temele muzicale. chords = acorduri (note MIDI), scale = notele melodiei, kick/snare = pașii (din 16) cu tobă,
+// lead = timbrul melodiei, arp = arpegii (note rapide din acord), drums = false → fără tobe.
 const SONGS = {
-  chill: { bpm: 76, chords: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]], scale: [72, 74, 76, 79, 81, 84], hat: 0.035, kick: [0, 10], snare: [8], mel: 0.28 },
-  chase: { bpm: 118, chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], scale: [69, 72, 74, 76, 79, 81], hat: 0.05, kick: [0, 4, 8, 12], snare: [4, 12], mel: 0.45 }
+  chill:    { bpm: 76,  chords: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]], scale: [72, 74, 76, 79, 81, 84], hat: 0.035, kick: [0, 10], snare: [8], mel: 0.28, lead: 'triangle' },
+  playful:  { bpm: 104, chords: [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60]], scale: [72, 74, 76, 79, 81, 84], hat: 0.04, kick: [0, 8], snare: [4, 12], mel: 0.4, lead: 'square', arp: true },
+  forest:   { bpm: 86,  chords: [[55, 59, 62], [52, 55, 59], [48, 52, 55], [50, 54, 57]], scale: [74, 76, 79, 81, 83, 86], hat: 0.03, kick: [0, 10], snare: [8], mel: 0.35, lead: 'sine' },
+  castle:   { bpm: 92,  chords: [[50, 53, 57], [48, 52, 55], [46, 50, 53], [45, 49, 52]], scale: [69, 70, 72, 74, 76, 77], hat: 0.03, kick: [0, 6, 8], snare: [12], mel: 0.38, lead: 'sawtooth', arp: true },
+  mountain: { bpm: 80,  chords: [[57, 60, 64], [52, 55, 59], [53, 57, 60], [48, 52, 55]], scale: [76, 79, 81, 84, 86, 88], hat: 0.025, kick: [0], snare: [8], mel: 0.25, lead: 'sine', pad: true },
+  arena:    { bpm: 112, chords: [[48, 51, 55], [44, 48, 51], [51, 55, 58], [46, 50, 53]], scale: [67, 70, 72, 75, 77, 79], hat: 0.05, kick: [0, 4, 8, 12], snare: [4, 12], mel: 0.42, lead: 'sawtooth', arp: true },
+  mission:  { bpm: 108, chords: [[53, 57, 60], [55, 59, 62], [52, 55, 59], [57, 60, 64]], scale: [72, 74, 76, 77, 79, 81], hat: 0.045, kick: [0, 7, 8], snare: [4, 12], mel: 0.3, lead: 'triangle', arp: true },
+  think:    { bpm: 68,  chords: [[48, 52, 55, 59], [53, 57, 60, 64]], scale: [72, 76, 79, 83], hat: 0, kick: [], snare: [], mel: 0.18, lead: 'sine', drums: false, pad: true },
+  test:     { bpm: 96,  chords: [[57, 60, 64], [50, 53, 57], [52, 56, 59], [57, 60, 64]], scale: [69, 72, 76, 81], hat: 0.04, kick: [0], snare: [], mel: 0.15, lead: 'sine', tick: true },
+  boss:     { bpm: 130, chords: [[52, 55, 59], [48, 52, 55], [50, 54, 57], [47, 51, 54]], scale: [64, 67, 69, 71, 74, 76], hat: 0.06, kick: [0, 4, 8, 12], snare: [4, 12], mel: 0.5, lead: 'sawtooth', arp: true },
+  chase:    { bpm: 132, chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], scale: [69, 72, 74, 76, 79, 81], hat: 0.06, kick: [0, 4, 8, 12], snare: [4, 12], mel: 0.5, lead: 'square', arp: true }
 };
 
 function setup() {
@@ -36,7 +46,7 @@ function keys(notes, t, dur) { // pian electric moale
 function bass(m, t, dur) { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = N(m - 12); env(g, t, 0.02, 0.12, 0.2, 0.06, dur); o.connect(g).connect(bus); o.start(t); o.stop(t + dur + 0.3); }
 function kick(t) { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.18); env(g, t, 0.005, 0.32, 0.12, 0.05, 0.12); o.connect(g).connect(bus); o.start(t); o.stop(t + 0.35); }
 function noiseHit(t, vol, hp, dur) { const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = AC.noise; f.type = 'highpass'; f.frequency.value = hp; env(g, t, 0.003, vol, dur, vol * 0.1, 0.05); s.connect(f).connect(g).connect(bus); s.start(t, Math.random()); s.stop(t + dur + 0.1); }
-function melody(m, t, dur) { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = N(m); env(g, t, 0.02, 0.05, 0.25, 0.02, dur); o.connect(g); g.connect(bus); g.connect(delay); o.start(t); o.stop(t + dur + 0.5); }
+function melody(m, t, dur, wave = 'triangle', vol = 0.05) { const o = AC.createOscillator(), g = AC.createGain(); o.type = wave; o.frequency.value = N(m); env(g, t, 0.02, vol, 0.25, vol * 0.4, dur); o.connect(g); g.connect(bus); g.connect(delay); o.start(t); o.stop(t + dur + 0.5); }
 
 let lastMel = 76;
 function schedule() { while (nextT < AC.currentTime + 0.25) scheduleStep(); }
@@ -44,14 +54,19 @@ function scheduleStep() {
   const song = SONGS[mode], s16 = 60 / song.bpm / 4;
   {
     const bar = Math.floor(step / 16) % song.chords.length, pos = step % 16, ch = song.chords[bar], t = nextT;
-    if (pos === 0) { keys(ch, t, s16 * 15); bass(ch[0], t, s16 * 6); }
-    if (pos === 8) bass(ch[0] + (mode === 'chase' ? 0 : 7), t, s16 * 5);
-    if (song.kick.includes(pos)) kick(t);
-    if (song.snare.includes(pos)) noiseHit(t, 0.06, 1800, 0.12);
-    if (pos % 2 === 0) noiseHit(t + (pos % 4 === 2 ? s16 * 0.15 : 0), song.hat * (pos % 4 === 2 ? 1 : 0.6), 7000, 0.04); // swing ușor
-    if (pos % 2 === 0 && Math.random() < song.mel) { // melodie din notele potrivite acordului
+    const sharp = song.lead === 'sawtooth' || song.lead === 'square', lv = sharp ? 0.025 : 0.05;
+    if (pos === 0) { keys(ch, t, s16 * (song.pad ? 16 : 15)); bass(ch[0], t, s16 * 6); }
+    if (pos === 8) bass(ch[0] + (song.bpm > 100 ? 0 : 7), t, s16 * 5);
+    if (song.drums !== false) {
+      if (song.kick.includes(pos)) kick(t);
+      if (song.snare.includes(pos)) noiseHit(t, 0.06, 1800, 0.12);
+      if (song.hat && pos % 2 === 0) noiseHit(t + (pos % 4 === 2 ? s16 * 0.15 : 0), song.hat * (pos % 4 === 2 ? 1 : 0.6), 7000, 0.04); // swing ușor
+    }
+    if (song.tick && pos % 4 === 0) noiseHit(t, 0.05, 5000, 0.02); // ca un ceas, la test
+    if (song.arp && pos % 2 === 1) melody(ch[(pos >> 1) % ch.length] + 12, t, s16 * 1.2, song.lead, lv * 0.6); // arpegii
+    if (pos % 2 === 0 && Math.random() < song.mel) { // melodie din notele potrivite
       const opts = song.scale.filter((n) => Math.abs(n - lastMel) <= 5); lastMel = opts[Math.floor(Math.random() * opts.length)] || song.scale[2];
-      melody(lastMel, t, s16 * (Math.random() < 0.5 ? 2 : 3));
+      melody(lastMel, t, s16 * (Math.random() < 0.5 ? 2 : 3), song.lead, lv);
     }
     nextT += s16; step++;
   }
@@ -66,7 +81,13 @@ export const Music = {
     nextT = AC.currentTime + 0.1; timer = setInterval(schedule, 90); applyVol(3);
     document.addEventListener('visibilitychange', () => { if (!AC) return; document.hidden ? AC.suspend() : AC.resume(); });
   },
-  setMode(m) { if (m === mode || !SONGS[m]) return; mode = m; step = 0; if (AC) nextT = AC.currentTime + 0.05; },
+  setMode(m) {
+    if (m === mode || !SONGS[m] || this._pending === m) return;
+    this._pending = m;
+    if (!AC) { mode = m; this._pending = null; return; }
+    const t = AC.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(0.0001, t + 0.45);
+    setTimeout(() => { mode = this._pending || m; this._pending = null; step = 0; nextT = AC.currentTime + 0.05; applyVol(0.9); }, 480);
+  },
   setQuiet(q) { if (q === quiet) return; quiet = q; applyVol(0.8); },
   toggle() { S.music = S.music === false; save(); if (S.music && !started) this.start(); applyVol(0.5); return S.music; },
   on: () => S.music !== false

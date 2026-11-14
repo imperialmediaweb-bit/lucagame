@@ -105,6 +105,7 @@ function bossBar() {
   return `<div id="bossWrap" class="bar" style="grid-template-columns:auto minmax(0,1fr) 48px"><b>Boss</b><span class="tr" style="height:14px"><i style="width:${p}%;background:var(--bad)"></i></span><span class="n">${p}%</span></div>`;
 }
 export function mpGameStart(m) {
+  document.body.dataset.act = m.mode;
   $('panel').hidden = true; $('quiz').hidden = false;
   card().innerHTML = `<div class="eyebrow">${m.mode === 'team' ? 'Echipa contra Boss-ului' : 'Duel'} · ${m.n} probleme</div>
     <h2>${m.mode === 'team' ? 'Toți împreună! Fiecare răspuns bun lovește Boss-ul.' : 'Cine răspunde corect primul ia puncte în plus!'}</h2>
@@ -183,6 +184,7 @@ function boardUpdate() {
   CH.drawBoard && CH.drawBoard(`Test de ${CT.sub === 'romana' ? 'română' : 'matematică'}`, lines);
 }
 export function classStart(m) {
+  document.body.dataset.act = 'class';
   $('panel').hidden = true;
   CT = { qs: m.qs, i: 0, sub: m.sub, t0: performance.now(), limit: m.limitMs, prog: new Map(), mySeat: (m.seats.find((s) => s.id === NET.you) || { seat: 0 }).seat };
   m.seats.forEach((s) => CT.prog.set(s.id, { done: 0, ms: 0 }));

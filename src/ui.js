@@ -164,7 +164,7 @@ function openQuiz() { $('quiz').hidden = false; H.stop && H.stop(); renderQ(); }
 const hintsOf = (q) => q.hints || (q.steps.length > 1 ? q.steps.slice(0, -1) : []);
 
 function renderQ() {
-  const q = Q.qs[Q.i]; q.used = 0; draftClear();
+  const q = Q.qs[Q.i]; q.used = 0; draftClear(); document.body.dataset.act = Q.mode;
   const n = Q.qs.length, dots = Q.qs.map((_, k) => `<i class="${k < Q.i ? (Q.res[k] ? 'ok' : 'no') : k === Q.i ? 'now' : ''}"></i>`).join('');
   const head = Q.mode === 'test' ? `Testul · exercițiul ${q.label} · ${fmtNota(q.pts)}p` : `${esc(Q.m.title)} · ${Q.i + 1} din ${n}${Q.mode === 'daily' && Q.i < Q.nrev ? ' · recapitulare' : ''}`;
   const body = q.kind === 'tap'
