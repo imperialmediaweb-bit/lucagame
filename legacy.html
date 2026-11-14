@@ -1,0 +1,741 @@
+<title>Insula lui Luca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Joc 3D pe tot ecranul; panourile sunt carduri de hârtie peste lume. Un singur aspect (zi senină), culori setate explicit. */
+:root{
+  --sky:#8fd3f0; --ink:#1f2b3a; --paper:#fffaf0; --line:#e6dcc8; --muted:#5f6c7b;
+  --accent:#ff7a2f; --accent-ink:#ffffff; --good:#23935a; --good-bg:#e3f5ea; --bad:#cc3d3d; --bad-bg:#fbe6e6; --gold:#f2b632;
+  --font-d:'Baloo 2','Trebuchet MS',system-ui,sans-serif; --font-b:'Nunito','Segoe UI',system-ui,sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;margin:0}
+body{background:var(--sky);color:var(--ink);font-family:var(--font-b);font-size:16px;touch-action:none;-webkit-user-select:none;user-select:none}
+#game{position:fixed;inset:0;display:block;width:100%;height:100%}
+button{font-family:var(--font-b);font-weight:800;cursor:pointer;border:0;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.hud{position:fixed;top:0;left:0;right:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));pointer-events:none;z-index:5}
+.pill{pointer-events:auto;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:4px 14px;font-family:var(--font-d);font-weight:800;font-size:18px;display:flex;gap:6px;align-items:center;box-shadow:0 3px 0 var(--ink);font-variant-numeric:tabular-nums}
+.pill .ic{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--ink)}
+.pill .st{color:var(--gold);-webkit-text-stroke:1px var(--ink);font-size:20px;line-height:1}
+.spacer{flex:1}
+.btn{pointer-events:auto;background:var(--accent);color:var(--accent-ink);border:2px solid var(--ink);border-radius:14px;padding:8px 16px;font-size:16px;box-shadow:0 3px 0 var(--ink)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn.light{background:var(--paper);color:var(--ink)}
+#act{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 150px);z-index:6;font-size:18px;padding:12px 22px;animation:pop .25s ease}
+#act:active{transform:translateX(-50%) translateY(2px)}
+#jump{position:fixed;right:calc(env(safe-area-inset-right,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 34px);width:86px;height:86px;border-radius:50%;font-family:var(--font-d);font-size:20px;z-index:6;padding:0}
+#stick{position:fixed;width:120px;height:120px;border-radius:50%;background:rgba(255,250,240,.35);border:2px solid rgba(31,43,58,.5);z-index:6;pointer-events:none;transform:translate(-50%,-50%)}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:var(--paper);border:2px solid var(--ink)}
+#keys{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);background:rgba(255,250,240,.85);border-radius:10px;padding:6px 10px;font-size:13px;color:var(--ink);z-index:4}
+.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(20,40,60,.45);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px))}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);width:min(560px,100%);max-height:100%;overflow:auto;padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px;-webkit-user-select:text;user-select:text;touch-action:pan-y}
+.card h2{font-family:var(--font-d);font-size:26px;line-height:1.1;margin:0;text-wrap:balance}
+.card p{margin:0;line-height:1.45}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dots{display:flex;gap:6px}
+.dots i{width:22px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.ok{background:var(--good)} .dots i.no{background:var(--bad)} .dots i.now{background:var(--ink)}
+.q{font-size:19px;font-weight:700;line-height:1.45;white-space:pre-line}
+.q .expr{display:block;font-family:var(--font-d);font-size:24px;margin-top:6px;letter-spacing:.02em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:12px 8px;font-size:20px;font-family:var(--font-d);box-shadow:0 3px 0 var(--ink);min-width:0;overflow-wrap:anywhere}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--good-bg);border-color:var(--good);color:var(--good);box-shadow:0 3px 0 var(--good)}
+.opt.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);box-shadow:0 3px 0 var(--bad)}
+.fb{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.fb.ok{background:var(--good-bg)} .fb.no{background:var(--bad-bg)}
+.fb b{font-family:var(--font-d);font-size:20px}
+.fb ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:3px;line-height:1.4}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.big{font-family:var(--font-d);font-size:44px;line-height:1;text-align:center}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.item{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px}
+.item .sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--ink)}
+.item.on{outline:3px solid var(--accent);outline-offset:1px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 90px 44px;gap:8px;align-items:center;font-size:14px}
+.bar .tr{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--good)}
+.bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:12px;font-weight:800;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+#toast.show{opacity:1}
+@keyframes pop{from{transform:translateX(-50%) scale(.8);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){#act{animation:none}#toast{transition:none}}
+@media (max-width:420px){.opt{font-size:18px}.q .expr{font-size:21px}.card h2{font-size:23px}}
+/* faza 1: ciornă, lecții, indicii, antrenament */
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:6px 12px;font-size:14px;box-shadow:0 2px 0 var(--ink)}
+.tool:disabled{opacity:.45;cursor:default}
+.tool.on{background:var(--ink);color:var(--paper)}
+.hint{background:#fff6dc;border:2px dashed var(--gold);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.combo{font-family:var(--font-d);color:var(--accent);font-size:18px}
+.toks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--font-d);font-size:28px}
+.tok{padding:0 2px}
+.tok.op{background:#fff;border:2px solid var(--ink);border-radius:10px;min-width:44px;height:48px;font-family:var(--font-d);font-size:28px;box-shadow:0 3px 0 var(--ink)}
+.tok.op.right{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.tok.op.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.overlay.withdraft{align-items:flex-start}
+.overlay.withdraft .card{max-height:calc(42% - 12px)}
+#draft{position:fixed;left:0;right:0;bottom:0;height:56%;z-index:25;background:var(--paper);border-top:3px solid var(--ink);border-radius:18px 18px 0 0;display:flex;flex-direction:column;
+  padding:8px max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(10px,env(safe-area-inset-left,0px));gap:8px}
+#draft .tools{align-items:center}
+#draft .ttl{font-family:var(--font-d);font-size:18px;margin-right:auto}
+.sw2{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);display:inline-block;vertical-align:middle}
+#paper{position:relative;flex:1;border:2px solid var(--ink);border-radius:10px;overflow:hidden;background-color:#fdfdf8;
+  background-image:linear-gradient(#cfe0f5 1px,transparent 1px),linear-gradient(90deg,#cfe0f5 1px,transparent 1px);background-size:22px 22px}
+#paper::before{content:"";position:absolute;top:0;bottom:0;left:44px;width:2px;background:#f0a0a0}
+#paperC{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:1}
+#paperT{position:absolute;inset:0;width:100%;height:100%;z-index:2;background:transparent;border:0;resize:none;outline:none;color:#2456b8;
+  font:700 20px/22px var(--font-d);padding:2px 10px 0 54px;box-sizing:border-box;-webkit-user-select:text;user-select:text;touch-action:auto}
+#draft.draw #paperT{pointer-events:none} #draft.type #paperC{pointer-events:none}
+.keys{display:flex;gap:6px;flex-wrap:wrap}
+.keys button{min-width:40px;height:38px;border-radius:10px;background:#fff;border:2px solid var(--ink);font-family:var(--font-d);font-size:20px;box-shadow:0 2px 0 var(--ink);padding:0 8px}
+@media (min-width:900px){
+  #draft{left:auto;top:0;width:46%;height:auto;border-top:0;border-left:3px solid var(--ink);border-radius:18px 0 0 18px;padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .overlay.withdraft{justify-content:flex-start;align-items:center}
+  .overlay.withdraft .card{max-height:100%;width:min(560px,50%)}
+}
+#draft.draw .keys,#draft.draw .typeonly{display:none} #draft.type .drawonly{display:none}
+.lesson .ln{font-family:var(--font-d);font-size:22px;line-height:1.35;padding:6px 10px;border-radius:10px;background:#fff;border:2px solid var(--line);animation:rise .5s ease both}
+.lesson .ln mark{background:#ffe08a;border-radius:6px;padding:0 4px;color:var(--ink)}
+.lesson .ln.res{border-color:var(--good);background:var(--good-bg)}
+.lesson .stack{display:flex;flex-direction:column;gap:8px}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--font-d);font-size:20px}
+.chain b{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:2px 10px;animation:rise .5s ease both}
+.chain i{font-style:normal;color:var(--muted);animation:rise .5s ease both}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bars .b{display:flex;height:34px;border-radius:8px;overflow:hidden;border:2px solid var(--ink);animation:rise .5s ease both}
+.bars .b span{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;min-width:0}
+.sdots{display:flex;gap:6px;justify-content:center}.sdots i{width:9px;height:9px;border-radius:50%;background:var(--line)}.sdots i.now{background:var(--ink)}
+@keyframes rise{from{opacity:.15;transform:translateY(8px)}to{opacity:1;transform:none}}
+.daybar{display:flex;align-items:center;gap:6px;font-size:14px}
+.daybar .tr{width:60px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}.daybar .tr i{display:block;height:100%;background:var(--good)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+#confetti i{position:absolute;width:10px;height:14px;border-radius:2px;animation:fall 1.3s ease-out forwards}
+@keyframes fall{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion:reduce){.lesson .ln,.chain b,.chain i,.bars .b{animation:none}#confetti{display:none}}
+</style>
+
+<canvas id="game"></canvas>
+
+<div class="hud">
+  <div class="pill" title="Monede"><span class="ic"></span><span id="coins">0</span></div>
+  <div class="pill" title="Stele"><span class="st">★</span><span id="stars">0/5</span></div>
+  <div class="pill" title="Zile la rând"><span id="streak">Serie 0</span></div>
+  <div class="pill daybar" title="Timp de antrenament azi"><span>Azi</span><span class="tr"><i id="dayFill"></i></span><span id="dayMin">0/20</span></div>
+  <div class="spacer"></div>
+  <button class="btn" id="openDaily" type="button">Antrenamentul zilei</button>
+  <button class="btn light" id="mute" type="button" aria-label="Sunet">Sunet: da</button>
+  <button class="btn light" id="openShop" type="button">Garderoba</button>
+  <button class="btn light" id="openProg" type="button">Progres</button>
+</div>
+
+<div id="stick" hidden><div id="knob"></div></div>
+<button class="btn" id="jump" type="button" hidden>Sari</button>
+<button class="btn" id="act" type="button" hidden>Vorbește</button>
+<div id="keys" hidden>Mergi: W A S D sau săgeți · Sari: Spațiu · Vorbește: E · Rotește camera: trage cu mouse-ul</div>
+<div id="toast"></div>
+
+<div class="overlay" id="intro">
+  <div class="card">
+    <div class="eyebrow">Clasa a III-a · matematică și română</div>
+    <h2>Bun venit pe Insula lui Luca!</h2>
+    <p>Pe insulă sunt <b>5 cristale</b>. Fiecare îți dă 5 provocări din lecțiile tale: paranteze, numărul ascuns, veverițe, piața bunicii și cuvinte.</p>
+    <p>Răspunzi bine la cel puțin 4 și primești o <b>stea</b>. Fiecare răspuns bun aduce 5 monede, iar cu ele îți cumperi haine.</p>
+    <p>Cu toate cele 5 stele urci scara din mijloc și deschizi <b>comoara</b>.</p>
+    <p><b>Antrenamentul zilei</b>: 20 de minute pe zi. Ce greșești revine mâine, ca să nu mai uiți. Ai nevoie de ciornă? Apasă „Ciornă” la orice exercițiu, sau ține lângă tine o foaie și un creion.</p>
+    <div class="row"><button class="btn" id="start" type="button">Joacă</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="quiz" hidden><div class="card" id="quizCard"></div></div>
+<div class="overlay" id="panel" hidden><div class="card" id="panelCard"></div></div>
+<div id="draft" hidden>
+  <div class="tools">
+    <span class="ttl">Ciornă</span>
+    <button class="tool" type="button" id="mType">Scriu cu tastatura</button>
+    <button class="tool" type="button" id="mDraw">Desenez</button>
+    <button class="tool on drawonly" type="button" data-pen="#2456b8" aria-label="Pix albastru"><span class="sw2" style="background:#2456b8"></span></button>
+    <button class="tool drawonly" type="button" data-pen="#d23a3a" aria-label="Pix roșu"><span class="sw2" style="background:#d23a3a"></span></button>
+    <button class="tool drawonly" type="button" data-pen="erase">Radieră</button>
+    <button class="tool" type="button" id="draftClear">Șterge tot</button>
+    <button class="tool" type="button" id="draftClose">Închide</button>
+  </div>
+  <div class="keys"><button type="button" data-ins="+">+</button><button type="button" data-ins="−">−</button><button type="button" data-ins="×">×</button><button type="button" data-ins=":">:</button><button type="button" data-ins="=">=</button><button type="button" data-ins="(">(</button><button type="button" data-ins=")">)</button><button type="button" data-ins="[">[</button><button type="button" data-ins="]">]</button><button type="button" data-ins="↵">↵</button></div>
+  <div id="paper"><canvas id="paperC"></canvas><textarea id="paperT" spellcheck="false" autocomplete="off" aria-label="Ciornă scrisă" placeholder="Scrie aici calculele, de ex. 32 : 8 = 4"></textarea></div>
+</div>
+<div id="confetti"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ---------- salvare ---------- */
+const KEY='insula-luca-v1';
+const S={coins:0,stars:{},shirt:'rosu',hat:'nimic',owned:['rosu','nimic'],stats:{},chest:false,
+  review:{},today:{day:0,sec:0},streak:0,lastGoalDay:-9,seen:{},mute:false};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s) Object.assign(S,s);}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const DAY=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/86400000);
+const GOAL=20*60; // 20 de minute pe zi
+if(S.today.day!==DAY()) S.today={day:DAY(),sec:0};
+if(S.lastGoalDay<DAY()-1) S.streak=0;
+
+/* ---------- sunete (pornesc după prima atingere) ---------- */
+let AC=null;
+function tone(f,d,when=0,type='triangle',vol=0.18){
+  if(S.mute)return; try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+when;o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}
+}
+const SFX={ok(){tone(523,.15);tone(659,.15,.1);tone(784,.25,.2);},no(){tone(220,.2,0,'sawtooth',.08);tone(170,.3,.15,'sawtooth',.08);},
+  coin(){tone(988,.08,0,'square',.06);tone(1319,.15,.07,'square',.06);},star(){[523,659,784,1047].forEach((f,i)=>tone(f,.25,i*.12));},
+  tap(){tone(660,.05,0,'sine',.08);}};
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const box=document.getElementById('confetti'),cols=['#ff7a2f','#f2b632','#23935a','#3b7ddd','#8a5cf6','#e04848'];
+  for(let i=0;i<28;i++){const e=document.createElement('i');e.style.left=(40+Math.random()*20)+'%';e.style.top='45%';e.style.background=cols[i%cols.length];
+    e.style.setProperty('--dx',(Math.random()*500-250)+'px');e.style.setProperty('--dy',(Math.random()*-350-50)+'px');e.style.setProperty('--r',(Math.random()*720)+'deg');
+    box.appendChild(e);setTimeout(()=>e.remove(),1400);}
+}
+
+/* ---------- utilitare ---------- */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const $=id=>document.getElementById(id);
+function opts(ans,cands){
+  const out=[ans]; for(const c of cands){ if(out.length>=4)break; if(Number.isInteger(c)&&c>=0&&!out.includes(c)) out.push(c); }
+  let k=1; while(out.length<4){ const c=ans+(k%2?1:-1)*Math.ceil(k/2)*pick([1,2,10]); if(c>=0&&!out.includes(c)) out.push(c); k++; }
+  return shuffle(out);
+}
+let toastT; function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2600);}
+
+/* ---------- generatoare de exerciții (după testul lui Luca) ---------- */
+const G={
+  ordine1(){ // (a+b) × (c − d : e) − f
+    const a=rnd(1,6),b=rnd(1,6),e=rnd(2,9),q=rnd(2,6),d=e*q,c=rnd(q+1,q+10),s1=a+b,s2=c-q,p=s1*s2,f=rnd(1,Math.min(20,p-1)),r=p-f;
+    return {text:'Calculează:',expr:`(${a} + ${b}) × (${c} − ${d} : ${e}) − ${f} =`,ans:r,opts:opts(r,[p,r+e,Math.abs(r-q),r+10]),
+      steps:[`Întâi parantezele. Prima: ${a} + ${b} = ${s1}`,`În a doua, împărțirea vine înaintea scăderii: ${d} : ${e} = ${q}, apoi ${c} − ${q} = ${s2}`,`Înmulțirea: ${s1} × ${s2} = ${p}`,`La final scăderea: ${p} − ${f} = ${r}`]};
+  },
+  ordine2(){ // a×b − c×d + e
+    let a,b,c,d; do{a=rnd(3,9);b=rnd(3,9);c=rnd(2,9);d=rnd(2,6);}while(a*b<=c*d);
+    const e=rnd(2,20),r=a*b-c*d+e,naiv=(a*b-c)*d+e;
+    return {text:'Calculează:',expr:`${a} × ${b} − ${c} × ${d} + ${e} =`,ans:r,opts:opts(r,[naiv,a*b-c*d-e,r+d]),
+      steps:['Înmulțirile se fac înaintea adunării și scăderii.',`${a} × ${b} = ${a*b}`,`${c} × ${d} = ${c*d}`,`Acum de la stânga la dreapta: ${a*b} − ${c*d} = ${a*b-c*d}, apoi ${a*b-c*d} + ${e} = ${r}`]};
+  },
+  ordine3(){ // a + b × c sau a − b : c
+    if(Math.random()<.5){const a=rnd(5,40),b=rnd(2,9),c=rnd(2,9),r=a+b*c;
+      return {text:'Calculează:',expr:`${a} + ${b} × ${c} =`,ans:r,opts:opts(r,[(a+b)*c,r+1,a*b+c]),
+        steps:['Capcană: înmulțirea se face prima, chiar dacă e la sfârșit!',`${b} × ${c} = ${b*c}`,`${a} + ${b*c} = ${r}`]};}
+    const c=rnd(2,9),q=rnd(2,9),b=c*q,a=rnd(q+5,q+60),r=a-q;
+    return {text:'Calculează:',expr:`${a} − ${b} : ${c} =`,ans:r,opts:opts(r,[Number.isInteger((a-b)/c)&&a>b?(a-b)/c:r+c,r-1,r+q]),
+      steps:['Împărțirea se face înaintea scăderii.',`${b} : ${c} = ${q}`,`${a} − ${q} = ${r}`]};
+  },
+  necunoscut1(){ // [a × (b×b − c×c) − x] : k = r
+    let a,b,c,M,k,r,x; do{b=rnd(4,7);c=rnd(2,b-1);a=rnd(2,6);M=a*(b*b-c*c);k=pick([2,5,10]);}while(Math.floor(M/k)<3);
+    r=rnd(1,Math.floor(M/k)-1);x=M-r*k;
+    return {text:'Află valoarea lui a din egalitatea:',expr:`[${a} × (${b} × ${b} − ${c} × ${c}) − a] : ${k} = ${r}`,ans:x,opts:opts(x,[M-r,r*k,x+k]),
+      steps:[`Ce e în paranteza mare, împărțit la ${k}, dă ${r}. Deci paranteza mare = ${r} × ${k} = ${r*k}`,`Calculăm ce știm: ${b} × ${b} − ${c} × ${c} = ${b*b} − ${c*c} = ${b*b-c*c}`,`${a} × ${b*b-c*c} = ${M}`,`${M} − a = ${r*k}, deci a = ${M} − ${r*k} = ${x}`,`Verificare: (${M} − ${x}) : ${k} = ${r} ✔`]};
+  },
+  necunoscut2(){
+    const t=rnd(0,3);
+    if(t===0){const x=rnd(10,90),p=rnd(5,60),q=x+p;return {text:'Află numărul necunoscut:',expr:`a + ${p} = ${q}`,ans:x,opts:opts(x,[q+p,x+1,x-10]),steps:['Termenul necunoscut = suma − termenul cunoscut',`a = ${q} − ${p} = ${x}`]};}
+    if(t===1){const x=rnd(30,99),p=rnd(5,29),q=x-p;return {text:'Află numărul necunoscut:',expr:`a − ${p} = ${q}`,ans:x,opts:opts(x,[q-p>=0?q-p:x+2,x+10,x-1]),steps:['Descăzutul = diferența + scăzătorul',`a = ${q} + ${p} = ${x}`]};}
+    if(t===2){const x=rnd(2,10),p=rnd(2,9),q=x*p;return {text:'Află numărul necunoscut:',expr:`a × ${p} = ${q}`,ans:x,opts:opts(x,[q-p,q+p,x+1]),steps:['Factorul necunoscut = produsul : factorul cunoscut',`a = ${q} : ${p} = ${x}`]};}
+    const p=rnd(2,9),q=rnd(2,10),x=p*q;return {text:'Află numărul necunoscut:',expr:`a : ${p} = ${q}`,ans:x,opts:opts(x,[q+p,q-p>0?q-p:x+p,x+1]),steps:['Deîmpărțitul = câtul × împărțitorul',`a = ${q} × ${p} = ${x}`]};
+  },
+  gandesc(){ // mersul invers
+    const T=[{v:8,t:'cel mai mare număr par de o cifră'},{v:9,t:'cel mai mare număr de o cifră'},{v:10,t:'cel mai mic număr de două cifre'},{v:7,t:'cel mai mare număr impar de o cifră, minus 2'}];
+    let n,m,d,s,v,tt,r; do{n=rnd(2,12);m=rnd(2,9);d=rnd(2,6);s=(n*m)%d+d*rnd(1,3);v=(n*m-s)/d;tt=pick(T);r=v-tt.v;}while(n*m-s<=0||r<1||!Number.isInteger(v));
+    return {text:`Mă gândesc la un număr. Îl măresc de ${m} ori, noul rezultat îl micșorez cu ${s}, apoi împart ce am obținut la ${d}. Din noul rezultat scad ${tt.t} și obțin ${r}.\nLa ce număr m-am gândit?`,ans:n,
+      opts:opts(n,[(r+tt.v)*d,n+1,Math.floor(((r+tt.v)*d)/m),n+2]),
+      steps:[`${cap(tt.t)} este ${tt.v}.`,'Mergem invers, de la sfârșit, cu operația opusă:',`Înainte să scad ${tt.v} aveam: ${r} + ${tt.v} = ${v}`,`Înainte să împart la ${d}: ${v} × ${d} = ${v*d}`,`Înainte să micșorez cu ${s}: ${v*d} + ${s} = ${n*m}`,`Înainte să măresc de ${m} ori: ${n*m} : ${m} = ${n}`]};
+  },
+  veverite(){
+    const x=rnd(100,300),y=rnd(100,300),z=rnd(100,300),T=x+y+z,P=x+y,Q=y+z,w=rnd(0,2),nume=['prima','a doua','a treia'],ans=[x,y,z][w];
+    return {text:`Trei veverițe mănâncă ${T} de alune. Primele două mănâncă ${P} de alune, iar ultimele două ${Q}.\nCâte alune mănâncă ${nume[w]} veveriță?`,ans,
+      opts:opts(ans,[x,y,z,P-Q>0?P-Q:Q-P].filter(v=>v!==ans)),
+      steps:[`A treia = toate − primele două = ${T} − ${P} = ${z}`,`Prima = toate − ultimele două = ${T} − ${Q} = ${x}`,`A doua = ${P} − ${x} = ${y}`,`Verificare: ${x} + ${y} + ${z} = ${T} ✔`]};
+  },
+  abc(){
+    const a=rnd(2,9),bc=rnd(6,20);
+    if(Math.random()<.4){const r=a+bc;return {text:`Dacă a = ${a} și b + c = ${bc}, calculează:`,expr:'a + b + c =',ans:r,opts:opts(r,[a*bc,bc,r+a]),steps:['Nu știm b și c separat, dar știm suma lor.',`a + b + c = a + (b + c) = ${a} + ${bc} = ${r}`]};}
+    const k=rnd(2,6),m=rnd(2,5),r=k*a+m*bc;
+    return {text:`Dacă a = ${a} și b + c = ${bc}, calculează:`,expr:`${k} × a + ${m} × b + ${m} × c =`,ans:r,opts:opts(r,[k*a+bc,k*a+m*bc+m,(k+m)*a+bc,a+m*bc]),
+      steps:[`${m} × b + ${m} × c = ${m} × (b + c)`,`${m} × ${bc} = ${m*bc}`,`${k} × a = ${k} × ${a} = ${k*a}`,`${k*a} + ${m*bc} = ${r}`]};
+  },
+  piata1(){
+    const A=rnd(2,6),p=rnd(2,6),B=rnd(2,5),q=rnd(2,9),T=A*p+B*q;
+    return {text:`${A} kilograme de mere și ${B} kilograme de pere costă ${T} de lei. Cât costă un kilogram de pere, știind că un kilogram de mere costă ${p} lei?`,ans:q,
+      opts:opts(q,[T-A*p,Math.floor(T/B),q+1,p]),
+      steps:[`Merele costă: ${A} × ${p} = ${A*p} lei`,`Perele costă: ${T} − ${A*p} = ${B*q} lei`,`Un kilogram de pere: ${B*q} : ${B} = ${q} lei`]};
+  },
+  bunica(){
+    const fr=pick(['caise','cireșe','roșii','mere']),A=rnd(2,5),p=rnd(3,9),B=rnd(2,5),q=rnd(2,6),N=rnd(2,4),r=pick([5,10,15,20]),S0=A*p+B*q+N*r;
+    return {text:`Bunica a plecat la piață. Cumpără ${A} kilograme de ${fr} a câte ${p} lei kilogramul și ${B} pâini a câte ${q} lei. Restul îl împarte în mod egal la cei ${N} nepoți.\nCe sumă avea bunica la început, știind că fiecare nepot a primit ${r} lei?`,ans:S0,
+      opts:opts(S0,[A*p+B*q,A*p+B*q+r,S0-N*r+r*(N+1),S0+10]),
+      steps:[`${cap(fr)}: ${A} × ${p} = ${A*p} lei`,`Pâinile: ${B} × ${q} = ${B*q} lei`,`Nepoții: ${N} × ${r} = ${N*r} lei`,`La început: ${A*p} + ${B*q} + ${N*r} = ${S0} lei`]};
+  },
+  rest(){
+    const A=rnd(2,6),p=rnd(3,9),R=rnd(1,30),S0=A*p+R;
+    return {text:`Ai ${S0} de lei. Cumperi ${A} caiete a câte ${p} lei. Câți lei îți rămân?`,ans:R,opts:opts(R,[S0-p,S0-A-p,A*p,R+p]),
+      steps:[`Caietele costă: ${A} × ${p} = ${A*p} lei`,`Rămân: ${S0} − ${A*p} = ${R} lei`]};
+  },
+  primul(){ // apasă operația care se face prima
+    const a=rnd(2,20),b=rnd(2,9),c=rnd(2,9),d=rnd(2,9);
+    const T=[
+      [[a,'+',b,'×',c],3,'Înmulțirea se face înaintea adunării.'],
+      [[a,'−',b,':',c],3,'Împărțirea se face înaintea scăderii.'],
+      [['(',a,'+',b,')','×',c],2,'Parantezele sunt cutii: le deschizi primele.'],
+      [[a,'×','(',b,'−',c,':',d,')'],6,'Întâi paranteza, iar în ea împărțirea vine înaintea scăderii.'],
+      [[a,'+',b,'−',c],1,'Adunarea și scăderea sunt la fel de tari: mergi de la stânga la dreapta.'],
+      [[a,':',b,'×',c],1,'Împărțirea și înmulțirea sunt la fel de tari: de la stânga la dreapta.'],
+      [['(',a,'−',b,')',':',c,'+',d],2,'Întâi ce e în paranteză.'],
+      [[a,'+',b,'×',c,'−',d],3,'× e operație tare: se face înaintea lui + și −.'],
+      [['[',a,'×','(',b,'+',c,')','−',d,']',':',2],5,'Întâi paranteza rotundă, apoi cea pătrată.']
+    ];
+    const [toks,idx,why]=pick(T);
+    return {kind:'tap',text:'Apasă operația care se face PRIMA:',toks,ans:idx,steps:[why],hints:['Caută întâi parantezele. Apoi × și :. Abia apoi + și −.']};
+  },
+  orto(){
+    const L=[
+      ['Mama ___ dus la piață.','s-a',['sa'],'„s-a” arată o acțiune: s-a dus, s-a jucat. „sa” înseamnă „a ei / a lui”.'],
+      ['Și-a luat cartea ___.','sa',['s-a'],'„cartea sa” = cartea lui. Nu e o acțiune, deci se scrie „sa”.'],
+      ['Copiii ___ jucat în parc.','s-au',['sau'],'„s-au jucat” e o acțiune. „sau” înseamnă „ori”.'],
+      ['Vrei mere ___ pere?','sau',['s-au'],'„sau” = „ori”: mere ori pere.'],
+      ['Elevii ___ așezat în bănci.','s-au',['sau'],'Acțiune făcută de mai mulți: s-au așezat.'],
+      ['Am intrat ___ cameră mare.','într-o',['intr-o','într o'],'„într-o” = în + o, se leagă cu cratimă.'],
+      ['A ieșit ___ pădure.','dintr-o',['din tr-o','dintr o'],'„dintr-o” = din + o, cu cratimă.'],
+      ['Tata ___ dat un măr.','i-a',['ia'],'„i-a dat” = lui i-a dat. „ia” e de la „a lua”.'],
+      ['___ cartea de pe masă!','Ia',['I-a'],'Aici e „a lua”: Ia cartea!'],
+      ['Ea ___ uitat pe geam.','s-a',['sa'],'„s-a uitat” e o acțiune.'],
+      ['Sora ___ e mică.','sa',['s-a'],'„sora sa” = sora lui.'],
+      ['Nu ___ cunosc pe ei.','i',['-i'],'„îi cunosc / i cunosc”: aici „i” stă singur, fără cratimă.'],
+      ['Cine ___ spus asta?','ți-a',['ția'],'„ți-a spus” = ție ți-a spus, cu cratimă.'],
+      ['Mergem la mare ___ la munte?','sau',['s-au'],'„sau” = „ori”.']
+    ];
+    const [t,a,w,why]=pick(L);
+    return {text:'Alege forma corectă:',expr:t,ans:a,opts:shuffle([a,...w]),steps:[why]};
+  }
+};
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+const ZONES=[
+  {id:'ordine',name:'Turnul Parantezelor',sub:'Ordinea operațiilor',color:0xff7a2f,types:['primul','ordine1','ordine2','ordine3']},
+  {id:'ascuns',name:'Peștera Numărului Ascuns',sub:'Află numărul / mersul invers',color:0x8a5cf6,types:['necunoscut1','necunoscut2','gandesc']},
+  {id:'veverite',name:'Pădurea Veverițelor',sub:'Probleme cu sume',color:0x2f9e5b,types:['veverite','abc']},
+  {id:'piata',name:'Piața Bunicii',sub:'Probleme cu bani',color:0xe0b020,types:['piata1','bunica','rest']},
+  {id:'cuvinte',name:'Biblioteca Cuvintelor',sub:'Ortograme',color:0x3b7ddd,types:['orto']}
+];
+function pickType(z){ // tipurile greșite des apar mai des
+  const w=z.types.map(t=>{const s=S.stats[t]||{ok:0,bad:0};return 1+3*(s.bad+1)/(s.ok+s.bad+2);});
+  let r=Math.random()*w.reduce((a,b)=>a+b,0); for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return z.types[i];} return z.types[0];
+}
+
+/* ---------- lumea 3D ---------- */
+const canvas=$('game');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8fd3f0); scene.fog=new THREE.Fog(0x8fd3f0,45,110);
+const camera=new THREE.PerspectiveCamera(60,1,0.1,300);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6aa060,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.85); sun.position.set(20,35,15); sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024); Object.assign(sun.shadow.camera,{left:-35,right:35,top:35,bottom:-35,near:1,far:90}); scene.add(sun);
+
+const boxes=[];
+function mat(c){return new THREE.MeshLambertMaterial({color:c});}
+function addBox(x,y,z,w,h,d,color,collide=true){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color)); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; scene.add(m);
+  if(collide) boxes.push({x1:x-w/2,x2:x+w/2,y1:y-h/2,y2:y+h/2,z1:z-d/2,z2:z+d/2});
+  return m;
+}
+const water=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat(0x3aa6d8)); water.rotation.x=-Math.PI/2; water.position.y=-0.6; scene.add(water);
+addBox(0,-1.15,0,62,2,62,0xf1dca0); // nisip
+addBox(0,-1,0,56,2,56,0x7ccf6a);   // iarbă
+
+function label(text,sub,color){
+  const c=document.createElement('canvas'); c.width=512; c.height=150; const g=c.getContext('2d');
+  g.fillStyle='rgba(255,250,240,0.95)'; g.strokeStyle='#1f2b3a'; g.lineWidth=6;
+  const r=28; g.beginPath(); g.moveTo(r,4); g.arcTo(508,4,508,146,r); g.arcTo(508,146,4,146,r); g.arcTo(4,146,4,4,r); g.arcTo(4,4,508,4,r); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle='#'+color.toString(16).padStart(6,'0'); g.fillRect(24,20,14,110);
+  g.fillStyle='#1f2b3a'; g.font='800 46px "Baloo 2", sans-serif'; g.textBaseline='middle'; g.fillText(text,56,58,430);
+  g.font='700 30px Nunito, sans-serif'; g.fillStyle='#5f6c7b'; g.fillText(sub,56,110,430);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:true})); s.scale.set(6.4,1.9,1); return s;
+}
+
+const zoneObjs=[];
+ZONES.forEach((z,i)=>{
+  const a=(-90+i*72)*Math.PI/180, x=17*Math.cos(a), zz=17*Math.sin(a); z.x=x; z.z=zz;
+  addBox(x,0.15,zz,7,0.3,7,z.color);
+  addBox(x,0.8,zz,1.6,1,1.6,0xf5efe2);
+  const cr=new THREE.Mesh(new THREE.OctahedronGeometry(0.9,0),new THREE.MeshLambertMaterial({color:z.color,emissive:z.color,emissiveIntensity:0.35}));
+  cr.position.set(x,2.6,zz); cr.castShadow=true; scene.add(cr);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.4,0.12,8,32),new THREE.MeshLambertMaterial({color:0xf2b632,emissive:0xf2b632,emissiveIntensity:0.5}));
+  ring.position.copy(cr.position); ring.visible=!!S.stars[z.id]; scene.add(ring);
+  const lb=label(z.name,z.sub,z.color); lb.position.set(x,4.8,zz); scene.add(lb);
+  zoneObjs.push({z,cr,ring});
+});
+
+// scara spirală spre comoară
+const STEPS=12, SR=7.5, A0=Math.PI/2;
+for(let i=0;i<STEPS;i++){const a=A0-i*0.62,h=0.8+i*0.85; addBox(SR*Math.cos(a),h-0.25,SR*Math.sin(a),2.8,0.5,2.8,i%2?0xffd27a:0xff9f6b);}
+const fa=A0-STEPS*0.62, fh=0.8+STEPS*0.85, fx=SR*Math.cos(fa), fz=SR*Math.sin(fa);
+addBox(fx,fh-0.25,fz,4.6,0.5,4.6,0xf5efe2);
+const chest=new THREE.Group(); chest.position.set(fx,fh,fz); scene.add(chest);
+const cb=new THREE.Mesh(new THREE.BoxGeometry(1.6,0.9,1),mat(0x8a5a2b)); cb.position.y=0.45; cb.castShadow=true; chest.add(cb);
+const band=new THREE.Mesh(new THREE.BoxGeometry(1.64,0.18,1.04),mat(0xf2b632)); band.position.y=0.6; chest.add(band);
+const lidPivot=new THREE.Group(); lidPivot.position.set(0,0.9,-0.5); chest.add(lidPivot);
+const lid=new THREE.Mesh(new THREE.BoxGeometry(1.6,0.35,1),mat(0x9c6a35)); lid.position.set(0,0.17,0.5); lid.castShadow=true; lidPivot.add(lid);
+const gold=new THREE.Mesh(new THREE.SphereGeometry(0.45,12,8),new THREE.MeshLambertMaterial({color:0xf2b632,emissive:0xf2b632,emissiveIntensity:0.6})); gold.position.y=0.95; gold.scale.y=0.5; gold.visible=S.chest; chest.add(gold);
+if(S.chest) lidPivot.rotation.x=-1.9;
+boxes.push({x1:fx-0.8,x2:fx+0.8,y1:fh,y2:fh+1.2,z1:fz-0.5,z2:fz+0.5});
+const clb=label('Comoara','Ai nevoie de 5 stele',0xf2b632); clb.position.set(fx,fh+3,fz); scene.add(clb);
+
+// copaci
+let placed=0,tries=0;
+while(placed<26&&tries<500){tries++;
+  const x=rnd(-25,25),z=rnd(-25,25),r=Math.hypot(x,z);
+  if(r<11.5||ZONES.some(q=>Math.hypot(q.x-x,q.z-z)<6.5)||Math.hypot(x,z-11)<4) continue;
+  const h=rnd(2,4); addBox(x,h/2,z,0.8,h,0.8,0x8a5a2b);
+  const c=pick([0x3f9e4d,0x4cb05a,0x2f8a45]); addBox(x,h+1,z,2.6,2.2,2.6,c,false); placed++;
+}
+
+// monede de strâns
+const coinGeo=new THREE.CylinderGeometry(0.4,0.4,0.1,20), coinMat=new THREE.MeshLambertMaterial({color:0xf2b632,emissive:0xb07a00,emissiveIntensity:0.4});
+const worldCoins=[];
+function addCoin(x,y,z){const m=new THREE.Mesh(coinGeo,coinMat);m.rotation.x=Math.PI/2;m.position.set(x,y,z);scene.add(m);worldCoins.push({m,back:0});}
+for(let i=0;i<STEPS;i+=2){const a=A0-i*0.62;addCoin(SR*Math.cos(a),0.8+i*0.85+0.9,SR*Math.sin(a));}
+for(let i=0;i<8;i++){const a=i/8*Math.PI*2+0.4;addCoin(23*Math.cos(a),0.9,23*Math.sin(a));}
+
+/* ---------- personaj ---------- */
+const SHIRTS={rosu:{n:'Roșu',c:0xe04848,p:0},albastru:{n:'Albastru',c:0x3b7ddd,p:15},verde:{n:'Verde',c:0x2fae5f,p:15},mov:{n:'Mov',c:0x8a5cf6,p:25},negru:{n:'Ninja',c:0x2b2f38,p:40},auriu:{n:'Auriu',c:0xf2b632,p:60}};
+const HATS={nimic:{n:'Fără',p:0},sapca:{n:'Șapcă',p:20},coif:{n:'Coif de vrăjitor',p:35},coroana:{n:'Coroană',p:80}};
+const player=new THREE.Group(); scene.add(player);
+const shirtMat=mat(SHIRTS[S.shirt].c), skin=mat(0xf3c9a0), dark=mat(0x2b3a55);
+const body=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.5,0.9,16),shirtMat); body.position.y=1.15; player.add(body);
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.42,16,12),skin); head.position.y=1.95; player.add(head);
+[-0.15,0.15].forEach(x=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6),mat(0x1f2b3a)); e.position.set(x,2.0,0.38); player.add(e);});
+const legs=[-0.2,0.2].map(x=>{const g=new THREE.Group();g.position.set(x,0.7,0);const l=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.7,0.3),dark);l.position.y=-0.35;g.add(l);player.add(g);return g;});
+const arms=[-0.58,0.58].map(x=>{const g=new THREE.Group();g.position.set(x,1.5,0);const l=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.7,0.22),shirtMat);l.position.y=-0.35;g.add(l);player.add(g);return g;});
+player.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+const hatG=new THREE.Group(); hatG.position.y=2.25; player.add(hatG);
+function updateLook(){
+  shirtMat.color.setHex(SHIRTS[S.shirt].c);
+  while(hatG.children.length) hatG.remove(hatG.children[0]);
+  if(S.hat==='sapca'){const m=new THREE.Mesh(new THREE.SphereGeometry(0.44,16,8,0,Math.PI*2,0,Math.PI/2),mat(0xe04848));m.position.y=-0.15;hatG.add(m);const b=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.06,0.4),mat(0xe04848));b.position.set(0,-0.12,0.45);hatG.add(b);}
+  if(S.hat==='coif'){const m=new THREE.Mesh(new THREE.ConeGeometry(0.42,1,16),mat(0x4b3cc4));m.position.y=0.35;hatG.add(m);}
+  if(S.hat==='coroana'){const m=new THREE.Mesh(new THREE.CylinderGeometry(0.36,0.36,0.3,16,1,true),new THREE.MeshLambertMaterial({color:0xf2b632,side:THREE.DoubleSide}));m.position.y=0.02;hatG.add(m);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;const s=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.22,6),mat(0xf2b632));s.position.set(0.34*Math.cos(a),0.27,0.34*Math.sin(a));hatG.add(s);}}
+  hatG.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+}
+updateLook();
+
+/* ---------- fizică ---------- */
+const P={x:0,y:0,z:12,vy:0,ground:false,coyote:0}; const R=0.4,H=2.2;
+function hitAt(px,py,pz){for(const b of boxes){if(px+R>b.x1&&px-R<b.x2&&pz+R>b.z1&&pz-R<b.z2&&py<b.y2-0.01&&py+H>b.y1)return b;}return null;}
+function moveAxis(ax,d){
+  if(!d)return; const nx=ax==='x'?P.x+d:P.x, nz=ax==='z'?P.z+d:P.z; const b=hitAt(nx,P.y,nz);
+  if(!b){P.x=nx;P.z=nz;return;}
+  if(P.ground&&b.y2-P.y<=0.55&&!hitAt(nx,b.y2,nz)){P.x=nx;P.z=nz;P.y=b.y2;}
+}
+function respawn(){P.x=0;P.y=0.5;P.z=12;P.vy=0;toast('Hopa! Înapoi pe insulă.');}
+let jumpReq=false;
+function physics(dt,mx,mz){
+  moveAxis('x',mx*dt); moveAxis('z',mz*dt);
+  P.vy-=28*dt; let ny=P.y+P.vy*dt; const was=P.ground; P.ground=false;
+  if(P.vy<=0){let land=-1e9;for(const b of boxes){if(P.x+R>b.x1&&P.x-R<b.x2&&P.z+R>b.z1&&P.z-R<b.z2&&P.y>=b.y2-0.06&&ny<=b.y2)land=Math.max(land,b.y2);}
+    if(land>-1e9){ny=land;P.vy=0;P.ground=true;}}
+  else{for(const b of boxes){if(P.x+R>b.x1&&P.x-R<b.x2&&P.z+R>b.z1&&P.z-R<b.z2&&P.y+H<=b.y1+0.06&&ny+H>b.y1){ny=b.y1-H;P.vy=0;}}}
+  P.y=ny; P.coyote=P.ground?0.12:Math.max(0,P.coyote-dt);
+  if(jumpReq&&P.coyote>0){P.vy=10.2;P.coyote=0;P.ground=false;} jumpReq=false;
+  if(P.y<-4) respawn();
+  void was;
+}
+
+/* ---------- control ---------- */
+const keys={}; let yaw=0, pitch=0.42;
+const touch=matchMedia('(pointer:coarse)').matches;
+if(touch){$('jump').hidden=false;} else {$('keys').hidden=false;}
+addEventListener('keydown',e=>{if(paused())return;keys[e.code]=true;if(e.code==='Space'){jumpReq=true;e.preventDefault();}if(e.code==='KeyE'||e.code==='Enter'){if(!$('act').hidden)$('act').click();}});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('keydown',e=>{if(e.code==='Escape'){if(!$('panel').hidden)$('panel').hidden=true;}});
+let stickId=null,sx=0,sy=0,jx=0,jy=0,camId=null,lx=0;
+canvas.addEventListener('pointerdown',e=>{
+  if(paused())return;
+  if(e.pointerType==='touch'&&e.clientX<innerWidth*0.45&&e.clientY>innerHeight*0.35&&stickId===null){
+    stickId=e.pointerId;sx=e.clientX;sy=e.clientY;const st=$('stick');st.style.left=sx+'px';st.style.top=sy+'px';st.hidden=false;
+  }else if(camId===null){camId=e.pointerId;lx=e.clientX;}
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+  if(e.pointerId===stickId){let dx=e.clientX-sx,dy=e.clientY-sy;const l=Math.hypot(dx,dy),m=50;if(l>m){dx*=m/l;dy*=m/l;}jx=dx/m;jy=dy/m;$('knob').style.transform=`translate(${dx}px,${dy}px)`;}
+  else if(e.pointerId===camId){yaw-=(e.clientX-lx)*0.008;lx=e.clientX;}
+});
+function endPtr(e){if(e.pointerId===stickId){stickId=null;jx=jy=0;$('stick').hidden=true;$('knob').style.transform='';}if(e.pointerId===camId)camId=null;}
+canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
+$('jump').addEventListener('pointerdown',e=>{e.preventDefault();jumpReq=true;});
+function paused(){return !$('quiz').hidden||!$('panel').hidden||!$('intro').hidden;}
+
+/* ---------- interacțiune ---------- */
+let near=null;
+$('act').addEventListener('click',()=>{if(!near)return; if(near.type==='zone')openQuiz(near.z); else openChest();});
+function openChest(){
+  const n=Object.keys(S.stars).length;
+  if(S.chest){toast('Comoara e deja a ta! Ești un campion.');return;}
+  if(n<5){toast(`Mai ai nevoie de ${5-n} ${5-n===1?'stea':'stele'}. Ai ${n} din 5.`);return;}
+  S.chest=true;S.coins+=100;save();refreshHud();gold.visible=true;opening=0.001;
+  showPanel(`<div class="eyebrow">Comoara insulei</div><h2>Ai deschis comoara!</h2><div class="big">+100</div><p>Ai strâns toate cele 5 stele. Ai lucrat la paranteze, numărul ascuns, veverițe, piață și cuvinte. Bravo, Luca!</p><div class="row"><button class="btn" type="button" data-close>Super!</button></div>`);
+}
+let opening=0;
+
+/* ---------- lecții fulger (principiul, pas cu pas) ---------- */
+const L=(lines,delay=0.9)=>'<div class="stack">'+lines.map((l,i)=>`<div class="ln${l.res?' res':''}" style="animation-delay:${i*delay}s">${l.t||l}</div>`).join('')+'</div>';
+const LESSONS={
+  ordine:[
+    {h:'Regula 1: parantezele sunt cutii',p:'Ce e în paranteză se face primul. Deschizi cutia, afli ce e în ea, apoi mergi mai departe.',x:L(['(1 + 3) × 5','<mark>(1 + 3)</mark> × 5','<mark>4</mark> × 5',{t:'= 20',res:1}])},
+    {h:'Regula 2: × și : sunt operațiile tari',p:'Înmulțirea și împărțirea se fac înaintea adunării și scăderii, chiar dacă sunt la sfârșit.',x:L(['14 − 32 : 8','14 − <mark>32 : 8</mark>','14 − <mark>4</mark>',{t:'= 10',res:1}])},
+    {h:'Regula 3: același fel, de la stânga la dreapta',p:'Când ai doar + și −, sau doar × și :, mergi ca la citit.',x:L(['20 − 5 + 3','<mark>20 − 5</mark> + 3','<mark>15</mark> + 3',{t:'= 18',res:1}])},
+    {h:'Toate odată: exercițiul din test',p:'Rotunde ( ) înainte de pătrate [ ]. În fiecare cutie: întâi × și :, apoi + și −.',x:L(['(1 + 3) × (14 − 32 : 8) − 8','<mark>4</mark> × (14 − <mark>4</mark>) − 8','4 × <mark>10</mark> − 8','<mark>40</mark> − 8',{t:'= 32',res:1}],1.1)}
+  ],
+  ascuns:[
+    {h:'Fiecare operație are o pereche',p:'Ce face una, desface cealaltă. Ăsta e tot secretul.',x:L(['+ se desface cu −','− se desface cu +','× se desface cu :',': se desface cu ×'],.6)},
+    {h:'Mersul invers: te întorci pe pod',p:'La „Mă gândesc la un număr” pornești de la FINAL și faci operațiile pe dos, de la coadă la cap.',
+      x:'<div class="chain"><b>?</b><i>× 8 →</i><b>72</b><i>− 12 →</i><b>60</b><i>: 6 →</i><b>10</b><i>− 8 →</i><b>2</b></div>'+L([{t:'Înapoi: 2 + 8 = 10',res:0},'10 × 6 = 60','60 + 12 = 72',{t:'72 : 8 = 9. Numărul era 9!',res:1}],1)},
+    {h:'Necunoscuta ascunsă',p:'Acoperă cu degetul tot ce e în paranteza mare. Întreabă-te: ce număr împărțit la 10 dă 4?',
+      x:L(['[ 5 × (5×5 − 4×4) − a ] : 10 = 4','[ <mark>?</mark> ] : 10 = 4  →  ? = 4 × 10 = <mark>40</mark>','5 × 9 − a = 40  →  45 − a = 40',{t:'a = 45 − 40 = 5',res:1}],1.1)}
+  ],
+  veverite:[
+    {h:'Desenează benzi!',p:'Fiecare veveriță e o bandă. Benzile îți arată ce se suprapune.',
+      x:'<div class="bars"><div class="b"><span style="flex:125;background:#e07a2f">V1</span><span style="flex:273;background:#2f9e5b">V2</span><span style="flex:215;background:#3b7ddd">V3</span></div><div class="b" style="animation-delay:.8s"><span style="flex:398;background:#8a5cf6">primele două = 398</span><span style="flex:215;background:#d9d2c3"></span></div><div class="b" style="animation-delay:1.6s"><span style="flex:125;background:#d9d2c3"></span><span style="flex:488;background:#e0b020">ultimele două = 488</span></div></div>'},
+    {h:'Toate minus o pereche = cea rămasă',p:'Dacă din toate scot primele două, rămâne a treia.',x:L(['A treia: 613 − 398 = 215','Prima: 613 − 488 = 125','A doua: 398 − 125 = 273',{t:'Verificare: 125 + 273 + 215 = 613 ✔',res:1}],1)},
+    {h:'b + c la grămadă',p:'Nu știi b și c separat? Nu-ți trebuie! Folosește-le împreună.',x:L(['a = 5, b + c = 12','a + b + c = 5 + <mark>12</mark> = 17','2 × b + 2 × c = 2 × (b + c) = 2 × 12 = 24',{t:'5 × a + 2 × b + 2 × c = 25 + 24 = 49',res:1}],1)}
+  ],
+  piata:[
+    {h:'Cantitate × preț = cât costă',p:'4 kilograme a câte 3 lei înseamnă de 4 ori câte 3 lei.',x:L(['4 kg mere × 3 lei = <mark>12 lei</mark>'])},
+    {h:'Din total scazi ce știi',p:'Rămâne exact ce cauți. Apoi împarți la câte bucăți sunt.',x:L(['Total: 36 lei','Merele: 4 × 3 = 12 lei','Perele: 36 − 12 = 24 lei',{t:'1 kg pere: 24 : 3 = 8 lei',res:1}],1)},
+    {h:'Bunica: adună tot ce a dat',p:'Banii de la început = tot ce a cheltuit + tot ce a dăruit.',x:L(['Caise: 3 × 6 = 18 lei','Pâini: 4 × 5 = 20 lei','Nepoți: 3 × 10 = 30 lei',{t:'La început: 18 + 20 + 30 = 68 lei',res:1}],1)}
+  ],
+  cuvinte:[
+    {h:'Trucul cu „se”',p:'Dacă poți spune „se”, scrii cu cratimă.',x:L(['Mama <mark>s-a</mark> dus → mama <mark>se</mark> duce ✔','Copiii <mark>s-au</mark> jucat → copiii <mark>se</mark> joacă ✔'])},
+    {h:'„sau” = „ori”',p:'Dacă poți pune „ori”, e „sau”, fără cratimă.',x:L(['Mere <mark>sau</mark> pere? → mere <mark>ori</mark> pere ✔'])},
+    {h:'„sa” = a lui / a ei',p:'Cartea sa = cartea lui. Nu e o acțiune.',x:L(['Și-a luat cartea <mark>sa</mark> → cartea <mark>lui</mark> ✔'])},
+    {h:'„i-a” sau „ia”?',p:'„i-a dat” = lui i-a dat. „Ia!” vine de la „a lua”.',x:L(['Tata <mark>i-a</mark> dat un măr → lui i-a dat','<mark>Ia</mark> cartea! → a lua'])}
+  ]
+};
+function showLesson(z,after){
+  const sl=LESSONS[z.id]; let i=0; S.seen[z.id]=true; save(); keysReset();
+  const draw=()=>{const s=sl[i];
+    $('panelCard').innerHTML=`<div class="eyebrow">Lecția fulger · ${esc(z.name)}</div><h2>${s.h}</h2><p>${s.p}</p><div class="lesson">${s.x}</div>
+      <div class="sdots">${sl.map((_,k)=>`<i class="${k===i?'now':''}"></i>`).join('')}</div>
+      <div class="row">${i>0?'<button class="btn light" type="button" id="lb">Înapoi</button>':''}<button class="btn" type="button" id="ln">${i<sl.length-1?'Mai departe':(after?'La provocări!':'Am înțeles')}</button></div>`;
+    $('panel').hidden=false;
+    if($('lb'))$('lb').onclick=()=>{i--;draw();};
+    $('ln').onclick=()=>{SFX.tap();if(i<sl.length-1){i++;draw();}else{$('panel').hidden=true;if(after)after();}};};
+  draw();
+}
+
+/* ---------- recapitulare la 1, 3, 7 zile ---------- */
+const GAPS=[1,3,7];
+function reviewMark(type,ok){
+  const r=S.review[type],d=DAY();
+  if(!ok){S.review[type]={due:d+1,stage:0};return;}
+  if(r&&r.due<=d){r.stage++; if(r.stage>=GAPS.length)delete S.review[type]; else r.due=d+GAPS[r.stage];}
+}
+const dueTypes=()=>Object.keys(S.review).filter(t=>S.review[t].due<=DAY());
+const zoneOf=t=>ZONES.find(z=>z.types.includes(t));
+
+/* ---------- quiz ---------- */
+let Q=null, combo=0, goalShown=false;
+function mk(t){return Object.assign({type:t,zone:zoneOf(t)},G[t]());}
+function openQuiz(z){
+  if(!S.seen[z.id]){showLesson(z,()=>openQuiz(z));return;}
+  const qs=[];for(let i=0;i<5;i++)qs.push(mk(pickType(z)));
+  Q={z,qs,i:0,ok:0,res:[],daily:false}; startQuiz();
+}
+function openDaily(){
+  const due=shuffle(dueTypes()).slice(0,4), qs=due.map(mk);
+  const all=ZONES.flatMap(z=>z.types);
+  while(qs.length<10){const z=pick(ZONES);qs.push(mk(pickType(z)));}
+  Q={z:{name:'Antrenamentul zilei',id:'daily'},qs,i:0,ok:0,res:[],daily:true,nrev:due.length}; startQuiz();
+  if(due.length)toast(`Întâi ${due.length} ${due.length===1?'recapitulare':'recapitulări'} din zilele trecute.`);
+  void all;
+}
+function startQuiz(){$('quiz').hidden=false;keysReset();renderQ();}
+function keysReset(){for(const k in keys)keys[k]=false;jx=jy=0;stickId=null;$('stick').hidden=true;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function renderQ(){
+  const q=Q.qs[Q.i]; q.used=0; draftClear();
+  const n=Q.qs.length;
+  const dots=Q.qs.map((_,k)=>`<i class="${k<Q.i?(Q.res[k]?'ok':'no'):k===Q.i?'now':''}"></i>`).join('');
+  const tag=Q.daily&&Q.i<Q.nrev?' · recapitulare':'';
+  const body=q.kind==='tap'
+    ? `<div class="toks">${q.toks.map((t,k)=>/^[+−×:]$/.test(t)?`<button class="tok op" type="button" data-k="${k}">${t}</button>`:`<span class="tok">${t}</span>`).join('')}</div>`
+    : `<div class="opts">${q.opts.map((o,k)=>`<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join('')}</div>`;
+  const hs=hintsOf(q);
+  $('quizCard').innerHTML=`<div class="eyebrow">${esc(q.zone.name)} · ${Q.i+1} din ${n}${tag}</div><div class="dots">${dots}</div>
+   ${combo>=2?`<div class="combo">Combo ${combo}! ${combo>=3?'Monede duble':'Încă unul și primești monede duble'}</div>`:''}
+   <div class="q">${esc(q.text)}${q.expr?`<span class="expr">${esc(q.expr)}</span>`:''}</div>
+   <div class="tools"><button class="tool" type="button" id="tDraft">Ciornă</button><button class="tool" type="button" id="tHint" ${hs.length?'':'disabled'}>Indiciu</button><button class="tool" type="button" id="tLesson">Lecția</button></div>
+   <div id="hintBox"></div>${body}<div id="fbBox"></div>`;
+  $('quizCard').querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>answer(+b.dataset.k)));
+  $('tDraft').onclick=()=>openDraft();
+  $('tHint').onclick=()=>{if(q.done)return;q.used=Math.min(q.used+1,hs.length);SFX.tap();
+    $('hintBox').innerHTML=`<div class="hint"><b>Indiciu ${q.used} din ${hs.length}</b>${hs.slice(0,q.used).map(h=>`<span>${esc(h)}</span>`).join('')}</div>`;
+    if(q.used>=hs.length)$('tHint').disabled=true;};
+  $('tLesson').onclick=()=>showLesson(q.zone,null);
+  $('quizCard').scrollTop=0;
+}
+function hintsOf(q){return q.hints||(q.steps.length>1?q.steps.slice(0,-1):[]);}
+function answer(k){
+  const q=Q.qs[Q.i]; if(q.done)return; q.done=true;
+  const ok=q.kind==='tap'?k===q.ans:q.opts[k]===q.ans;
+  if(q.kind==='tap'){$('quizCard').querySelectorAll('.tok.op').forEach(b=>{const i=+b.dataset.k;b.disabled=true;if(i===q.ans)b.classList.add('right');else if(i===k)b.classList.add('wrong');});}
+  else $('quizCard').querySelectorAll('.opt').forEach((b,i)=>{b.disabled=true;if(q.opts[i]===q.ans)b.classList.add('right');else if(i===k)b.classList.add('wrong');});
+  const st=S.stats[q.type]||(S.stats[q.type]={ok:0,bad:0}); ok?st.ok++:st.bad++;
+  reviewMark(q.type,ok);
+  let gain=0;
+  if(ok){combo++;gain=Math.max(1,5-q.used*2)*(combo>=3?2:1);Q.ok++;S.coins+=gain;SFX.ok();confetti();}else{combo=0;SFX.no();}
+  Q.res[Q.i]=ok; save(); refreshHud();
+  const last=Q.i===Q.qs.length-1, ansTxt=q.kind==='tap'?q.toks[q.ans]:q.ans;
+  $('fbBox').innerHTML=`<div class="fb ${ok?'ok':'no'}"><b>${ok?`Corect! +${gain} ${gain===1?'monedă':'monede'}${combo>=3?' (combo!)':''}`:'Nu chiar. Răspunsul corect: '+esc(ansTxt)}</b>
+    <span>${ok?'Iată cum se face:':'Hai să vedem pas cu pas. Acest tip de exercițiu revine mâine, ca să-l prinzi.'}</span><ol>${q.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
+    <div class="row" style="margin-top:10px"><button class="btn" type="button" id="next">${last?'Vezi rezultatul':'Mai departe'}</button></div>`;
+  $('next').addEventListener('click',()=>{closeDraft();if(last)finishQuiz();else{Q.i++;renderQ();}});
+  $('fbBox').scrollIntoView({block:'nearest'});
+}
+function finishQuiz(){
+  closeDraft();
+  const n=Q.qs.length;
+  if(Q.daily){
+    $('quizCard').innerHTML=`<div class="eyebrow">Antrenamentul zilei</div><h2>${Q.ok>=8?'Ești în formă maximă!':Q.ok>=5?'Bine lucrat!':'Fiecare greșeală e o lecție.'}</h2>
+      <div class="big">${Q.ok} / ${n}</div><p>${Q.nrev?`Ai făcut ${Q.nrev} ${Q.nrev===1?'recapitulare':'recapitulări'}. `:''}Ce ai greșit azi revine mâine, apoi peste 3 zile și peste o săptămână. Așa se lipește de creier.</p>
+      <div class="row"><button class="btn light" type="button" id="again">Încă o rundă</button><button class="btn" type="button" id="back">Înapoi pe insulă</button></div>`;
+    $('again').onclick=openDaily; $('back').onclick=()=>{$('quiz').hidden=true;Q=null;checkGoal();};
+    return;
+  }
+  const z=Q.z,had=!!S.stars[z.id],win=Q.ok>=4;
+  if(win&&!had){S.stars[z.id]=true;save();refreshHud();zoneObjs.find(o=>o.z.id===z.id).ring.visible=true;SFX.star();confetti();}
+  const msg=win?(had?'Ai stăpânit din nou cristalul. Monedele sunt ale tale!':'Ai câștigat o stea nouă!'):'Pentru stea ai nevoie de cel puțin 4 răspunsuri bune. Mai încearcă, exercițiile greșite vor apărea iar.';
+  $('quizCard').innerHTML=`<div class="eyebrow">${esc(z.name)}</div><h2>${win?'Bravo, Luca!':'Aproape!'}</h2>
+    <div class="big">${Q.ok} / 5</div><p>${msg}</p>
+    <div class="row"><button class="btn light" type="button" id="again">Încă o rundă</button><button class="btn" type="button" id="back">Înapoi pe insulă</button></div>`;
+  $('again').onclick=()=>openQuiz(z); $('back').onclick=()=>{$('quiz').hidden=true;Q=null;checkGoal();};
+}
+function checkGoal(){
+  if(S.today.sec<GOAL||goalShown||S.lastGoalDay===DAY())return;
+  goalShown=true; const d=DAY(); S.streak=(S.lastGoalDay===d-1?S.streak:0)+1; S.lastGoalDay=d; S.coins+=20; save(); refreshHud(); SFX.star(); confetti();
+  showPanel(`<div class="eyebrow">Obiectivul de azi: 20 de minute</div><h2>Gata pe azi, campionule!</h2><div class="big">+20</div>
+    <p>Ai antrenat creierul 20 de minute. Serie: <b>${S.streak} ${S.streak===1?'zi':'zile'} la rând</b>.</p>
+    <p>Creierul învață cel mai bine puțin și des. Ce ai lucrat azi se așază peste noapte. Ne vedem mâine!</p>
+    <div class="row"><button class="btn" type="button" data-close>Super!</button></div>`);
+}
+
+/* ---------- ciornă ---------- */
+const pc=$('paperC'),px=pc.getContext('2d'); let strokes=[],cur=null,pen='#2456b8';
+function fitPaper(){const r=pc.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);if(!r.width)return;pc.width=r.width*d;pc.height=r.height*d;px.setTransform(d,0,0,d,0,0);redraw();}
+function redraw(){px.clearRect(0,0,pc.width,pc.height);for(const s of strokes)drawStroke(s);}
+function drawStroke(s){px.globalCompositeOperation=s.c==='erase'?'destination-out':'source-over';px.strokeStyle=s.c==='erase'?'#000':s.c;px.lineWidth=s.c==='erase'?24:3;px.lineCap=px.lineJoin='round';
+  px.beginPath();s.p.forEach((p,i)=>i?px.lineTo(p[0],p[1]):px.moveTo(p[0],p[1]));if(s.p.length===1)px.lineTo(s.p[0][0]+.1,s.p[0][1]);px.stroke();px.globalCompositeOperation='source-over';}
+pc.addEventListener('pointerdown',e=>{const r=pc.getBoundingClientRect();cur={c:pen,p:[[e.clientX-r.left,e.clientY-r.top]]};strokes.push(cur);pc.setPointerCapture(e.pointerId);drawStroke(cur);});
+pc.addEventListener('pointermove',e=>{if(!cur)return;const r=pc.getBoundingClientRect();cur.p.push([e.clientX-r.left,e.clientY-r.top]);const s={c:cur.c,p:cur.p.slice(-2)};drawStroke(s);});
+const endS=()=>{cur=null;}; pc.addEventListener('pointerup',endS); pc.addEventListener('pointercancel',endS);
+document.querySelectorAll('#draft [data-pen]').forEach(b=>b.addEventListener('click',()=>{pen=b.dataset.pen;document.querySelectorAll('#draft [data-pen]').forEach(x=>x.classList.toggle('on',x===b));}));
+const pt=$('paperT');
+function draftClear(){strokes=[];redraw();pt.value='';}
+let dMode=matchMedia('(pointer:fine)').matches?'type':'draw';
+function setMode(m){dMode=m;$('draft').classList.toggle('type',m==='type');$('draft').classList.toggle('draw',m==='draw');
+  $('mType').classList.toggle('on',m==='type');$('mDraw').classList.toggle('on',m==='draw');if(m==='type')pt.focus({preventScroll:true});}
+$('mType').onclick=()=>setMode('type'); $('mDraw').onclick=()=>setMode('draw');
+// * devine ×, / devine :, - devine −
+pt.addEventListener('input',()=>{const p=pt.selectionStart,v=pt.value.replace(/\*/g,'×').replace(/\//g,':').replace(/-/g,'−');if(v!==pt.value){pt.value=v;pt.setSelectionRange(p,p);}});
+document.querySelectorAll('#draft [data-ins]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();
+  const k=b.dataset.ins==='↵'?'\n':' '+b.dataset.ins+' ',a=pt.selectionStart??pt.value.length,z=pt.selectionEnd??a;
+  pt.value=pt.value.slice(0,a)+k+pt.value.slice(z);const c=a+k.length;pt.focus({preventScroll:true});pt.setSelectionRange(c,c);}));
+function openDraft(){$('draft').hidden=false;$('quiz').classList.add('withdraft');setMode(dMode);requestAnimationFrame(fitPaper);}
+function closeDraft(){$('draft').hidden=true;$('quiz').classList.remove('withdraft');}
+$('draftClear').onclick=draftClear; $('draftClose').onclick=closeDraft;
+addEventListener('resize',()=>{if(!$('draft').hidden)fitPaper();});
+
+/* ---------- panouri ---------- */
+function showPanel(html){$('panelCard').innerHTML=html;$('panel').hidden=false;keysReset();
+  $('panelCard').querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{$('panel').hidden=true;}));}
+$('panel').addEventListener('click',e=>{if(e.target.id==='panel')$('panel').hidden=true;});
+$('openShop').addEventListener('click',renderShop);
+function renderShop(){
+  const it=(kind,id,o)=>{const own=S.owned.includes(id),on=S[kind]===id;
+    return `<button class="item ${on?'on':''}" type="button" data-kind="${kind}" data-id="${id}">${kind==='shirt'?`<span class="sw" style="background:#${o.c.toString(16).padStart(6,'0')}"></span>`:''}<span>${esc(o.n)}</span><span>${on?'Purtat':own?'Îmbracă':o.p+' monede'}</span></button>`;};
+  showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Garderoba</h2><p>Tricouri</p><div class="shopgrid">${Object.entries(SHIRTS).map(([k,o])=>it('shirt',k,o)).join('')}</div>
+   <p>Pălării</p><div class="shopgrid">${Object.entries(HATS).map(([k,o])=>it('hat',k,o)).join('')}</div><div class="row"><button class="btn" type="button" data-close>Gata</button></div>`);
+  $('panelCard').querySelectorAll('.item').forEach(b=>b.addEventListener('click',()=>{
+    const kind=b.dataset.kind,id=b.dataset.id,o=(kind==='shirt'?SHIRTS:HATS)[id];
+    if(!S.owned.includes(id)){if(S.coins<o.p){toast(`Îți mai trebuie ${o.p-S.coins} monede. Rezolvă provocări!`);return;}S.coins-=o.p;S.owned.push(id);}
+    S[kind]=id;save();updateLook();refreshHud();renderShop();
+  }));
+}
+$('openProg').addEventListener('click',()=>{
+  const names={primul:'Ce operație se face prima',ordine1:'Paranteze și ordinea operațiilor',ordine2:'Înmulțiri înaintea scăderilor',ordine3:'Capcana „+ ×”',necunoscut1:'Necunoscuta în paranteze mari',necunoscut2:'Află numărul necunoscut',gandesc:'„Mă gândesc la un număr”',veverite:'Problema cu veverițele',abc:'a + b + c când știi b + c',piata1:'Mere și pere',bunica:'Bunica la piață (mers invers)',rest:'Rest de bani',orto:'Ortograme'};
+  const rows=Object.keys(names).map(t=>{const s=S.stats[t]||{ok:0,bad:0},n=s.ok+s.bad,p=n?Math.round(100*s.ok/n):0;
+    return `<div class="bar"><span>${names[t]}</span><span class="tr"><i style="width:${p}%"></i></span><span class="n">${n?p+'%':'–'}</span></div>`;}).join('');
+  showPanel(`<div class="eyebrow">Pentru părinți</div><h2>Unde mai are de lucrat</h2><p>Procentul de răspunsuri corecte pe fiecare tip de exercițiu. Tipurile cu procent mic apar mai des în joc.</p><div style="display:flex;flex-direction:column;gap:8px">${rows}</div>
+   <p><b>Azi:</b> ${Math.floor(S.today.sec/60)} din 20 de minute · <b>Serie:</b> ${S.streak} ${S.streak===1?'zi':'zile'} · <b>Recapitulări programate:</b> ${Object.keys(S.review).length} (${dueTypes().length} pentru azi)</p>
+   <div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
+});
+$('start').addEventListener('click',()=>{$('intro').hidden=true;SFX.tap();});
+function refreshHud(){$('coins').textContent=S.coins;$('stars').textContent=Object.keys(S.stars).length+'/5';
+  $('streak').textContent='Serie '+S.streak;const m=Math.min(20,Math.floor(S.today.sec/60));$('dayMin').textContent=m+'/20';$('dayFill').style.width=(m/20*100)+'%';
+  $('mute').textContent='Sunet: '+(S.mute?'nu':'da');}
+$('openDaily').addEventListener('click',()=>{SFX.tap();openDaily();});
+$('mute').addEventListener('click',()=>{S.mute=!S.mute;save();refreshHud();SFX.tap();});
+refreshHud();
+
+/* ---------- bucla ---------- */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+addEventListener('resize',resize); resize();
+let hudT=0, last=performance.now(), t=0, walk=0, face=0;
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; t+=dt;
+  if(!$('quiz').hidden||(!$('panel').hidden&&$('panelCard').querySelector('.lesson'))){if(S.today.day!==DAY())S.today={day:DAY(),sec:0};S.today.sec+=dt;hudT+=dt;if(hudT>5){hudT=0;save();refreshHud();}}
+  let fwd=0,side=0;
+  if(!paused()){
+    fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-jy;
+    side=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+jx;
+    if(keys.KeyQ)yaw+=1.8*dt; if(keys.KeyR)yaw-=1.8*dt;
+  }
+  const l=Math.hypot(fwd,side); if(l>1){fwd/=l;side/=l;}
+  const fx_=-Math.sin(yaw),fz_=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  const mx=(fx_*fwd+rx*side)*6.5, mz=(fz_*fwd+rz*side)*6.5;
+  physics(dt,mx,mz);
+  const moving=Math.hypot(mx,mz)>0.3;
+  if(moving){const target=Math.atan2(mx,mz);let d=target-face;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;face+=d*Math.min(1,dt*12);walk+=dt*10;}else walk*=0.85;
+  const sw=moving?Math.sin(walk)*0.7:0;
+  legs[0].rotation.x=sw;legs[1].rotation.x=-sw;arms[0].rotation.x=-sw;arms[1].rotation.x=sw;
+  player.position.set(P.x,P.y,P.z); player.rotation.y=face;
+  // camera
+  const cd=9, cx=P.x+Math.sin(yaw)*cd*Math.cos(pitch), cz=P.z+Math.cos(yaw)*cd*Math.cos(pitch), cy=P.y+1.5+cd*Math.sin(pitch);
+  camera.position.lerp(new THREE.Vector3(cx,cy,cz),Math.min(1,dt*8)); camera.lookAt(P.x,P.y+1.5,P.z);
+  // cristale, monede, comoară
+  zoneObjs.forEach((o,i)=>{o.cr.rotation.y+=dt*1.2;o.cr.position.y=2.6+Math.sin(t*2+i)*0.2;o.ring.rotation.x=Math.PI/2+Math.sin(t)*0.3;o.ring.rotation.z+=dt;});
+  for(const c of worldCoins){
+    if(c.back>0){c.back-=dt;if(c.back<=0)c.m.visible=true;continue;}
+    c.m.rotation.z+=dt*3;
+    if(Math.hypot(c.m.position.x-P.x,c.m.position.z-P.z)<1.1&&Math.abs(c.m.position.y-(P.y+1))<1.4){c.m.visible=false;c.back=45;S.coins+=1;save();refreshHud();SFX.coin();}
+  }
+  if(opening>0&&opening<1){opening=Math.min(1,opening+dt*1.5);lidPivot.rotation.x=-1.9*opening;}
+  // ce e aproape
+  let n=null;
+  for(const o of zoneObjs){if(Math.hypot(o.z.x-P.x,o.z.z-P.z)<4.2&&P.y<1.5){n={type:'zone',z:o.z};break;}}
+  if(!n&&Math.hypot(fx-P.x,fz-P.z)<3&&Math.abs(P.y-fh)<1)n={type:'chest'};
+  if((n&&n.type)!==(near&&near.type)||(n&&near&&n.z!==near.z)){
+    near=n;const a=$('act');
+    if(!n)a.hidden=true;else{a.textContent=n.type==='zone'?`Vorbește cu cristalul: ${n.z.sub}`:'Deschide comoara';a.hidden=false;}
+  }
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>

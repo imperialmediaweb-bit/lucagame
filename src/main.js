@@ -1,0 +1,215 @@
+// Insula lui Luca: motorul jocului (Babylon.js), personajul, controalele și legătura cu ecranele.
+import { Engine } from '@babylonjs/core/Engines/engine';
+import { Scene } from '@babylonjs/core/scene';
+import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
+import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator';
+import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
+import { GlowLayer } from '@babylonjs/core/Layers/glowLayer';
+import '@babylonjs/core/Layers/effectLayerSceneComponent';
+import { LABELS } from './avatar.js';
+import { S, save } from './state.js';
+import { SFX } from './audio.js';
+import { createAvatar } from './avatar.js';
+import { buildWorld } from './world.js';
+import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('game');
+const engine = new Engine(canvas, true, { preserveDrawingBuffer: false, stencil: true, adaptToDeviceRatio: false });
+engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.75));
+const scene = new Scene(engine);
+scene.clearColor = Color4.FromHexString('#8fd3f0ff');
+scene.ambientColor = new Color3(0.3, 0.3, 0.3);
+scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogColor = Color3.FromHexString('#8fd3f0'); scene.fogStart = 60; scene.fogEnd = 160;
+
+const camera = new FreeCamera('cam', new Vector3(0, 6, 14), scene);
+camera.inputs.clear(); camera.minZ = 0.1; camera.fov = 1.0;
+
+const hemi = new HemisphericLight('h', new Vector3(0.2, 1, 0.1), scene);
+hemi.intensity = 0.75; hemi.groundColor = Color3.FromHexString('#6aa060');
+const sun = new DirectionalLight('sun', new Vector3(-0.5, -1, -0.35), scene);
+sun.position = new Vector3(30, 60, 25); sun.intensity = 0.9;
+const shadow = new ShadowGenerator(1024, sun);
+shadow.usePercentageCloserFiltering = true; shadow.bias = 0.002; shadow.darkness = 0.35;
+sun.autoUpdateExtends = false; sun.shadowMinZ = 1; sun.shadowMaxZ = 150; sun.orthoLeft = -30; sun.orthoRight = 30; sun.orthoTop = 30; sun.orthoBottom = -30;
+const glow = new GlowLayer('glow', scene, { blurKernelSize: 32 }); glow.intensity = 0.4;
+
+const W = buildWorld(scene, shadow);
+const me = createAvatar(scene, S.look, shadow, 'luca');
+LABELS.forEach((l) => glow.addExcludedMesh(l));
+let yaw0 = Math.atan2(5, 5);
+
+/* ---------- fizică simplă cu cutii ---------- */
+const P = { x: W.spawn.x, y: W.spawn.y, z: W.spawn.z, vy: 0, ground: false, coyote: 0 }, R = 0.42, HGT = 2.5;
+const hitAt = (px, py, pz) => { for (const b of W.colliders) if (px + R > b.x1 && px - R < b.x2 && pz + R > b.z1 && pz - R < b.z2 && py < b.y2 - 0.01 && py + HGT > b.y1) return b; return null; };
+function moveAxis(ax, d) {
+  if (!d) return; const nx = ax === 'x' ? P.x + d : P.x, nz = ax === 'z' ? P.z + d : P.z, b = hitAt(nx, P.y, nz);
+  if (!b) { P.x = nx; P.z = nz; return; }
+  if (P.ground && b.y2 - P.y <= 0.55 && !hitAt(nx, b.y2, nz)) { P.x = nx; P.z = nz; P.y = b.y2; }
+}
+let jumpReq = false, standing = null;
+function physics(dt, mx, mz) {
+  moveAxis('x', mx * dt); moveAxis('z', mz * dt);
+  P.vy -= 30 * dt; let ny = P.y + P.vy * dt; P.ground = false; standing = null;
+  if (P.vy <= 0) {
+    let land = -1e9, lb = null;
+    for (const b of W.colliders) if (P.x + R > b.x1 && P.x - R < b.x2 && P.z + R > b.z1 && P.z - R < b.z2 && P.y >= b.y2 - 0.08 && ny <= b.y2 && b.y2 > land) { land = b.y2; lb = b; }
+    if (lb) { ny = land; P.vy = 0; P.ground = true; standing = lb; if (lb.bounce) { P.vy = lb.bounce; P.ground = false; SFX.boing(); } }
+  } else {
+    for (const b of W.colliders) if (P.x + R > b.x1 && P.x - R < b.x2 && P.z + R > b.z1 && P.z - R < b.z2 && P.y + HGT <= b.y1 + 0.08 && ny + HGT > b.y1) { ny = b.y1 - HGT; P.vy = 0; }
+  }
+  P.y = ny; P.coyote = P.ground ? 0.12 : Math.max(0, P.coyote - dt);
+  if (jumpReq && P.coyote > 0) { P.vy = 11; P.coyote = 0; P.ground = false; SFX.jump(); }
+  jumpReq = false;
+  if (P.y < -6) { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); }
+}
+function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
+
+/* ---------- control ---------- */
+const keys = {}; let yaw = yaw0, pitch = 0.38, camDist = 10, jx = 0, jy = 0, stickId = null, camId = null, sx = 0, sy = 0, lx = 0, ly = 0;
+const touch = matchMedia('(pointer:coarse)').matches;
+if (touch) $('jump').hidden = false; else $('keys').hidden = false;
+const stop = () => { for (const k in keys) keys[k] = false; jx = jy = 0; stickId = null; $('stick').hidden = true; };
+addEventListener('keydown', (e) => {
+  if (paused() || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = true;
+  if (e.code === 'Space') { jumpReq = true; e.preventDefault(); }
+  if ((e.code === 'KeyE' || e.code === 'Enter') && !$('act').hidden) $('act').click();
+});
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+canvas.addEventListener('pointerdown', (e) => {
+  if (paused()) return;
+  if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.3 && stickId === null) {
+    stickId = e.pointerId; sx = e.clientX; sy = e.clientY; const st = $('stick'); st.style.left = sx + 'px'; st.style.top = sy + 'px'; st.hidden = false;
+  } else if (camId === null) { camId = e.pointerId; lx = e.clientX; ly = e.clientY; }
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId === stickId) { let dx = e.clientX - sx, dy = e.clientY - sy; const l = Math.hypot(dx, dy), m = 50; if (l > m) { dx *= m / l; dy *= m / l; } jx = dx / m; jy = dy / m; $('knob').style.transform = `translate(${dx}px,${dy}px)`; }
+  else if (e.pointerId === camId) { yaw -= (e.clientX - lx) * 0.008; pitch = Math.max(0.1, Math.min(1.1, pitch + (e.clientY - ly) * 0.005)); lx = e.clientX; ly = e.clientY; }
+});
+const endPtr = (e) => { if (e.pointerId === stickId) { stickId = null; jx = jy = 0; $('stick').hidden = true; $('knob').style.transform = ''; } if (e.pointerId === camId) camId = null; };
+canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('wheel', (e) => { camDist = Math.max(5, Math.min(18, camDist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
+$('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpReq = true; });
+
+/* ---------- interacțiune ---------- */
+let near = null, cheerT = 0;
+$('act').addEventListener('click', () => {
+  if (!near) return;
+  if (near.type === 'npc') talkTo(near.n.m);
+  if (near.type === 'chest') openChest(near.c);
+});
+function openChest(c) {
+  const today = Math.floor(Date.now() / 86400000);
+  if (S.chests[c.id] === today) { toast('Ai deschis-o azi. Revino mâine pentru altă comoară!'); return; }
+  S.chests[c.id] = today; S.coins += 25; save(); refreshHud(); c.open = 0.001; SFX.fanfare(); confetti(); cheerT = 2;
+  toast('Comoară! +25 de monede');
+}
+function goTo(m) {
+  const n = W.npcs.find((x) => x.m.id === m.id); if (!n) return;
+  if (m.boss) teleport(n.x, n.z - 6, 0.5);
+  else { const dx = n.area.pos[0] - n.x, dz = n.area.pos[1] - n.z, l = Math.hypot(dx, dz) || 1; teleport(n.x + dx / l * 2.6, n.z + dz / l * 2.6, n.top + 0.5); }
+  yaw = Math.atan2(P.x - n.x, P.z - n.z);
+  toast(`Ai ajuns la ${m.npc}!`);
+}
+function missionsChanged() {
+  W.npcs.forEach((n) => { const st = (S.missions[n.m.id] || {}).stars || 0; n.bang.isVisible = st === 0; n.done.isVisible = st > 0; });
+}
+missionsChanged();
+
+initUI({ setLook: (l) => me.setLook(l), goTo, stop, missionsChanged, cheer: () => { cheerT = 1.4; } });
+if (!S.tutorial) showTutorial(touch);
+
+/* ---------- bucla ---------- */
+let t = 0, face = 0, hudT = 0;
+const camPos = new Vector3(0, 8, 16);
+scene.registerBeforeRender(() => {
+  const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+  tickTime(dt); hudT += dt; if (hudT > 5) { hudT = 0; save(); refreshHud(); }
+  let fwd = 0, side = 0;
+  if (!paused()) {
+    fwd = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - jy;
+    side = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + jx;
+  }
+  const l = Math.hypot(fwd, side); if (l > 1) { fwd /= l; side /= l; }
+  // camera stă în spatele jucătorului, la unghiul yaw
+  // Babylon e „mâna stângă”: dreapta ecranului este (-cos, sin)
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = -Math.cos(yaw), rz = Math.sin(yaw);
+  const speed = 7.5, mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
+  // platforme care se mișcă
+  for (const mv of W.movers) {
+    const nxp = mv.base + Math.sin(t * mv.sp) * mv.amp, d = nxp - mv.m.position.x; mv.m.position.x = nxp; mv.c.x1 += d; mv.c.x2 += d;
+    if (standing === mv.c) P.x += d;
+  }
+  physics(dt, mx, mz);
+  const moving = Math.hypot(mx, mz) > 0.3;
+  if (moving) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
+  cheerT = Math.max(0, cheerT - dt);
+  me.root.position.set(P.x, P.y, P.z); me.root.rotation.y = face;
+  me.update(dt, { speed: moving ? Math.min(1, l) : 0, air: !P.ground && P.coyote <= 0, dance: cheerT > 0 && P.ground && !moving });
+
+  const cd = camDist, tgt = new Vector3(P.x, P.y + 1.8, P.z);
+  camPos.set(P.x + Math.sin(yaw) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yaw) * cd * Math.cos(pitch));
+  camera.position = Vector3.Lerp(camera.position, camPos, Math.min(1, dt * 8)); camera.setTarget(tgt);
+  // umbra urmărește jucătorul
+  sun.position.set(P.x + 30, 60, P.z + 25);
+
+  // NPC-uri: respiră, se uită la tine, salută când ești aproape
+  near = null; let best = 1e9;
+  for (const n of W.npcs) {
+    const d = Math.hypot(n.x - P.x, n.z - P.z);
+    const look = d < 9 ? Math.atan2(P.x - n.x, P.z - n.z) - n.av.root.rotation.y : undefined;
+    let lk = look; if (lk !== undefined) { while (lk > Math.PI) lk -= 2 * Math.PI; while (lk < -Math.PI) lk += 2 * Math.PI; }
+    n.av.update(dt, { lookYaw: lk, wave: d < 5 && d > 2.2 });
+    n.bang.position.y = n.baseY + Math.sin(t * 3 + n.x) * 0.15; n.done.position.y = n.bang.position.y;
+    const reach = n.m.boss ? 5.5 : 3.2;
+    if (d < reach && Math.abs(P.y - n.top) < 2 && d < best) { best = d; near = { type: 'npc', n }; }
+  }
+  for (const c of W.chests) {
+    if (c.open > 0 && c.open < 1) { c.open = Math.min(1, c.open + dt * 1.5); c.piv.rotation.x = -1.9 * c.open; }
+    if (Math.hypot(c.x - P.x, c.z - P.z) < 2.8 && Math.abs(P.y - c.top) < 1.2) near = { type: 'chest', c };
+  }
+  for (const p of W.pads) {
+    p.ring.rotation.y += dt; p.ring.position.y = 1.6 + Math.sin(t * 2) * 0.2;
+    if (Math.hypot(p.x - P.x, p.z - P.z) < 1.4 && P.y < 0.6) {
+      const [ax, az] = p.area.pos; teleport(ax - Math.sign(ax) * 13, az - Math.sign(az) * 13); yaw = Math.atan2(-Math.sign(ax), -Math.sign(az));
+      SFX.star(); toast(`Bun venit în ${p.area.name}!`);
+    }
+  }
+  for (const c of W.coins) {
+    if (c.back > 0) { c.back -= dt; if (c.back <= 0) c.m.isVisible = true; continue; }
+    c.m.rotation.y += dt * 3;
+    if (Math.hypot(c.m.position.x - P.x, c.m.position.z - P.z) < 1.1 && Math.abs(c.m.position.y - (P.y + 1)) < 1.5) { c.m.isVisible = false; c.back = 60; S.coins += 1; SFX.coin(); refreshHud(); }
+  }
+  for (const c of W.clouds) { c.position.x += dt * 0.8; if (c.position.x > 130) c.position.x = -130; }
+  W.statue.update(dt, { dance: true });
+
+  const act = $('act');
+  if (!near || paused()) act.hidden = true;
+  else { act.textContent = near.type === 'npc' ? `Vorbește cu ${near.n.m.npc}` : 'Deschide comoara'; act.hidden = false; }
+  updateQuest();
+});
+
+/* ---------- bara cu misiunea următoare ---------- */
+let qm = null;
+$('qGo').onclick = () => { if (qm) goTo(qm); };
+function updateQuest() {
+  const m = nextMission(), el = $('quest');
+  if (!m || paused()) { el.hidden = true; return; }
+  el.hidden = false;
+  if (m !== qm) { qm = m; $('qTitle').textContent = m.title; }
+  const n = W.npcs.find((x) => x.m.id === m.id), d = Math.round(Math.hypot(n.x - P.x, n.z - P.z));
+  $('qSub').textContent = `${m.npc} · ${d} m`;
+  const ang = Math.atan2(n.x - P.x, n.z - P.z) - Math.atan2(-Math.sin(yaw), -Math.cos(yaw));
+  $('qArrow').style.transform = `rotate(${ang}rad)`;
+}
+
+engine.runRenderLoop(() => scene.render());
+addEventListener('resize', () => engine.resize());
+scene.executeWhenReady(() => { $('loading').hidden = true; });
+document.fonts && document.fonts.ready.then(() => { /* etichetele folosesc fonturile deja încărcate la prima randare */ });

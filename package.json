@@ -1,8 +1,18 @@
 {
   "name": "lucagame",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Insula lui Luca - joc de învățat pentru clasa a III-a",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" }
+  "description": "Insula lui Luca - joc de învățat pentru clasele I-III",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {},
+  "devDependencies": {
+    "@babylonjs/core": "9.32.1",
+    "vite": "7.3.7"
+  }
 }

@@ -1,0 +1,32 @@
+// Progresul lui Luca, salvat în browser.
+const KEY = 'insula-luca-v2';
+export const S = {
+  coins: 0, missions: {}, // id -> {stars, best}
+  look: { skin: '#f3c9a0', shirt: '#e04848', pants: '#2b3a55', hat: 'sapca', face: 'zambet' },
+  owned: ['shirt:#e04848', 'pants:#2b3a55', 'hat:nimic', 'hat:sapca', 'face:zambet'],
+  stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
+  testBest: 0, chests: {}
+};
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, s); } catch (e) { /* fără salvare */ }
+export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } }
+export const DAY = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+export const GOAL = 20 * 60;
+if (S.today.day !== DAY()) S.today = { day: DAY(), sec: 0 };
+if (S.lastGoalDay < DAY() - 1) S.streak = 0;
+
+export const starsTotal = () => Object.values(S.missions).reduce((a, m) => a + (m.stars || 0), 0);
+
+// Recapitulare la 1, 3 și 7 zile pentru tipurile greșite
+const GAPS = [1, 3, 7];
+export function reviewMark(type, ok) {
+  const r = S.review[type], d = DAY();
+  if (!ok) { S.review[type] = { due: d + 1, stage: 0 }; return; }
+  if (r && r.due <= d) { r.stage++; if (r.stage >= GAPS.length) delete S.review[type]; else r.due = d + GAPS[r.stage]; }
+}
+export const dueTypes = () => Object.keys(S.review).filter((t) => S.review[t].due <= DAY());
+export function weightOf(t) { const s = S.stats[t] || { ok: 0, bad: 0 }; return 1 + 3 * (s.bad + 1) / (s.ok + s.bad + 2); }
+export function pickWeighted(types) {
+  const w = types.map(weightOf); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return types[i]; }
+  return types[0];
+}
