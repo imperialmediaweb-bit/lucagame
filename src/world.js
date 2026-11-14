@@ -67,6 +67,31 @@ export function buildWorld(scene, shadow) {
     gates[a.id] = { bar, col: colliders[colliders.length - 1], lbl: lockLbl, y1: 0, y2: 3 };
   });
 
+  // ---------- pereți pe margini, ca să nu cazi în apă ----------
+  // zid de piatră vizibil + barieră invizibilă mai înaltă (să nu poți sări peste)
+  function wallSeg(x, z, w, d) {
+    box(x, 0.6, z, w, 1.2, d, '#cfc6b2', { cast: true, collide: false });
+    box(x, 1.28, z, w + 0.1, 0.16, d + 0.1, '#a89c88', { collide: false });
+    colliders.push({ x1: x - w / 2, x2: x + w / 2, y1: -1, y2: 9, z1: z - d / 2, z2: z + d / 2 });
+  }
+  function ringWalls(cx, cz, half, open) {
+    const gap = 5.2, t = 0.6;
+    for (const side of ['n', 's', 'w', 'e']) {
+      const horiz = side === 'n' || side === 's', fixed = side === 'n' ? cz - half : side === 's' ? cz + half : side === 'w' ? cx - half : cx + half, c0 = horiz ? cx : cz;
+      const parts = open.includes(side) ? [[c0 - half, c0 - gap / 2], [c0 + gap / 2, c0 + half]] : [[c0 - half, c0 + half]];
+      for (const [a, b] of parts) { const mid = (a + b) / 2, len = b - a; horiz ? wallSeg(mid, fixed, len, t) : wallSeg(fixed, mid, t, len); }
+    }
+  }
+  ringWalls(0, 0, 20, ['n', 's', 'w', 'e']);
+  AREAS.forEach((a) => {
+    const [ax, az] = a.pos, open = a.portalOnly ? [] : [az < 0 ? 's' : az > 0 ? 'n' : ax > 0 ? 'w' : 'e'];
+    ringWalls(ax, az, 18, open);
+    if (!a.portalOnly) { // bariere invizibile pe marginile podurilor
+      const dx = Math.sign(ax), dz = Math.sign(az), len = 17, mid = 20 + len / 2 - 0.5;
+      for (const o of [-2.4, 2.4]) colliders.push(dx ? { x1: dx * mid - len / 2, x2: dx * mid + len / 2, y1: 0.5, y2: 9, z1: o - 0.15, z2: o + 0.15 } : { x1: o - 0.15, x2: o + 0.15, y1: 0.5, y2: 9, z1: dz * mid - len / 2, z2: dz * mid + len / 2 });
+    }
+  });
+
   // nori
   const clouds = [];
   for (let i = 0; i < 14; i++) {

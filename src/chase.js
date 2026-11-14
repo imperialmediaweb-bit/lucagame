@@ -20,6 +20,8 @@ export function initChase(scene, shadow, hooks, labelHook) {
   // pista: un drum lung spre -z, cu decor care se repetă la 20 de unități (ca să putem „sări” înapoi fără să se vadă)
   const road = MeshBuilder.CreateBox('road', { width: 8, height: 1, depth: RLEN }, scene); road.position.set(0, -0.5, RZ0 - RLEN / 2); road.material = mat(scene, '#5a5f6b'); road.receiveShadows = true;
   const grass = MeshBuilder.CreateBox('rgrass', { width: 60, height: 1, depth: RLEN }, scene); grass.position.set(0, -0.6, RZ0 - RLEN / 2); grass.material = mat(scene, '#5cb85c'); grass.receiveShadows = true;
+  // pereți pe marginile pistei
+  for (const x of [-4.4, 4.4]) { const w = MeshBuilder.CreateBox('rw' + x, { width: 0.8, height: 1.4, depth: RLEN }, scene); w.position.set(x, 0.7, RZ0 - RLEN / 2); w.material = mat(scene, '#4a2470'); const c = MeshBuilder.CreateBox('rwc' + x, { width: 1, height: 0.25, depth: RLEN }, scene); c.position.set(x, 1.5, RZ0 - RLEN / 2); c.material = mat(scene, '#7B5CF6', 0.4); }
   for (let z = RZ0; z > RZ0 - RLEN; z -= 4) { const m = MeshBuilder.CreateBox('rl' + z, { width: 0.3, height: 0.02, depth: 2 }, scene); m.position.set(0, 0.01, z); m.material = mat(scene, '#ffffff'); }
   for (let z = RZ0; z > RZ0 - RLEN; z -= 20) {
     [-6, 6].forEach((x, i) => {
