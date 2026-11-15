@@ -15,13 +15,14 @@ import { S, save, areaLocked, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
-import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti } from './ui.js';
+import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti, showPanel } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
 import { Music } from './music.js';
 import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
+import { initHome, openHome } from './home.js';
 window.__portal = (id) => portalPanel(id);
 import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks, summonUI } from './mpui.js';
 
@@ -174,9 +175,11 @@ setClassHooks({
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
   reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
-  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else if (!S.tutorial) showTutorial(touch); }
+  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else { openHome(); if (!S.tutorial) showTutorial(touch); } }
 };
 window.__profile = () => profileMenu(hooks);
+initHome({ stop, showPanel });
+document.getElementById('openHome').onclick = () => openHome();
 startFlow(hooks);
 
 /* ---------- bucla ---------- */

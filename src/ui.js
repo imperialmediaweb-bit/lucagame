@@ -28,7 +28,7 @@ export function confetti() {
     box.appendChild(e); setTimeout(() => e.remove(), 1400);
   }
 }
-export const paused = () => !$('quiz').hidden || !$('panel').hidden;
+export const paused = () => !$('quiz').hidden || !$('panel').hidden || ($('home') && !$('home').hidden);
 const starsHtml = (n, max = 3) => `<span class="stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(max - n)}</span></span>`;
 export function refreshHud() {
   $('coins').textContent = S.coins; $('stars').textContent = starsTotal();
@@ -69,6 +69,7 @@ export function openMenu() {
       <button class="item" type="button" id="mP"><b>Progres</b><span>pentru părinți</span></button>
       <button class="item" type="button" id="mM"><b>Sunete</b><span>${S.mute ? 'oprite' : 'pornite'}</span></button>
       <button class="item" type="button" id="mMu"><b>Muzică</b><span>${Music.on() ? 'pornită' : 'oprită'}</span></button>
+      <button class="item" type="button" id="mH"><b>Acasă</b><span>alege jocul</span></button>
       <button class="item" type="button" id="mPr"><b>Profilul meu</b><span>${esc(S.name || 'fără profil')}</span></button>
       <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
@@ -85,6 +86,7 @@ export function openMenu() {
   $('mA').onclick = () => openAtelier();
   $('mCh').onclick = () => openChapters(); $('mF').onclick = () => openFise();
   $('mPr').onclick = () => window.__profile && window.__profile();
+  $('mH').onclick = () => { hidePanel(); document.getElementById('openHome').click(); };
   $('mG').onclick = () => { toast(`Ești în ${GRADE_NAMES[G()]}. Când termini toată lumea clasei tale, se deschide clasa următoare.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
 }
