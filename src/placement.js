@@ -1,6 +1,6 @@
 // Testul de plasare: ~5 minute, o întrebare pe capitol, în ordinea de la școală.
 // Află singur unde a ajuns copilul; capitolele neajunse rămân „în ceață” pe hartă.
-import { S, save, G, GRADE_NAMES } from './state.js';
+import { S, save, G, GRADE_NAMES, level, starsTotal } from './state.js';
 import { SFX } from './audio.js';
 import { MISSIONS, GEN, ROMANA } from './content/missions.js';
 import { showPanel, toast } from './ui.js';
@@ -85,3 +85,10 @@ function finish() {
 }
 export const placed = () => !!(S.placed && S.placed.at);
 export { toast };
+
+// ce văd colegii despre mine: nivel, stele, cea mai bună notă, câte capitole am făcut (fără greșeli)
+export function myInfo() {
+  const all = [...chaptersOf('mate'), ...chaptersOf('romana')];
+  const done = all.filter((m) => !S.chapters || S.chapters.includes(m.id)).length;
+  return { lv: level(), st: starsTotal(), tb: S.testBest || 0, g: G(), pr: done, pt: all.length };
+}

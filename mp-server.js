@@ -17,7 +17,9 @@ let nextId = 1;
 
 function send(ws, m) { if (ws.readyState === 1) ws.send(JSON.stringify(m)); }
 function bcast(room, m, except) { const s = JSON.stringify(m); for (const p of room.players.values()) if (p.ws !== except && p.ws.readyState === 1) p.ws.send(s); }
-const pub = (p) => ({ id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, f: p.f, score: p.score, host: p.host });
+const num = (v, a, b) => { v = Math.round(+v * 10) / 10; return Number.isFinite(v) ? Math.min(b, Math.max(a, v)) : a; };
+const cleanInfo = (i = {}) => ({ lv: num(i.lv, 1, 999), st: num(i.st, 0, 99999), tb: num(i.tb, 0, 10), g: num(i.g, 0, 8) | 0, pr: num(i.pr, 0, 999) | 0, pt: num(i.pt, 0, 999) | 0 });
+const pub = (p) => ({ id: p.id, name: p.name, look: p.look, info: p.info, x: p.x, y: p.y, z: p.z, f: p.f, score: p.score, host: p.host });
 const roomState = (r) => ({ code: r.code, grade: r.grade, subject: r.subject, players: [...r.players.values()].map(pub), game: r.game ? { mode: r.game.mode, n: r.game.qs.length, i: r.game.i, bossHp: r.game.bossHp, bossMax: r.game.bossMax } : null });
 
 function makeQuestions(r, n) {
@@ -164,7 +166,7 @@ export function attachMultiplayer(server) {
   wss.on('connection', (ws) => {
     let room = null, me = null, last = 0, pendingId = 0, pendingRoom = null;
     const enter = (m, id) => {
-      me = { id, ws, name: clean(m.name), look: cleanLook(m.look), x: 0, y: 0.5, z: 5, f: 0, score: 0, host: room.players.size === 0 };
+      me = { id, ws, name: clean(m.name), look: cleanLook(m.look), info: cleanInfo(m.info), x: 0, y: 0.5, z: 5, f: 0, score: 0, host: room.players.size === 0 };
       room.players.set(me.id, me);
       send(ws, { t: 'joined', you: me.id, room: roomState(room) });
       bcast(room, { t: 'player', p: pub(me) }, ws);
@@ -209,7 +211,8 @@ export function attachMultiplayer(server) {
       if (m.t === 'pos') {
         me.x = +m.x || 0; me.y = +m.y || 0; me.z = +m.z || 0; me.f = +m.f || 0;
         bcast(room, { t: 'pos', id: me.id, x: me.x, y: me.y, z: me.z, f: me.f, a: m.a | 0 }, ws);
-      } else if (m.t === 'look') { me.look = cleanLook(m.look); bcast(room, { t: 'look', id: me.id, look: me.look }); }
+      } else if (m.t === 'info') { me.info = cleanInfo(m.info); bcast(room, { t: 'room', room: roomState(room) }); }
+      else if (m.t === 'look') { me.look = cleanLook(m.look); bcast(room, { t: 'look', id: me.id, look: me.look }); }
       else if (m.t === 'emote') { const k = EMOTES[m.k | 0]; if (k) bcast(room, { t: 'emote', id: me.id, text: k }); }
       else if (m.t === 'settings' && me.host && !room.game) {
         if ([0, 1, 2, 3, 4].includes(+m.grade)) room.grade = +m.grade;

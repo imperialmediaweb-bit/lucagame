@@ -32,6 +32,10 @@ const results = []; const ok = (n, c, i = '') => results.push({ n, pass: !!c, i 
   await L.waitForTimeout(1500);
   const n = await L.textContent('#roomBtn');
   ok('Luca vede 3 jucători în cameră', n.includes('· 3'), n);
+  await L.click('#roomBtn').catch(() => {}); await L.waitForTimeout(500);
+  await L.click('#panelCard [data-pl] >> nth=1').catch(() => {}); await L.waitForTimeout(300);
+  const card = await L.textContent('#plInfo').catch(() => '');
+  ok('Luca vede nivelul colegului (fișa)', /nivel/.test(card) && /capitole/.test(card), card);
   const others = await A.evaluate(() => document.querySelectorAll('#panelCard .tab').length);
   ok('Ana vede lista de jucători', others >= 3);
   for (const p of [A, M]) await p.click('[data-close]').catch(() => {});

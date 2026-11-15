@@ -178,10 +178,25 @@ export function parent(back) {
       const at = st.atelier || {}, mastered = Object.values(at).filter((l) => l >= 5).length;
       showPanel(`<div class="eyebrow">Pentru părinți · ${GRADES[j.profile.grade]}</div><h2>${esc(j.profile.username)}</h2>
         <p><b>Azi:</b> ${Math.floor(((st.today || {}).sec || 0) / 60)} min · <b>Serie:</b> ${st.streak || 0} zile · <b>Stele:</b> ${stars} din ${MISSIONS.filter((m) => m.types || m.test).length * 3} · <b>Cea mai bună notă la test:</b> ${st.testBest ? String(Math.round(st.testBest * 100) / 100).replace('.', ',') : '–'} · <b>Atelier stăpânit:</b> ${mastered} din 8 tipuri</p>
+        ${chapterMap(st, j.profile.grade)}
         <p>Răspunsuri corecte pe tipuri, de la cel mai slab:</p>
         <div style="display:flex;flex-direction:column;gap:8px">${rows || '<p>Încă nu a jucat.</p>'}</div>
         <div class="row"><button class="btn" type="button" id="pClose">Închide</button></div>`);
       $('pClose').onclick = back || (() => { $('panel').hidden = true; });
     } catch (err) { $('pErr').innerHTML = `<div class="fb no"><b>${esc(err.message)}</b></div>`; }
   };
+}
+
+// harta capitolelor pentru părinte: făcut și știut / de lucrat / în ceață
+function chapterMap(st, grade) {
+  const ms = MISSIONS.filter((m) => m.area === String(grade) && m.types && !m.subject && !m.test && !m.hidden);
+  if (!ms.length) return '';
+  const weak = new Set((st.placed && st.placed.weak) || []);
+  const row = (m) => {
+    const fog = st.chapters && !st.chapters.includes(m.id), stars = ((st.missions || {})[m.id] || {}).stars || 0;
+    const [cls, txt] = fog ? ['fog', 'în ceață'] : stars === 3 ? ['ok', 'stăpânit'] : weak.has(m.id) || (stars && stars < 2) ? ['weak', 'de lucrat'] : stars ? ['mid', 'în lucru'] : ['new', 'neînceput'];
+    return `<div class="pm-row ${cls}"><span>${esc(m.title)}</span><i>${'★'.repeat(stars)}</i><em>${txt}</em></div>`;
+  };
+  return `<p><b>Unde a ajuns</b>${st.placed && st.placed.at ? ` (test de plasare din ${new Date(st.placed.at).toLocaleDateString('ro-RO')})` : ' (n-a dat încă testul de plasare)'}:</p>
+    <div class="pm">${ms.map(row).join('')}</div>`;
 }

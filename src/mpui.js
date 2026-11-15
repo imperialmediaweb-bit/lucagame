@@ -2,6 +2,7 @@
 import { S, save, G } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, confetti, refreshHud } from './ui.js';
+import { sendInfo } from './net.js';
 import { NET, createRoom, joinRoom, leave, amHost, inviteLink, sendSettings, startGame, stopGame, sendEmote, sendAnswer, setName, EMOTES, esc } from './net.js';
 import { TYPE_NAMES } from './content/missions.js';
 import { classAnswer, startClass, summon } from './net.js';
@@ -63,6 +64,7 @@ export function openLobby() {
   if (!NET.room) { openCreate(); return; }
   const r = NET.room, host = amHost(), link = inviteLink();
   const hostName = (r.players.find((p) => p.host) || {}).name || 'gazda';
+  if (!openLobby.sent) { openLobby.sent = 1; sendInfo(); setTimeout(() => (openLobby.sent = 0), 3000); }
   const msg = `Hai să ne jucăm împreună în Mintoria! Intră aici: ${link}`;
   showPanel(`<div id="lobby"></div><div class="eyebrow">Camera de joc · ${GRADES[r.grade]} · ${SUBJECTS[r.subject]}</div><h2>Camera ${esc(r.code)}</h2>
     <p>Trimite linkul colegilor:</p>
@@ -73,7 +75,8 @@ export function openLobby() {
       ${navigator.share ? '<button class="btn light" type="button" id="lShare">Trimite…</button>' : ''}
     </div>
     <b>Jucători (${r.players.length})</b>
-    <div class="tabs">${r.players.map((p) => `<span class="tab ${p.id === NET.you ? 'on' : ''}">${esc(p.name)}${p.host ? ' · gazdă' : ''}</span>`).join('')}</div>
+    <div class="tabs">${r.players.map((p) => `<button class="tab ${p.id === NET.you ? 'on' : ''}" type="button" data-pl="${p.id}">${esc(p.name)}${p.info ? ` · nv. ${p.info.lv}` : ''}${p.host ? ' · gazdă' : ''}</button>`).join('')}</div>
+    <div id="plInfo"></div>
     <div class="row" style="justify-content:flex-start"><button class="btn light" type="button" id="lSummon">Cheamă colegii la mine</button></div>
     <b>Mesaje rapide</b><div class="tabs">${EMOTES.map((e, i) => `<button class="tab" type="button" data-e="${i}">${e}</button>`).join('')}</div>
     ${host ? `<b>Clasa</b><div class="tabs" id="lGrade">${pills({ [r.grade]: GRADES[r.grade] }, r.grade, 'data-g')}</div>
@@ -85,6 +88,7 @@ export function openLobby() {
       </div>${classButtons(r)}` : `<p>Așteaptă ca <b>${esc(hostName)}</b> să pornească jocul. Până atunci, plimbă-te pe insulă cu colegii!</p>`}
     <div class="row"><button class="btn light" type="button" id="lLeave">Ieși din cameră</button><button class="btn" type="button" data-close>Pe insulă</button></div>`);
   $('lCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Linkul e copiat. Lipește-l în mesaj.'); } catch { $('lnk').select(); toast('Selectat. Apasă Copiază din meniu.'); } };
+  $('panelCard').querySelectorAll('[data-pl]').forEach((b) => b.onclick = () => playerCard(+b.dataset.pl));
   if ($('lShare')) $('lShare').onclick = () => navigator.share({ title: 'Mintoria', text: msg, url: link }).catch(() => {});
   $('panelCard').querySelectorAll('[data-e]').forEach((b) => b.onclick = () => { sendEmote(+b.dataset.e); SFX.tap(); });
   $('lSummon').onclick = () => { const h = CH.here(); summon(h.x, h.z, h.area ? h.area + '|' + h.place : '|' + h.place); toast('I-ai chemat pe colegi la tine!'); };
@@ -269,4 +273,13 @@ export function summonUI(m) {
   showPanel(`<div class="eyebrow">Invitație</div><h2>${esc(m.name)} te cheamă!</h2><p>E la <b>${esc(place || 'insulă')}</b>. Mergi lângă el?</p>
     <div class="row"><button class="btn light" type="button" data-close>Nu acum</button><button class="btn" type="button" id="smGo">Mergi</button></div>`);
   $('smGo').onclick = () => { $('panel').hidden = true; CH.goNear(m.x, m.z, area || null); };
+}
+
+// fișa unui coleg: nivel, stele, notă, cât a făcut din materie (fără greșelile lui)
+function playerCard(id) {
+  const p = (NET.room.players || []).find((x) => x.id === id), el = $('plInfo'); if (!p || !el) return;
+  const i = p.info || {}, pct = i.pt ? Math.round(100 * i.pr / i.pt) : 0;
+  el.innerHTML = `<div class="plcard"><b>${esc(p.name)}</b><div class="plstats">
+    <span><em>${i.lv || 1}</em>nivel</span><span><em>${i.st || 0}</em>stele</span><span><em>${i.tb ? String(i.tb).replace('.', ',') : '–'}</em>nota la test</span></div>
+    <small>Materia clasei: ${i.pr || 0} din ${i.pt || 0} capitole</small><div class="pl-bar"><i style="width:${pct}%"></i></div></div>`;
 }
