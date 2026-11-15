@@ -57,6 +57,7 @@
     <span class="ttl">Ciornă</span>
     <button class="tool" type="button" id="mType">Scriu cu tastatura</button>
     <button class="tool" type="button" id="mDraw">Desenez</button>
+    <button class="tool" type="button" id="mCol">Unul sub altul</button>
     <button class="tool on drawonly" type="button" data-pen="#2456b8" aria-label="Pix albastru"><span class="sw2" style="background:#2456b8"></span></button>
     <button class="tool drawonly" type="button" data-pen="#d23a3a" aria-label="Pix roșu"><span class="sw2" style="background:#d23a3a"></span></button>
     <button class="tool drawonly" type="button" data-pen="erase">Radieră</button>
@@ -64,7 +65,7 @@
     <button class="tool" type="button" id="draftClose">Închide</button>
   </div>
   <div class="keys"><button type="button" data-ins="+">+</button><button type="button" data-ins="−">−</button><button type="button" data-ins="×">×</button><button type="button" data-ins=":">:</button><button type="button" data-ins="=">=</button><button type="button" data-ins="(">(</button><button type="button" data-ins=")">)</button><button type="button" data-ins="[">[</button><button type="button" data-ins="]">]</button><button type="button" data-ins="↵">↵</button></div>
-  <div id="paper"><canvas id="paperC"></canvas><textarea id="paperT" spellcheck="false" autocomplete="off" aria-label="Ciornă scrisă" placeholder="Scrie aici calculele, de ex. 32 : 8 = 4"></textarea></div>
+  <div id="paper"><canvas id="paperC"></canvas><textarea id="paperT" spellcheck="false" autocomplete="off" aria-label="Ciornă scrisă" placeholder="Scrie aici calculele, de ex. 32 : 8 = 4"></textarea><div id="colPad"></div></div>
 </div>
 <div id="confetti"></div>
 <script type="module" src="./src/main.js"></script>

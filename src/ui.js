@@ -1,4 +1,5 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
+import { initColumn, showColumn, exprFrom, resetColumn } from './column.js';
 import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES, G } from './state.js';
 import { SFX } from './audio.js';
 import { Music } from './music.js';
@@ -343,7 +344,8 @@ function bindDraft() {
   pc.addEventListener('pointermove', (e) => { if (!cur) return; const r = pc.getBoundingClientRect(); cur.p.push([e.clientX - r.left, e.clientY - r.top]); drawStroke({ c: cur.c, p: cur.p.slice(-2) }); });
   const end = () => { cur = null; }; pc.addEventListener('pointerup', end); pc.addEventListener('pointercancel', end);
   document.querySelectorAll('#draft [data-pen]').forEach((b) => b.addEventListener('click', () => { pen = b.dataset.pen; document.querySelectorAll('#draft [data-pen]').forEach((x) => x.classList.toggle('on', x === b)); }));
-  $('mType').onclick = () => setMode('type'); $('mDraw').onclick = () => setMode('draw');
+  $('mType').onclick = () => setMode('type'); $('mDraw').onclick = () => setMode('draw'); $('mCol').onclick = () => setMode('col');
+  initColumn($('colPad'), () => { const q = Q && Q.qs[Q.i]; if (q) q.used = Math.max(q.used || 0, 2); });
   pt.addEventListener('input', () => { const p = pt.selectionStart, v = pt.value.replace(/\*/g, '×').replace(/\//g, ':').replace(/-/g, '−'); if (v !== pt.value) { pt.value = v; pt.setSelectionRange(p, p); } });
   document.querySelectorAll('#draft [data-ins]').forEach((b) => b.addEventListener('pointerdown', (e) => {
     e.preventDefault(); const k = b.dataset.ins === '↵' ? '\n' : ' ' + b.dataset.ins + ' ', a = pt.selectionStart ?? pt.value.length, z = pt.selectionEnd ?? a;
@@ -352,14 +354,19 @@ function bindDraft() {
   $('draftClear').onclick = draftClear; $('draftClose').onclick = closeDraft;
   addEventListener('resize', () => { if (!$('draft').hidden) fitPaper(); });
 }
-function setMode(m) { dMode = m; $('draft').classList.toggle('type', m === 'type'); $('draft').classList.toggle('draw', m === 'draw'); $('mType').classList.toggle('on', m === 'type'); $('mDraw').classList.toggle('on', m === 'draw'); if (m === 'type') pt.focus({ preventScroll: true }); }
+function setMode(m) {
+  dMode = m; ['type', 'draw', 'col'].forEach((k) => $('draft').classList.toggle(k, m === k));
+  $('mType').classList.toggle('on', m === 'type'); $('mDraw').classList.toggle('on', m === 'draw'); $('mCol').classList.toggle('on', m === 'col');
+  if (m === 'type') pt.focus({ preventScroll: true });
+  if (m === 'col') { const q = Q && Q.qs[Q.i]; $('draft').classList.toggle('notest', !(Q && Q.mode === 'test')); showColumn(q ? exprFrom((q.expr || '') + ' ' + q.text) : null); }
+}
 function fitPaper() { const r = pc.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); if (!r.width) return; pc.width = r.width * d; pc.height = r.height * d; px.setTransform(d, 0, 0, d, 0, 0); redraw(); }
 function redraw() { px.clearRect(0, 0, pc.width, pc.height); strokes.forEach(drawStroke); }
 function drawStroke(s) {
   px.globalCompositeOperation = s.c === 'erase' ? 'destination-out' : 'source-over'; px.strokeStyle = s.c === 'erase' ? '#000' : s.c; px.lineWidth = s.c === 'erase' ? 24 : 3; px.lineCap = px.lineJoin = 'round';
   px.beginPath(); s.p.forEach((p, i) => (i ? px.lineTo(p[0], p[1]) : px.moveTo(p[0], p[1]))); if (s.p.length === 1) px.lineTo(s.p[0][0] + 0.1, s.p[0][1]); px.stroke(); px.globalCompositeOperation = 'source-over';
 }
-function draftClear() { strokes = []; if (px) redraw(); if (pt) pt.value = ''; }
+function draftClear() { strokes = []; if (px) redraw(); if (pt) pt.value = ''; if (dMode === 'col' && !$('draft').hidden) setMode('col'); else resetColumn(); }
 function openDraft() { $('draft').hidden = false; $('quiz').classList.add('withdraft'); setMode(dMode); requestAnimationFrame(fitPaper); }
 function closeDraft() { $('draft').hidden = true; $('quiz').classList.remove('withdraft'); }
 
