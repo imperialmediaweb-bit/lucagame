@@ -24,7 +24,7 @@ export const G3C = {
     const x = rnd(3, 9), y = rnd(2, 9); return { text: 'Completează (ordinea factorilor nu contează la înmulțire):', expr: `${x} × ${y} = ${y} × ___`, ans: x, opts: opts(x, [y, x * y, x + 1]), steps: ['La înmulțire, dacă schimbi locul factorilor, produsul rămâne același.'] };
   },
   inm3() {
-    const a = rnd(102, 333), b = rnd(2, 3), r = a * b, s = Math.floor(a / 100) * 100, z = Math.floor((a % 100) / 10) * 10, u = a % 10;
+    const b = rnd(2, 9), a = rnd(102, Math.min(999, Math.floor(9999 / b))), r = a * b, s = Math.floor(a / 100) * 100, z = Math.floor((a % 100) / 10) * 10, u = a % 10;
     return { text: 'Calculează:', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [s * b + z + u, r + b, r - 10 * b]), steps: [`Desfaci ${a} = ${s} + ${z} + ${u}`, `${s} × ${b} = ${s * b}, ${z} × ${b} = ${z * b}, ${u} × ${b} = ${u * b}`, `${s * b} + ${z * b} + ${u * b} = ${r}`] };
   },
   deOri() {

@@ -90,8 +90,9 @@ export const G3 = {
   },
   fractii() {
     const t = rnd(0, 2);
-    if (t === 0) { const q = rnd(2, 15), n = 2 * q; return { text: `Cât este jumătate din ${n}?`, ans: q, opts: opts(q, [n * 2, q + 2, n - 2]), steps: ['Jumătate = împarți la 2.', `${n} : 2 = ${q}`] }; }
-    if (t === 1) { const q = rnd(2, 10), n = 4 * q; return { text: `Cât este un sfert din ${n}?`, ans: q, opts: opts(q, [n / 2, q * 2, q + 4]), steps: ['Un sfert = împarți la 4 (4 părți egale, iei una).', `${n} : 4 = ${q}`] }; }
+    if (t === 0) { const d = pick([3, 5, 6, 7, 8, 9, 10]), q = rnd(3, 12), n = d * q, nm = { 3: 'o treime', 5: 'o cincime', 6: 'o șesime', 7: 'o șeptime', 8: 'o optime', 9: 'o noime', 10: 'o zecime' }[d];
+      return { text: `Cât este ${nm} (1/${d}) din ${n}?`, ans: q, opts: opts(q, [n - d, q * 2, n / (d === 10 ? 5 : 2) | 0]), steps: [`1/${d} = împarți întregul în ${d} părți egale și iei una.`, `${n} : ${d} = ${q}`] }; }
+    if (t === 1) { const q = rnd(6, 25), n = 4 * q; return { text: `Cât este un sfert din ${n}?`, ans: q, opts: opts(q, [n / 2, q * 2, q + 4]), steps: ['Un sfert = împarți la 4 (4 părți egale, iei una).', `${n} : 4 = ${q}`] }; }
     const d = pick([2, 3, 4, 5, 8, 10]), k = rnd(1, d - 1);
     return { text: `Un tort e tăiat în ${d} felii egale. Mănânci ${k}. Ce fracție ai mâncat?`, ans: `${k}/${d}`, opts: textOpts(`${k}/${d}`, [`${d}/${k}`, `${k}/${d + 1}`, `1/${k + 1}`]),
       steps: ['Jos (numitorul) scrii în câte părți e împărțit întregul.', 'Sus (numărătorul) scrii câte părți ai luat.', `Deci ${k}/${d}`] };

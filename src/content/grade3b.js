@@ -20,7 +20,7 @@ export const G3B = {
       const a = rnd(1000, 9999), b = Math.random() < 0.5 ? a + rnd(1, 900) : a - rnd(1, 900), ans = a < b ? '<' : '>';
       return { text: 'Ce semn pui?', expr: `${fmt(a)} ___ ${fmt(b)}`, ans, opts: ['<', '>', '='], steps: ['Compari pe rând: miile, apoi sutele, apoi zecile, apoi unitățile.', `${fmt(a)} ${ans} ${fmt(b)}`] };
     }
-    const n = rnd(1001, 9998), prev = Math.random() < 0.5;
+    const n = pick([rnd(2, 9) * 1000, rnd(1, 8) * 1000 + 999, rnd(11, 98) * 100 + pick([0, 99]), rnd(101, 998) * 10 + 9]), prev = Math.random() < 0.5;
     return { text: `Care este numărul ${prev ? 'dinainte' : 'de după'} lui ${fmt(n)}?`, ans: prev ? n - 1 : n + 1, opts: opts(prev ? n - 1 : n + 1, [prev ? n + 1 : n - 1, n + (prev ? -10 : 10)]),
       steps: [prev ? 'Dinainte = cu 1 mai mic.' : 'De după = cu 1 mai mare.'] };
   },
@@ -39,10 +39,10 @@ export const G3B = {
     const t = rnd(0, 2);
     if (t === 0) { const a = rnd(12, 49), b = rnd(2, 9), r = a * b, z = Math.floor(a / 10) * 10, u = a % 10; return { text: 'Calculează:', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [z * b + u, r + b, a + b]), steps: [`Desfaci ${a} = ${z} + ${u}`, `${z} × ${b} = ${z * b} și ${u} × ${b} = ${u * b}`, `${z * b} + ${u * b} = ${r}`] }; }
     if (t === 1) { const a = rnd(2, 99), b = pick([10, 100]), r = a * b; return { text: 'Calculează:', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [a * (b === 10 ? 100 : 10), a + b, r + 1]), steps: [`La înmulțirea cu ${b} adaugi ${b === 10 ? 'un zero' : 'două zerouri'} la sfârșit.`, `${a} × ${b} = ${r}`] }; }
-    const a = rnd(2, 99), b = pick([0, 1]); return { text: 'Calculează:', expr: `${a} × ${b} =`, ans: a * b, opts: opts(a * b, [b ? 1 : a, a + b, 0 === a * b ? a : 0]), steps: [b ? 'Orice număr înmulțit cu 1 rămâne la fel.' : 'Orice număr înmulțit cu 0 dă 0.'] };
+    { const a = rnd(51, 99), b = rnd(6, 9), r = a * b, z = Math.floor(a / 10) * 10, u = a % 10; return { text: 'Calculează:', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [z * b + u, r - b, r + 10]), steps: [`Desfaci ${a} = ${z} + ${u}`, `${z} × ${b} = ${z * b}`, `${u} × ${b} = ${u * b}`, `${z * b} + ${u * b} = ${r}`] }; }
   },
   impRest() {
-    const d = rnd(2, 9), q = rnd(2, 9), r = rnd(1, d - 1), a = d * q + r;
+    const d = rnd(4, 9), q = rnd(5, 10), r = rnd(1, d - 1), a = d * q + r;
     return { text: `${a} : ${d} = ? rest ?`, ans: `${q} rest ${r}`, opts: textOpts(`${q} rest ${r}`, [`${q + 1} rest ${r}`, `${q} rest ${r + d}`, `${q - 1} rest ${r + d}`]),
       steps: [`Cel mai mare număr din tabla lui ${d} care încape în ${a}: ${d} × ${q} = ${d * q}`, `Restul: ${a} − ${d * q} = ${r}`, `Restul (${r}) trebuie să fie mai mic decât ${d} ✔`],
       hints: ['Restul e mereu mai mic decât împărțitorul.'] };
@@ -61,24 +61,26 @@ export const G3B = {
   },
   masuri3() {
     const Q = [
-      () => { const m = rnd(2, 9); return [`${m} m = ? cm`, m * 100, [m * 10, m * 1000], `1 m = 100 cm → ${m} × 100 = ${m * 100}`]; },
-      () => { const k = rnd(2, 9); return [`${k} km = ? m`, k * 1000, [k * 100, k * 10], `1 km = 1.000 m → ${k} × 1.000 = ${k * 1000}`]; },
-      () => { const k = rnd(2, 9); return [`${k} kg = ? g`, k * 1000, [k * 100, k * 10], `1 kg = 1.000 g → ${k} × 1.000 = ${k * 1000}`]; },
-      () => { const l = rnd(2, 9); return [`${l} l = ? ml`, l * 1000, [l * 100, l * 10], `1 l = 1.000 ml → ${l} × 1.000 = ${l * 1000}`]; },
-      () => { const d = rnd(2, 9); return [`${d} dm = ? cm`, d * 10, [d * 100, d], `1 dm = 10 cm → ${d} × 10 = ${d * 10}`]; },
-      () => { const l = rnd(2, 9); return [`${l} lei = ? bani`, l * 100, [l * 10, l * 1000], `1 leu = 100 de bani → ${l} × 100 = ${l * 100}`]; },
-      () => { const h = rnd(2, 5); return [`${h} ore = ? minute`, h * 60, [h * 100, h * 30], `1 oră = 60 de minute → ${h} × 60 = ${h * 60}`]; },
-      () => ['Câți ani are un deceniu?', 10, [100, 12], 'Un deceniu = 10 ani.'],
-      () => ['Câți ani are un secol?', 100, [10, 1000], 'Un secol = 100 de ani.'],
-      () => { const z = rnd(2, 4); return [`Câte zile au ${z} săptămâni?`, z * 7, [z * 5, z * 10], `${z} × 7 = ${z * 7}`]; }
+      () => { const m = rnd(2, 9), c = rnd(5, 95); return [`${m} m ${c} cm = ? cm`, m * 100 + c, [m * 10 + c, m * 1000 + c], `${m} m = ${m * 100} cm → ${m * 100} + ${c} = ${m * 100 + c}`]; },
+      () => { const k = rnd(2, 9), m = rnd(1, 9) * 50; return [`${k} km ${m} m = ? m`, k * 1000 + m, [k * 100 + m, k + m], `${k} km = ${k * 1000} m → ${k * 1000} + ${m} = ${k * 1000 + m}`]; },
+      () => { const k = rnd(2, 8), g = rnd(1, 9) * 100; return [`${k} kg ${g} g = ? g`, k * 1000 + g, [k * 100 + g, k + g], `${k} kg = ${k * 1000} g → ${k * 1000} + ${g} = ${k * 1000 + g}`]; },
+      () => { const k = rnd(2, 9); return [`${k * 1000} ml = ? l`, k, [k * 10, k * 100], `1.000 ml = 1 l → ${k * 1000} : 1.000 = ${k}`]; },
+      () => { const c = rnd(3, 9) * 100; return [`${c} cm = ? m`, c / 100, [c / 10, c], `100 cm = 1 m → ${c} : 100 = ${c / 100}`]; },
+      () => { const l = rnd(2, 9), b = rnd(1, 9) * 10; return [`${l} lei ${b} bani = ? bani`, l * 100 + b, [l * 10 + b, l + b], `${l} lei = ${l * 100} bani → ${l * 100} + ${b} = ${l * 100 + b}`]; },
+      () => { const h = rnd(2, 5); return [`${h * 60} minute = ? ore`, h, [h * 10, h * 6], `60 de minute = 1 oră → ${h * 60} : 60 = ${h}`]; },
+      () => { const h = rnd(1, 3), m = rnd(1, 5) * 10; return [`${h} ${h === 1 ? 'oră' : 'ore'} și ${m} minute = ? minute`, h * 60 + m, [h * 100 + m, h + m], `${h} × 60 = ${h * 60} → ${h * 60} + ${m} = ${h * 60 + m}`]; },
+      () => { const d = rnd(2, 5); return [`${d} decenii = ? ani`, d * 10, [d * 100, d * 12], `1 deceniu = 10 ani → ${d} × 10 = ${d * 10}`]; },
+      () => { const z = rnd(3, 6), x = rnd(1, 6); return [`${z} săptămâni și ${x} zile = ? zile`, z * 7 + x, [z * 5 + x, z * 10 + x], `${z} × 7 = ${z * 7} → ${z * 7} + ${x} = ${z * 7 + x}`]; }
     ];
     const [t, a, w, s] = pick(Q)();
     return { text: 'Transformă:', expr: t, ans: a, opts: opts(a, w), steps: [s] };
   },
   perimetru() {
-    const t = rnd(0, 2);
-    if (t === 0) { const l = rnd(2, 15), r = 4 * l; return { text: `Un pătrat are latura de ${l} cm. Care este perimetrul lui (în cm)?`, ans: r, opts: opts(r, [l * l, 2 * l, r + 4]), steps: ['Perimetrul = suma tuturor laturilor.', 'Pătratul are 4 laturi egale.', `${l} + ${l} + ${l} + ${l} = 4 × ${l} = ${r} cm`] }; }
-    if (t === 1) { const L = rnd(5, 20), l = rnd(2, L - 1), r = 2 * (L + l); return { text: `Un dreptunghi are lungimea de ${L} cm și lățimea de ${l} cm. Care este perimetrul (în cm)?`, ans: r, opts: opts(r, [L + l, L * l, r + 2]), steps: ['Perimetrul = suma tuturor laturilor.', `Dreptunghiul are 2 lungimi și 2 lățimi: ${L} + ${l} + ${L} + ${l}`, `= ${r} cm`] }; }
+    const t = rnd(0, 4);
+    if (t === 3) { const l = rnd(6, 25), P = 4 * l; return { text: `Perimetrul unui pătrat este de ${P} cm. Cât măsoară latura lui (în cm)?`, ans: l, opts: opts(l, [P / 2, P - 4, l + 4]), steps: ['Pătratul are 4 laturi egale.', `Latura = perimetrul : 4 = ${P} : 4 = ${l} cm`] }; }
+    if (t === 4) { const L = rnd(10, 40), l = rnd(3, L - 2), P = 2 * (L + l); return { text: `Un dreptunghi are perimetrul de ${P} cm și lungimea de ${L} cm. Cât măsoară lățimea (în cm)?`, ans: l, opts: opts(l, [P - L, P / 2, L - l]), steps: [`Lungimea + lățimea = jumătate din perimetru = ${P} : 2 = ${P / 2}`, `Lățimea = ${P / 2} − ${L} = ${l} cm`] }; }
+    if (t === 0) { const l = rnd(8, 45), r = 4 * l; return { text: `Un pătrat are latura de ${l} cm. Care este perimetrul lui (în cm)?`, ans: r, opts: opts(r, [l * l, 2 * l, r + 4]), steps: ['Perimetrul = suma tuturor laturilor.', 'Pătratul are 4 laturi egale.', `${l} + ${l} + ${l} + ${l} = 4 × ${l} = ${r} cm`] }; }
+    if (t === 1) { const L = rnd(12, 60), l = rnd(5, L - 1), r = 2 * (L + l); return { text: `Un dreptunghi are lungimea de ${L} cm și lățimea de ${l} cm. Care este perimetrul (în cm)?`, ans: r, opts: opts(r, [L + l, L * l, r + 2]), steps: ['Perimetrul = suma tuturor laturilor.', `Dreptunghiul are 2 lungimi și 2 lățimi: ${L} + ${l} + ${L} + ${l}`, `= ${r} cm`] }; }
     const a = rnd(3, 12), b = rnd(3, 12), c = rnd(Math.abs(a - b) + 1, a + b - 1), r = a + b + c;
     return { text: `Un triunghi are laturile de ${a} cm, ${b} cm și ${c} cm. Care este perimetrul (în cm)?`, ans: r, opts: opts(r, [a + b, r - c, r + 1]), steps: ['Perimetrul = suma laturilor.', `${a} + ${b} + ${c} = ${r} cm`] };
   },
