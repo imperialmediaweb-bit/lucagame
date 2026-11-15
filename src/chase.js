@@ -5,6 +5,7 @@ import { mat, createAvatar, makeLabel } from './avatar.js';
 import { SPEED, SPEED_IDS, timeFor } from './content/speed.js';
 import { S, save, G, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
+import { POWERS, has, count, use as usePower } from './powers.js';
 import { toast, confetti, refreshHud, showPanel } from './ui.js';
 import { apiCall, loggedIn } from './account.js';
 import { NET, online, raceInvite as sendRaceInvite, raceReply, raceProgress } from './net.js';
@@ -77,7 +78,9 @@ export function portalPanel(id) {
     <p>Timp pe exercițiu: <b>${timeFor(id, 1)} secunde</b> la început, tot mai puțin la fiecare nivel (minim ${SPEED[id].min} s).</p>
     ${best ? `<p>Recordul tău: <b>${best.score} puncte</b> · ${'★'.repeat(best.stars || 0)}${'☆'.repeat(3 - (best.stars || 0))}</p>` : ''}
     <div class="row"><button class="btn light" type="button" id="ppTop">Clasament</button><button class="btn light" type="button" data-close>Nu acum</button>${online() ? '<button class="btn" type="button" id="ppRace">Cheamă colegii la cursă</button>' : ''}<button class="btn" type="button" id="ppGo">Fugi singur</button></div>`);
-  $('ppGo').onclick = () => { $('panel').hidden = true; start(id); };
+  const pw = ['shield', 'slow'].filter(has);
+  if (pw.length) $('ppGo').closest('.row').insertAdjacentHTML('beforebegin', `<div class="tabs">${pw.map((k) => `<label class="tab"><input type="checkbox" data-pw="${k}" checked> ${POWERS[k].icon} ${POWERS[k].name} (ai ${count(k)})</label>`).join('')}</div>`);
+  $('ppGo').onclick = () => { const use = [...document.querySelectorAll('#panelCard [data-pw]:checked')].map((x) => x.dataset.pw); $('panel').hidden = true; start(id, undefined, use); };
   if ($('ppRace')) $('ppRace').onclick = () => { sendRaceInvite(id); };
   $('ppTop').onclick = () => showBoard('portal-' + id, p.name, () => portalPanel(id));
 }
@@ -96,8 +99,8 @@ export async function showBoard(board, title, back) {
 }
 
 /* ---------- fuga ---------- */
-function start(id, race) {
-  C = { active: true, id, level: 1, lives: 3, score: 0, correct: 0, streak: 0, t0: performance.now(), gap: 10, gapStart: 10, qT: 8, qE: 0, q: null, lock: 0, finishing: false };
+function start(id, race, pw = []) {
+  C = { active: true, shield: !race && pw.includes('shield') && usePower('shield'), slow: !race && pw.includes('slow') && usePower('slow'), id, level: 1, lives: 3, score: 0, correct: 0, streak: 0, t0: performance.now(), gap: 10, gapStart: 10, qT: 8, qE: 0, q: null, lock: 0, finishing: false };
   gate.setEnabled(false);
   if (race) { C.race = race; C.qi = 0; C.laneX = laneX(race.myLane, race.lanes.length); }
   H.teleport(C.laneX || 0, RZ0 - 10, 0); H.setView(Math.PI);
@@ -112,7 +115,7 @@ function drawTop() {
   $('chGoalT').textContent = `Spre ieșire: ${Math.min(C.correct, GOAL)} / ${GOAL}`; $('chG').style.width = (100 * Math.min(1, C.correct / GOAL)) + '%';
 }
 function nextQ() {
-  const p = SPEED[C.id], q = C.race ? (C.race.qs[C.qi++] || p.gen()) : p.gen(); C.q = q; C.qT = timeFor(C.id, C.level, q.kind); C.qE = 0; C.gapStart = Math.max(3, C.gap); C.lock = 0;
+  const p = SPEED[C.id], q = C.race ? (C.race.qs[C.qi++] || p.gen()) : p.gen(); C.q = q; C.qT = timeFor(C.id, C.level, q.kind) * (C.slow ? 1.5 : 1); C.qE = 0; C.gapStart = Math.max(3, C.gap); C.lock = 0;
   $('chQ').textContent = q.expr + (SPEED[q.kind || C.id].text ? '' : ' = ?');
   $('chO').innerHTML = q.opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join('');
   $('chO').querySelectorAll('[data-k]').forEach((b) => b.onpointerdown = (e) => { e.preventDefault(); answer(+b.dataset.k, b); });
@@ -140,10 +143,10 @@ function finish() {
   gate.position.set(0, 0, H.getZ() - 24); gate.setEnabled(true); SFX.fanfare();
 }
 function caught() {
-  C.lives--; SFX.boing(); drawTop();
+  const saved = C.shield; if (saved) C.shield = false; else C.lives--; SFX.boing(); drawTop();
   if (C.race) raceProgress(C.correct, C.lives, false);
   if (C.lives <= 0) return C.race ? endRaceLocal(false) : end(false);
-  toast(`Te-a prins! Mai ai ${C.lives} ${C.lives === 1 ? 'viață' : 'vieți'}.`);
+  toast(saved ? 'Scutul te-a salvat! Data viitoare nu mai ai scut.' : `Te-a prins! Mai ai ${C.lives} ${C.lives === 1 ? 'viață' : 'vieți'}.`);
   C.gap = 9; nextQ();
 }
 function end(quit, win) {

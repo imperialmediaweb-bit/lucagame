@@ -7,7 +7,7 @@ const DEFAULTS = {
   stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
   testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: '', atelier: {}
 };
-DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {}; DEFAULTS.grade = null; DEFAULTS.gv = 2; DEFAULTS.unlocked = {}; DEFAULTS.placed = null;
+DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {}; DEFAULTS.grade = null; DEFAULTS.gv = 2; DEFAULTS.unlocked = {}; DEFAULTS.placed = null; DEFAULTS.powers = {}; DEFAULTS.doubleUntil = 0;
 const migrate = (o) => { if (o.gv !== 2) { if (o.grade === 0) o.grade = null; o.gv = 2; } return o; };
 export const S = JSON.parse(JSON.stringify(DEFAULTS));
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, migrate(s)); } catch (e) { /* fără salvare */ }

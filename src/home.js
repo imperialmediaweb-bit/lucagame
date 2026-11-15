@@ -71,7 +71,7 @@ export function openHome() {
       { id: 'atelier', icon: 'atelier', name: 'Atelierul problemelor', sub: 'Metoda pas cu pas', color: '#23935a', tags: ['Singur'], prog: `${Object.values(S.atelier || {}).filter((l) => l >= 5).length} / 8 stăpânite` }] : []),
     { id: 'colegi', icon: 'colegi', name: 'Joacă cu colegii', sub: 'Test în clasă, cursă, duel, echipă', color: '#1F2B3A', tags: ['Cu colegii'], prog: NET.room ? `Camera ${NET.room.code} · ${NET.room.players.length}` : 'fă o cameră' },
     { id: 'insula', icon: 'insula', name: 'Explorează insula', sub: 'Personaje, comori, trambuline', color: '#42c0d8', tags: ['Singur', 'Cu colegii'], prog: `${starsTotal()} ★ adunate` },
-    { id: 'garderoba', icon: 'garderoba', name: 'Garderoba', sub: 'Haine, pălării, fețe', color: '#f2b632', tags: [], prog: `${S.coins} monede` }
+    { id: 'garderoba', icon: 'garderoba', name: 'Magazin', sub: 'Puteri, haine, pălării, fețe', color: '#f2b632', tags: [], prog: `${S.coins} monede` }
   ];
   TILES = tiles; const rec = recommend(subj);
   $('home').innerHTML = `<div class="hm-top">
@@ -107,7 +107,7 @@ function recommend(subj) {
 }
 function tile(id) {
   if (id === 'colegi') { closeHome(); return NET.room ? openLobby() : openCreate(); }
-  if (id === 'garderoba') { closeHome(); return openShop(); }
+  if (id === 'garderoba') { closeHome(); return openShop('puteri'); }
   preview(id);
 }
 function play(id) {

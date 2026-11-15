@@ -283,3 +283,4 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 .col-bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .col-msg{font-size:15px;line-height:1.35;background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 10px}
 @media (max-width:420px){#colPad{--cw:34px}.cc{font-size:24px;height:38px}}
+.item.pw{gap:4px}.pwi{font:800 28px var(--font-d);width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:#7B5CF6;color:#fff;border:2px solid var(--ink);margin:0 auto}

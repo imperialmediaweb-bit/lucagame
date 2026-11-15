@@ -1,4 +1,5 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
+import { POWERS, has as hasPower, count as countPower, use as usePower, buy as buyPower, doubleOn, doubleLeft } from './powers.js';
 import { initColumn, showColumn, exprFrom, resetColumn } from './column.js';
 import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES, G } from './state.js';
 import { SFX } from './audio.js';
@@ -198,6 +199,16 @@ function renderQ() {
     <div id="hintBox"></div>${body}<div id="fbBox"></div>`;
   $('quizCard').querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => answer(+b.dataset.k)));
   $('tDraft').onclick = openDraft;
+  // puterea „Elimină 2 variante” (nu și la test)
+  if (Q.mode !== 'test' && q.kind !== 'tap' && q.opts.length >= 3 && hasPower('half')) {
+    $('tDraft').insertAdjacentHTML('afterend', `<button class="tool" type="button" id="tHalf">½ Elimină 2 (ai ${countPower('half')})</button>`);
+    $('tHalf').onclick = () => {
+      if (q.done || !usePower('half')) return; SFX.coin();
+      const wrong = [...$('quizCard').querySelectorAll('.opts [data-k]')].filter((b) => q.opts[+b.dataset.k] !== q.ans);
+      shuffle(wrong).slice(0, Math.min(2, q.opts.length - 2)).forEach((b) => { b.disabled = true; b.style.opacity = .3; });
+      $('tHalf').remove();
+    };
+  }
   $('tQuit').onclick = () => { closeDraft(); $('quiz').hidden = true; Q = null; };
   if ($('tHint')) $('tHint').onclick = () => {
     if (q.done) return; q.used = Math.min(q.used + 1, hs.length); SFX.tap();
@@ -217,7 +228,7 @@ function answer(k) {
   reviewMark(q.type, ok);
   let gain = 0;
   S.xp = (S.xp || 0) + (ok ? 10 : 2);
-  if (ok) { combo++; gain = Math.max(1, 5 - q.used * 2) * (combo >= 3 ? 2 : 1); Q.ok++; S.coins += gain; if (Q.mode === 'test') Q.score += q.pts; SFX.ok(); confetti(); H.cheer && H.cheer(); }
+  if (ok) { combo++; gain = Math.max(1, 5 - q.used * 2) * (doubleOn() ? 2 : 1) * (combo >= 3 ? 2 : 1); Q.ok++; S.coins += gain; if (Q.mode === 'test') Q.score += q.pts; SFX.ok(); confetti(); H.cheer && H.cheer(); }
   else { combo = 0; SFX.no(); }
   Q.res[Q.i] = ok; save(); refreshHud();
   const last = Q.i === Q.qs.length - 1, ansTxt = q.kind === 'tap' ? q.toks[q.ans] : q.ans;
@@ -308,7 +319,8 @@ const PRICES = { shirt: 10, pants: 10, hat: { nimic: 0, sapca: 0, fundita: 20, b
 let shopTab = 'shirt';
 export function openShop(tab) {
   if (tab) shopTab = tab;
-  const slots = { skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
+  const slots = { puteri: 'Puteri', skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
+  if (shopTab === 'puteri') return powerShop(slots);
   const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).map(([v, n]) => [v, n, PRICES[shopTab][v]]);
   const owned = (v, p) => p === 0 || shopTab === 'skin' || S.owned.includes(shopTab + ':' + v);
   showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Garderoba</h2>
@@ -320,6 +332,20 @@ export function openShop(tab) {
     const v = b.dataset.v, p = +b.dataset.p;
     if (!owned(v, p)) { if (S.coins < p) { toast(`Îți mai trebuie ${p - S.coins} monede. Rezolvă misiuni!`); return; } S.coins -= p; S.owned.push(shopTab + ':' + v); SFX.coin(); }
     S.look[shopTab] = v; save(); refreshHud(); H.setLook(S.look); openShop();
+  });
+}
+
+function powerShop(slots) {
+  showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Puteri</h2>
+    <div class="tabs">${Object.entries(slots).map(([k, n]) => `<button class="tab ${k === shopTab ? 'on' : ''}" type="button" data-tab="${k}">${n}</button>`).join('')}</div>
+    <p>Puterile te ajută la misiuni. Le câștigi doar cu monede din răspunsuri bune.</p>
+    <div class="shopgrid">${Object.entries(POWERS).map(([k, p]) => `<button class="item pw" type="button" data-pw="${k}"><span class="pwi">${p.icon}</span><b>${p.name}</b><span>${p.desc}</span><span><b>${p.price}</b> monede · ${k === 'double' ? (doubleOn() ? `activ încă ${doubleLeft()} min` : 'pornește la cumpărare') : `ai ${countPower(k)}`}</span></button>`).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-close>Gata</button></div>`);
+  $('panelCard').querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => openShop(b.dataset.tab));
+  $('panelCard').querySelectorAll('[data-pw]').forEach((b) => b.onclick = () => {
+    const k = b.dataset.pw, p = POWERS[k];
+    if (!buyPower(k)) { toast(`Îți mai trebuie ${p.price - S.coins} monede. Rezolvă misiuni!`); return; }
+    SFX.coin(); refreshHud(); toast(k === 'double' ? 'Monede duble pornite pentru 10 minute!' : `Ai cumpărat: ${p.name}.`); powerShop(slots);
   });
 }
 
