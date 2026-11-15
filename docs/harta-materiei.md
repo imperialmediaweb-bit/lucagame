@@ -1,12 +1,12 @@
 # Harta materiei (pregătitoare – clasa a IV-a)
 
-Sursa: programele școlare MEN — OMEN 3418/2013 (CP–II: Matematică și explorarea mediului, Comunicare în limba română) și OMEN 5003/2014 (III–IV: Matematică, Limba și literatura română). Domenii: numere și operații, geometrie, măsurări, organizarea datelor; comunicare orală/scrisă, elemente de construcție a comunicării.
+Surse: programele școlare MEN — OMEN 3418/2013 (CP–II) și OMEN 5003/2014 (III–IV: Matematică, Limba și literatura română, Științe ale naturii, Educație civică, Limba modernă). Programele de științe și civică pentru III–IV au fost citite direct din PDF-urile oficiale.
 
-Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere noi la fiecare joc).
+Fiecare rând = o misiune/lecție; fiecare tip = un generator de exerciții (numere noi la fiecare joc). Toate tipurile sunt verificate automat cu tools/verifica-exercitii.mjs.
 
 ## Clasa pregătitoare
 
-| Misiune | Materie | Tipuri de exerciții |
+| Lecție | Materie | Tipuri de exerciții |
 |---|---|---|
 | Numărăm | Matematică | Numărare, Vecinii numerelor (0–31) |
 | Mai mare, mai mic | Matematică | Mai mare / mai mic |
@@ -18,7 +18,7 @@ Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere n
 
 ## Clasa I
 
-| Misiune | Materie | Tipuri de exerciții |
+| Lecție | Materie | Tipuri de exerciții |
 |---|---|---|
 | Mai mare sau mai mic? | Matematică | Comparare și vecini, Numărul dinainte / de după |
 | Adunări până la 20 | Matematică | Adunări până la 20 |
@@ -30,7 +30,7 @@ Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere n
 
 ## Clasa a II-a
 
-| Misiune | Materie | Tipuri de exerciții |
+| Lecție | Materie | Tipuri de exerciții |
 |---|---|---|
 | Calcule până la 1000 | Matematică | Calcule până la 1000 |
 | Tabla înmulțirii | Matematică | Tabla înmulțirii |
@@ -42,7 +42,7 @@ Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere n
 
 ## Clasa a III-a
 
-| Misiune | Materie | Tipuri de exerciții |
+| Lecție | Materie | Tipuri de exerciții |
 |---|---|---|
 | Ce se face primul? | Matematică | Ce operație e prima, Capcana „+ ×”, Înmulțiri înaintea scăderilor |
 | Paranteze și calcule lungi | Matematică | Paranteze (test 1 a), Înmulțiri înaintea scăderilor |
@@ -50,25 +50,40 @@ Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere n
 | Mă gândesc la un număr | Matematică | „Mă gândesc la un număr” (test 2) |
 | Problema veverițelor | Matematică | Veverițele (test 3), a + b + c (test 1 c) |
 | Piața bunicii | Matematică | Mere și pere (test 4), Bunica la piață (test 5), Rest de bani |
-| Fracții | Matematică | Fracții |
+| Fracții | Matematică | Fracții, Fracții: citire și comparare |
 | Părțile de vorbire | Română | Părți de vorbire |
-| Numere până la 10.000 | Matematică | Numere până la 10.000, Rotunjiri |
-| Adunări și scăderi mari | Matematică | Calcule până la 10.000 |
-| Înmulțirea mare | Matematică | Înmulțirea mare |
+| Numere până la 10.000 | Matematică | Numere până la 10.000, Rotunjiri, Ordonare, par / impar |
+| Adunări și scăderi mari | Matematică | Calcule până la 10.000, Proprietățile adunării și înmulțirii |
+| Înmulțirea mare | Matematică | Înmulțirea mare, Înmulțirea cu numere de 3 cifre |
 | Împărțirea cu rest | Matematică | Împărțirea cu rest |
-| Metoda figurativă | Matematică | Suma și diferența, „de atâtea ori mai mult” |
-| Unități de măsură | Matematică | Unități de măsură |
-| Perimetrul | Matematică | Perimetrul |
+| Metoda figurativă | Matematică | Suma și diferența, „de atâtea ori mai mult”, „de … ori mai mult / mai puțin” |
+| Unități de măsură | Matematică | Unități de măsură, Ceasul, Calendarul |
+| Perimetrul | Matematică | Perimetrul, Figuri geometrice, Corpuri geometrice |
 | Cifre romane | Matematică | Cifre romane |
-| Sinonime și antonime | Română | Sinonime și antonime |
+| Sinonime și antonime | Română | Sinonime și antonime, Omonime |
 | Substantivul | Română | Substantivul |
 | Propoziția și dialogul | Română | Propoziția și dialogul |
+| Tabele și date | Matematică | Tabele și date |
+| Toate ortogramele | Română | Ortograme (toate), Virgula și două puncte |
+| Alfabet și silabe | Română | Ordinea alfabetică, Silabe (cuvinte lungi) |
+| Pronumele personal | Română | Pronumele personal |
+| Lumea vie | Științe ale naturii | Științe: lumea vie |
+| Grupe de animale | Științe ale naturii | Științe: grupe de animale |
+| Pământul și apa | Științe ale naturii | Științe: Pământul și apa |
+| Corpuri și forțe | Științe ale naturii | Științe: corpuri și forțe |
+| Omul sănătos | Științe ale naturii | Științe: omul sănătos |
+| Ce e bine? | Educație civică | Civică: ce e bine |
+| Words | Limba engleză | Engleză: cuvinte |
+| Numbers 1–100 | Limba engleză | Engleză: numere |
+| Grammar | Limba engleză | Engleză: gramatică |
+| Cum arată o compunere | Compuneri | Compunere: structura |
+| Ordinea ideilor | Compuneri | Compunere: ordinea ideilor |
 | Atelierul problemelor | Atelier | — |
 | TESTUL: matematică | Test | — |
 
 ## Clasa a IV-a
 
-| Misiune | Materie | Tipuri de exerciții |
+| Lecție | Materie | Tipuri de exerciții |
 |---|---|---|
 | Numere până la 1.000.000 | Matematică | Numere până la 1.000.000 |
 | Adunări și scăderi uriașe | Matematică | Calcule până la 1.000.000 |
@@ -83,10 +98,14 @@ Fiecare misiune = un capitol; fiecare tip = un generator de exerciții (numere n
 | Acordul adjectivului | Română | Acordul adjectivului |
 | Omonime și tipuri de text | Română | Omonime, Tipuri de text, Sinonime și antonime |
 
-## Ce urmează (lipsește încă)
+## Instrumente pentru părinți și profesori
 
-- Organizarea datelor (tabele, grafice simple) — CP–IV
-- Explorarea mediului (plante, animale, corpul omenesc) — CP–II
-- Unghiuri, axa de simetrie — III–IV
-- Lecții fulger pentru tipurile noi de la pregătitoare și clasa a IV-a
-- Clasele V–VIII (Faza B)
+- Fișe de lucru de printat pe orice capitol, cu răspunsuri (Meniu → Fișe de lucru)
+- „Unde am ajuns la școală”: antrenamentul doar din capitolele făcute
+- Compunere scrisă cu verificare automată (titlu, alineate, majuscule, punctuație, ortograme)
+- Pagina părintelui: progres pe tipuri, compuneri, timp
+
+## Ce urmează
+
+- Aceeași acoperire completă (științe, civică, engleză, compuneri) pentru celelalte clase
+- Clasele V–VIII

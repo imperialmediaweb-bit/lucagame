@@ -128,7 +128,7 @@ function openChest(c) {
   toast('Comoară! +25 de monede');
 }
 function goTo(m) {
-  const n = W.npcs.find((x) => x.m.id === m.id); if (!n) return;
+  const n = W.npcs.find((x) => x.m.id === m.id) || (m.hidden && W.npcs.find((x) => x.m.hub === m.subject)); if (!n) return;
   if (m.boss) teleport(n.x, n.z - 6, 0.5);
   else { const dx = n.area.pos[0] - n.x, dz = n.area.pos[1] - n.z, l = Math.hypot(dx, dz) || 1; teleport(n.x + dx / l * 2.6, n.z + dz / l * 2.6, n.top + 0.5); }
   yaw = Math.atan2(P.x - n.x, P.z - n.z);

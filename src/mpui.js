@@ -10,7 +10,7 @@ import { apiCall, loggedIn } from './account.js';
 
 const $ = (id) => document.getElementById(id);
 const GRADES = { 0: 'Pregătitoare', 1: 'Clasa I', 2: 'Clasa a II-a', 3: 'Clasa a III-a', 4: 'Clasa a IV-a' };
-const SUBJECTS = { mix: 'Amestecat', mate: 'Matematică', romana: 'Română', test: 'Ca la test' };
+const SUBJECTS = { mix: 'Amestecat', mate: 'Matematică', romana: 'Română', test: 'Ca la test', stiinte: 'Științe', civica: 'Civică', engleza: 'Engleză' };
 const pills = (obj, cur, attr) => Object.entries(obj).map(([k, v]) => `<button class="tab ${String(k) === String(cur) ? 'on' : ''}" type="button" ${attr}="${k}">${v}</button>`).join('');
 
 /* ---------- ecranul de start ---------- */

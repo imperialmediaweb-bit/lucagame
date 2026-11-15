@@ -4,8 +4,10 @@ import { G3, TEST_ITEMS } from './grade3.js';
 import { G3B } from './grade3b.js';
 import { G0 } from './grade0.js';
 import { G4 } from './grade4.js';
+import { G3C } from './grade3c.js';
+import { SUBJECTS3 } from './subjects3.js';
 
-export const GEN = { ...G0, ...G1, ...G2, ...G3, ...G3B, ...G4 };
+export const GEN = { ...G0, ...G1, ...G2, ...G3, ...G3B, ...G3C, ...G4, ...SUBJECTS3 };
 export { TEST_ITEMS };
 
 export const AREAS = [
@@ -62,20 +64,43 @@ export const MISSIONS = [
   { id: 'g3-gandesc', area: '3', npc: 'Detectivul Dodo', look: ['#c98e5f', '#7a5a3b', '#3b3b3b', 'palarie', 'cool'], title: 'Mă gândesc la un număr', desc: 'Mersul invers, ca la exercițiul 2.', types: ['gandesc'], lesson: 'ascuns' },
   { id: 'g3-veverite', area: '3', npc: 'Ronțăilă', look: ['#c46a2f', '#e07a2f', '#7a3b1f', 'urechi', 'zambet'], title: 'Problema veverițelor', desc: 'Benzi colorate și sume, ca la 3 și 1 c).', types: ['veverite', 'abc'], lesson: 'veverite' },
   { id: 'g3-piata', area: '3', npc: 'Bunica Ileana', look: ['#f0c8a8', '#d23a3a', '#3b3b3b', 'basma', 'zambet'], title: 'Piața bunicii', desc: 'Prețuri, rest și bani, ca la 4 și 5.', types: ['piata1', 'bunica', 'rest'], lesson: 'piata' },
-  { id: 'g3-fractii', area: '3', npc: 'Bucătarul Tort', look: ['#f3c9a0', '#ffffff', '#2b2f38', 'bucatar', 'zambet'], title: 'Fracții', desc: 'Jumătăți, sferturi și felii de tort.', types: ['fractii'], lesson: 'fractii' },
+  { id: 'g3-fractii', area: '3', npc: 'Bucătarul Tort', look: ['#f3c9a0', '#ffffff', '#2b2f38', 'bucatar', 'zambet'], title: 'Fracții', desc: 'Jumătăți, sferturi și felii de tort.', types: ['fractii', 'fractii3'], lesson: 'fractii' },
   { id: 'g3-vorbire', area: '3', npc: 'Bibliotecara Ema', look: ['#f3c9a0', '#2fae5f', '#2b3a55', 'ochelari', 'zambet'], title: 'Părțile de vorbire', desc: 'Substantiv, verb sau adjectiv?', types: ['partivorbire'], lesson: 'vorbire' },
 
-  { id: 'g3-numere', area: '3', npc: 'Contesa Miilor', look: ['#f3c9a0', '#f2b632', '#2b2f38', 'coroana', 'zambet'], title: 'Numere până la 10.000', desc: 'Mii, sute, zeci, unități, comparare, rotunjire.', types: ['numere10k', 'rotunjire'], lesson: 'numere10k' },
-  { id: 'g3-calcule', area: '3', npc: 'Strajerul Coloană', look: ['#c98e5f', '#9aa4b2', '#4a4f5a', 'coif', 'zambet'], title: 'Adunări și scăderi mari', desc: 'Calcule până la 10.000, în coloană.', types: ['adun10k'] },
-  { id: 'g3-inmultire', area: '3', npc: 'Fierarul Fix', look: ['#8a5a3b', '#7a5a3b', '#2b2f38', 'casca', 'cool'], title: 'Înmulțirea mare', desc: 'Număr de 2 cifre × 1 cifră, × 10, × 100.', types: ['inm'], lesson: 'inm' },
+  { id: 'g3-numere', area: '3', npc: 'Contesa Miilor', look: ['#f3c9a0', '#f2b632', '#2b2f38', 'coroana', 'zambet'], title: 'Numere până la 10.000', desc: 'Mii, sute, zeci, unități, comparare, rotunjire.', types: ['numere10k', 'rotunjire', 'ordonare'], lesson: 'numere10k' },
+  { id: 'g3-calcule', area: '3', npc: 'Strajerul Coloană', look: ['#c98e5f', '#9aa4b2', '#4a4f5a', 'coif', 'zambet'], title: 'Adunări și scăderi mari', desc: 'Calcule până la 10.000, în coloană.', types: ['adun10k', 'proprietati'] },
+  { id: 'g3-inmultire', area: '3', npc: 'Fierarul Fix', look: ['#8a5a3b', '#7a5a3b', '#2b2f38', 'casca', 'cool'], title: 'Înmulțirea mare', desc: 'Număr de 2 cifre × 1 cifră, × 10, × 100.', types: ['inm', 'inm3'], lesson: 'inm' },
   { id: 'g3-rest', area: '3', npc: 'Grădinarul Rest', look: ['#e0b48a', '#2fae5f', '#7a5a3b', 'palarie', 'zambet'], title: 'Împărțirea cu rest', desc: 'Câte încap și ce rămâne.', types: ['impRest'], lesson: 'rest' },
-  { id: 'g3-figurativ', area: '3', npc: 'Pictorița Bandă', look: ['#f3c9a0', '#ff8ac0', '#2b3a55', 'fundita', 'fericit'], title: 'Metoda figurativă', desc: 'Suma și diferența, „de atâtea ori mai mult”.', types: ['sumadif', 'sumacat'], lesson: 'figurativ' },
-  { id: 'g3-masuri', area: '3', npc: 'Negustorul Cântar', look: ['#c98e5f', '#e07a2f', '#3b3b3b', 'palarie', 'zambet'], title: 'Unități de măsură', desc: 'm, km, kg, l, lei, ore, secol.', types: ['masuri3'] },
-  { id: 'g3-perimetru', area: '3', npc: 'Arhitectul Latură', look: ['#f3c9a0', '#42c0d8', '#2b2f38', 'casca', 'cool'], title: 'Perimetrul', desc: 'Pătrat, dreptunghi, triunghi.', types: ['perimetru'], lesson: 'perimetru' },
+  { id: 'g3-figurativ', area: '3', npc: 'Pictorița Bandă', look: ['#f3c9a0', '#ff8ac0', '#2b3a55', 'fundita', 'fericit'], title: 'Metoda figurativă', desc: 'Suma și diferența, „de atâtea ori mai mult”.', types: ['sumadif', 'sumacat', 'deOri'], lesson: 'figurativ' },
+  { id: 'g3-masuri', area: '3', npc: 'Negustorul Cântar', look: ['#c98e5f', '#e07a2f', '#3b3b3b', 'palarie', 'zambet'], title: 'Unități de măsură', desc: 'm, km, kg, l, lei, ore, secol.', types: ['masuri3', 'ceas', 'calendar'] },
+  { id: 'g3-perimetru', area: '3', npc: 'Arhitectul Latură', look: ['#f3c9a0', '#42c0d8', '#2b2f38', 'casca', 'cool'], title: 'Perimetrul', desc: 'Pătrat, dreptunghi, triunghi.', types: ['perimetru', 'figuri3', 'corpuri'], lesson: 'perimetru' },
   { id: 'g3-romane', area: '3', npc: 'Centurionul Marcus', look: ['#e0b48a', '#d23a3a', '#7a5a3b', 'coif', 'cool'], title: 'Cifre romane', desc: 'I, V, X, L.', types: ['romane'], lesson: 'romane' },
-  { id: 'g3-sinonime', area: '3', npc: 'Poetul Rima', look: ['#f3c9a0', '#4b3cc4', '#2b2f38', 'palarie', 'fericit'], title: 'Sinonime și antonime', desc: 'Cuvinte la fel și cuvinte opuse.', types: ['sinonime'], lesson: 'sinonime' },
+  { id: 'g3-sinonime', area: '3', npc: 'Poetul Rima', look: ['#f3c9a0', '#4b3cc4', '#2b2f38', 'palarie', 'fericit'], title: 'Sinonime și antonime', desc: 'Cuvinte la fel și cuvinte opuse.', types: ['sinonime', 'omonime'], lesson: 'sinonime' },
   { id: 'g3-substantiv', area: '3', npc: 'Scribul Nume', look: ['#e0b48a', '#7a5a3b', '#2b3a55', 'ochelari', 'zambet'], title: 'Substantivul', desc: 'Comun sau propriu, singular sau plural.', types: ['substantiv'], lesson: 'vorbire' },
   { id: 'g3-propozitie', area: '3', npc: 'Crainicul Glas', look: ['#f3c9a0', '#ffb020', '#2b3a55', 'sapca', 'surprins'], title: 'Propoziția și dialogul', desc: 'Enunțiativă, interogativă, exclamativă.', types: ['propozitie'] },
+
+  { id: 'g3-date', area: '3', npc: 'Cercetașa Tabel', look: ['#f3c9a0', '#42c0d8', '#2b3a55', 'sapca', 'fericit'], title: 'Tabele și date', desc: 'Citești un tabel și răspunzi.', types: ['tabel'] },
+  { id: 'g3-ortograme', area: '3', npc: 'Ortografa Cratimă', look: ['#f3c9a0', '#e04848', '#2b2f38', 'ochelari', 'cool'], title: 'Toate ortogramele', desc: 'l-a/la, ne-a/nea, mi-a/mia, v-a/va, n-a/na.', types: ['orto3', 'punct3'], lesson: 'orto' },
+  { id: 'g3-alfabet', area: '3', npc: 'Bufnița Abecedar', look: ['#c98e5f', '#7a5a3b', '#3b3b3b', 'ochelari', 'surprins'], title: 'Alfabet și silabe', desc: 'Ordinea alfabetică și despărțirea în silabe.', types: ['alfabet', 'silabe3'] },
+  { id: 'g3-pronume', area: '3', npc: 'Ecoul Castelului', look: ['#e0b48a', '#9aa4b2', '#2b2f38', 'coif', 'surprins'], title: 'Pronumele personal', desc: 'Eu, tu, el, ea, noi, voi, ei, ele.', types: ['pronume'] },
+
+  // profesorii pe materii (fiecare deschide lista lui de lecții)
+  { id: 'hub-stiinte', area: '3', npc: 'Profesorul Natură', look: ['#e0b48a', '#2fae5f', '#7a5a3b', 'palarie', 'zambet'], title: 'Științe ale naturii', desc: 'Viețuitoare, Pământul, apa, corpurile, magneții.', hub: 'stiinte' },
+  { id: 'hub-civica', area: '3', npc: 'Doamna Bunătate', look: ['#f3c9a0', '#ff8ac0', '#2b3a55', 'fundita', 'fericit'], title: 'Educație civică', desc: 'Ce e bine, drepturi, reguli, respect.', hub: 'civica' },
+  { id: 'hub-engleza', area: '3', npc: 'Teacher Emma', look: ['#f3c9a0', '#3b7ddd', '#2b2f38', 'nimic', 'zambet'], title: 'Limba engleză', desc: 'Words, numbers, grammar.', hub: 'engleza' },
+  { id: 'hub-compuneri', area: '3', npc: 'Scriitorul Pană', look: ['#c98e5f', '#7a5a3b', '#2b2f38', 'ochelari', 'zambet'], title: 'Compuneri', desc: 'Părțile compunerii, ordinea ideilor, bilet, invitație.', hub: 'compuneri' },
+  // lecțiile din fiecare materie (nu stau pe hartă: le deschide profesorul)
+  { id: 's3-viata', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Lumea vie', desc: 'Nevoi, creștere, reacții la mediu.', types: ['sViata'] },
+  { id: 's3-animale', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Grupe de animale', desc: 'Insecte, pești, amfibieni, reptile, păsări, mamifere.', types: ['sAnimale'] },
+  { id: 's3-pamant', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Pământul și apa', desc: 'Circuitul apei, fenomene, resurse, poluare.', types: ['sPamant'] },
+  { id: 's3-corpuri', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Corpuri și forțe', desc: 'Stări de agregare, magneți, busola, frecare, mișcare.', types: ['sCorpuri'] },
+  { id: 's3-omul', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Omul sănătos', desc: 'Activitate, odihnă, organe.', types: ['sOmul'] },
+  { id: 'c3-morala', area: '3', subject: 'civica', hidden: true, npc: 'Doamna Bunătate', look: [], title: 'Ce e bine?', desc: 'Bunătate, sinceritate, curaj, modestie, respect, drepturi și îndatoriri.', types: ['civica'] },
+  { id: 'e3-vocab', area: '3', subject: 'engleza', hidden: true, npc: 'Teacher Emma', look: [], title: 'Words', desc: 'Culori, familie, animale, mâncare, școală, corp, haine, casă, zile, vreme.', types: ['enVocab'] },
+  { id: 'e3-numere', area: '3', subject: 'engleza', hidden: true, npc: 'Teacher Emma', look: [], title: 'Numbers 1–100', desc: 'Numerele în engleză.', types: ['enNumere'] },
+  { id: 'e3-gram', area: '3', subject: 'engleza', hidden: true, npc: 'Teacher Emma', look: [], title: 'Grammar', desc: 'have got / has got, am / is / are, in / on / under, can.', types: ['enGramatica'] },
+  { id: 'r3-parti', area: '3', subject: 'compuneri', hidden: true, npc: 'Scriitorul Pană', look: [], title: 'Cum arată o compunere', desc: 'Titlu, introducere, cuprins, încheiere, alineat, bilet, invitație.', types: ['compParti'] },
+  { id: 'r3-ordine', area: '3', subject: 'compuneri', hidden: true, npc: 'Scriitorul Pană', look: [], title: 'Ordinea ideilor', desc: 'Pui ideile în ordine ca să iasă povestea.', types: ['compOrdine'] },
 
   { id: 'atelier', area: 'T', npc: 'Antrenorul Pas-cu-Pas', look: ['#c98e5f', '#23935a', '#2b2f38', 'sapca', 'fericit'], title: 'Atelierul problemelor', desc: 'Problemele din test, învățate pas cu pas.', atelier: true },
   { id: 'test-mate', area: 'T', npc: 'Profesorul Calcul', look: ['#f0c8a8', '#2b2f38', '#2b2f38', 'coroana', 'cool'], title: 'TESTUL: matematică', desc: 'Testul tău, cu numere noi de fiecare dată. Primești notă, ca la școală!', test: true, boss: true }
@@ -100,15 +125,22 @@ export const TYPE_NAMES = {
   sinonime: 'Sinonime și antonime',
   numarare: 'Numărare', vecini31: 'Vecinii numerelor (0–31)', compara10: 'Mai mare / mai mic', adun10: 'Adunări până la 10', scad10: 'Scăderi până la 10', forme: 'Forme geometrice', sunetInitial: 'Primul sunet', rima: 'Rime',
   numere1m: 'Numere până la 1.000.000', calc1m: 'Calcule până la 1.000.000', inm2c: 'Înmulțirea cu 2 cifre', imp1c: 'Împărțirea la o cifră', fractiiIV: 'Fracții (clasa a IV-a)', masuriIV: 'Măsuri mari', corpuri: 'Corpuri geometrice', ipoteza: 'Metoda falsei ipoteze',
-  verbTimp: 'Timpul verbului', pronume: 'Pronumele personal', numeral: 'Numeralul', acordAdj: 'Acordul adjectivului', omonime: 'Omonime', textTip: 'Tipuri de text', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
+  verbTimp: 'Timpul verbului',
+  sViata: 'Științe: lumea vie', sAnimale: 'Științe: grupe de animale', sPamant: 'Științe: Pământul și apa', sCorpuri: 'Științe: corpuri și forțe', sOmul: 'Științe: omul sănătos', civica: 'Civică: ce e bine', enVocab: 'Engleză: cuvinte', enNumere: 'Engleză: numere', enGramatica: 'Engleză: gramatică', compParti: 'Compunere: structura', compOrdine: 'Compunere: ordinea ideilor',
+  ordonare: 'Ordonare, par / impar', proprietati: 'Proprietățile adunării și înmulțirii', inm3: 'Înmulțirea cu numere de 3 cifre', deOri: '„de … ori mai mult / mai puțin”', fractii3: 'Fracții: citire și comparare',
+  figuri3: 'Figuri geometrice', ceas: 'Ceasul', calendar: 'Calendarul', tabel: 'Tabele și date', alfabet: 'Ordinea alfabetică', orto3: 'Ortograme (toate)', punct3: 'Virgula și două puncte', silabe3: 'Silabe (cuvinte lungi)', pronume: 'Pronumele personal', numeral: 'Numeralul', acordAdj: 'Acordul adjectivului', omonime: 'Omonime', textTip: 'Tipuri de text', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
 };
 
-export const ROMANA = new Set(['silabe', 'cegi', 'orto', 'punct', 'partivorbire', 'sinonime', 'substantiv', 'propozitie', 'sunetInitial', 'rima', 'verbTimp', 'pronume', 'numeral', 'acordAdj', 'omonime', 'textTip']);
+export const SUBJECT_NAMES = { stiinte: 'Științe ale naturii', civica: 'Educație civică', engleza: 'Limba engleză', compuneri: 'Compuneri' };
+export const ROMANA = new Set(['compParti', 'compOrdine', 'alfabet', 'orto3', 'punct3', 'silabe3', 'silabe', 'cegi', 'orto', 'punct', 'partivorbire', 'sinonime', 'substantiv', 'propozitie', 'sunetInitial', 'rima', 'verbTimp', 'pronume', 'numeral', 'acordAdj', 'omonime', 'textTip']);
 /** Tipurile de exerciții pentru o clasă și o materie: 'mate', 'romana', 'mix' sau 'test'. */
 export function typesFor(grade, subject = 'mix') {
   if (subject === 'test') return TEST_ITEMS.map((i) => i.type);
-  const all = [...new Set(MISSIONS.filter((m) => m.area === String(grade) && m.types).flatMap((m) => m.types))];
-  if (subject === 'mate') return all.filter((t) => !ROMANA.has(t));
+  const ms = MISSIONS.filter((m) => m.area === String(grade) && m.types);
+  const all = [...new Set(ms.flatMap((m) => m.types))];
+  if (SUBJECT_NAMES[subject]) return [...new Set(ms.filter((m) => m.subject === subject).flatMap((m) => m.types))];
+  const core = [...new Set(ms.filter((m) => !m.subject).flatMap((m) => m.types))];
+  if (subject === 'mate') return core.filter((t) => !ROMANA.has(t));
   if (subject === 'romana') return all.filter((t) => ROMANA.has(t));
   return all;
 }

@@ -57,7 +57,7 @@ async function answerCurrent(p, correct) {
     await p.evaluate(() => window.__ui.startMission('g4-numere'));
     ok('Misiune de clasa a IV-a refuzată înainte de deblocare', await p.locator('#quiz').isHidden());
     // 5. Deschiderea clasei a IV-a după toate misiunile clasei a III-a + testul
-    await p.evaluate(() => { const S = window.__ui.S; ['g3-primul', 'g3-paranteze', 'g3-ascuns', 'g3-gandesc', 'g3-veverite', 'g3-piata', 'g3-fractii', 'g3-vorbire', 'g3-numere', 'g3-calcule', 'g3-inmultire', 'g3-rest', 'g3-figurativ', 'g3-masuri', 'g3-perimetru', 'g3-romane', 'g3-sinonime', 'g3-substantiv', 'g3-propozitie'].forEach((id) => (S.missions[id] = { stars: 1 })); S.missions['test-mate'] = { stars: 0 }; });
+    await p.evaluate(() => { const S = window.__ui.S; window.__ui.MISSIONS.filter((m) => m.area === '3' && m.types && !m.subject).forEach((m) => (S.missions[m.id] = { stars: 1 })); S.missions['test-mate'] = { stars: 0 }; });
     await p.evaluate(() => window.__ui.startMission('test-mate'));
     for (let i = 0; i < 7; i++) await answerCurrent(p, true);
     const unl = await p.evaluate(() => !!(window.__ui.S.unlocked || {})[4]);
@@ -70,6 +70,35 @@ async function answerCurrent(p, correct) {
     await p.evaluate(() => window.__portal('tabla')); await p.click('#ppGo');
     await p.waitForSelector('#panelCard h2:has-text("Misiune pierdută")', { timeout: 120000 }).catch(() => {});
     ok('Monstrul: fără răspunsuri → „Misiune pierdută”', (await p.textContent('#panelCard h2')).includes('Misiune pierdută'));
+    // Profesorii pe materii: lista de lecții și o lecție de științe
+    await p.evaluate(() => window.__ui.openHub('stiinte'));
+    ok('Profesorul de științe arată 5 lecții', (await p.locator('#panelCard [data-play]').count()) === 5);
+    await p.click('#panelCard [data-play] >> nth=1');
+    ok('Lecția de științe pornește', await p.locator('#quiz').isVisible());
+    for (let i = 0; i < 5; i++) await answerCurrent(p, true);
+    ok('Lecția de științe dă 3 stele la 5/5', await p.evaluate(() => (window.__ui.S.missions['s3-animale'] || {}).stars === 3));
+    await p.click('#back');
+    // Compunerea: textul bun primește 3 stele, cel cu greșeli mai puține
+    await p.evaluate(() => window.__ui.openWrite());
+    await p.fill('#wTxt', 'O zi la munte\nSâmbătă am plecat cu părinții la munte. Era o zi senină și caldă.\nAm urcat pe o potecă printre brazi. Am văzut o veveriță care s-a ascuns repede. Tata mi-a arătat urmele unui urs.\nSeara ne-am întors acasă obosiți, dar fericiți. A fost o zi minunată pe care nu o voi uita niciodată.');
+    await p.click('#wCheck');
+    ok('Compunere bună → 3 stele', (await p.textContent('#wRes')).includes('★★★'), await p.textContent('#wRes'));
+    await p.fill('#wTxt', 'excursia\nam mers la munte si sa dus si tata\nne-am jucat');
+    await p.click('#wCheck');
+    const r = await p.textContent('#wRes');
+    ok('Compunere slabă → indică greșelile (literă mică, s-a, alineate)', r.includes('s-a dus') && r.includes('literă mică') && !r.includes('★★★'), r);
+    await p.click('[data-close]');
+    // Fișa de lucru: 10 exerciții + pagina cu răspunsuri
+    await p.evaluate(() => window.__ui.openFise()); await p.selectOption('#fN', '10'); await p.click('#fGo');
+    ok('Fișa are 10 exerciții și 10 răspunsuri', (await p.locator('#fisa .fp:not(.fk) ol > li').count()) === 10 && (await p.locator('#fisa .fk ol > li').count()) === 10);
+    await p.click('#fClose');
+    // Unde am ajuns: doar 2 capitole → antrenamentul are doar tipurile lor
+    await p.evaluate(() => window.__ui.openChapters()); await p.click('#cNone');
+    await p.check('[data-c="g3-veverite"]'); await p.check('[data-c="g3-romane"]'); await p.click('#cSave');
+    await p.evaluate(() => window.__ui.openDaily());
+    const types = await p.evaluate(() => [...new Set(window.__ui.Q().qs.map((q) => q.type))]);
+    ok('Antrenamentul respectă „unde am ajuns”', types.every((t) => ['veverite', 'abc', 'romane'].includes(t) || window.__nope), types.join(','));
+    await p.click('#tQuit');
     ok('Fără erori în pagină (clasa a III-a)', p.errs.length === 0, p.errs.join(' | '));
     await p.close();
   }

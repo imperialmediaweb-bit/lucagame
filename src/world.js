@@ -226,7 +226,7 @@ export function buildWorld(scene, shadow) {
   // NPC-uri cu misiuni
   const npcs = [];
   AREAS.forEach((a) => {
-    const list = MISSIONS.filter((m) => m.area === a.id);
+    const list = MISSIONS.filter((m) => m.area === a.id && !m.hidden);
     const [ax, az] = a.pos;
     // locuri pentru personaje: un cerc interior (8) și unul exterior, ocolind traseul, trambulina și intrarea
     const avoid = { '0': [], '4': [], '1': [[11, -11], [6, 14]], '2': [[11, 11], [-8, 14]], '3': [[-10, -10], [8, 10]], T: [] }[a.id] || [];
