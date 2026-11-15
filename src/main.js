@@ -15,7 +15,7 @@ import { S, save, areaLocked, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
-import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti, showPanel } from './ui.js';
+import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti, showPanel, askOne } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
 import { startFlow, profileMenu } from './account.js';
 import { Music } from './music.js';
@@ -23,6 +23,7 @@ import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
+import { initWorlds, updateWorlds, worldAt, currentWorld } from './worlds/index.js';
 import { offerPlacement } from './placement.js';
 window.__portal = (id) => portalPanel(id);
 import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks, summonUI } from './mpui.js';
@@ -75,7 +76,7 @@ function physics(dt, mx, mz) {
   P.y = ny; P.coyote = P.ground ? 0.12 : Math.max(0, P.coyote - dt);
   if (jumpReq && P.coyote > 0) { P.vy = 11; P.coyote = 0; P.ground = false; SFX.jump(); }
   jumpReq = false;
-  if (P.y < -6) { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); }
+  if (P.y < -6) { const w = worldAt(P); if (w) { teleport(w.spawn.x, w.spawn.z, w.spawn.y); toast('Hopa! Înapoi la intrare.'); } else { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); } }
 }
 function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
 if (location.hostname === 'localhost') window.__dbg = { P, teleport: (x, z, y) => teleport(x, z, y), setYaw: (y) => { yaw = y; yawS = y; }, W, areaLocked };
@@ -147,6 +148,7 @@ function applyLocks() {
 const AREA_MUSIC = { '0': 'playful', '1': 'playful', '2': 'forest', '3': 'castle', '4': 'mountain', T: 'arena' };
 function musicFor() {
   if (chasing()) return 'chase';
+  { const w = currentWorld(); if (w && $('quiz').hidden) return w.fight && w.fight.on ? 'boss' : w.music; if (w && w.fight && w.fight.on) return 'boss'; }
   if (!$('quiz').hidden) return { test: 'test', class: 'test', duel: 'boss', team: 'boss', atelier: 'think', mission: 'mission', daily: 'mission' }[document.body.dataset.act] || 'mission';
   const a = AREAS.find((q) => Math.abs(P.x - q.pos[0]) < 19 && Math.abs(P.z - q.pos[1]) < 19);
   return a ? AREA_MUSIC[a.id] || 'chill' : 'chill';
@@ -170,8 +172,15 @@ setClassHooks({
   backHub: () => { seated = false; teleport(W.spawn.x, W.spawn.z); yaw = yaw0; toast('Înapoi în piață!'); },
   drawBoard: (t, lines) => CR.drawBoard(t, lines),
   // „Cheamă colegii la mine”: unde sunt și ce loc e acolo
-  here: () => { const a = AREAS.find((q) => Math.abs(P.x - q.pos[0]) < 19 && Math.abs(P.z - q.pos[1]) < 19); return { x: P.x, z: P.z, area: a ? a.id : null, place: a ? a.name : P.x > 140 ? 'sala de clasă' : 'piața Mintoriei' }; },
+  here: () => { const w = worldAt(P); if (w) return { x: P.x, z: P.z, area: null, place: w.place(P) }; const a = AREAS.find((q) => Math.abs(P.x - q.pos[0]) < 19 && Math.abs(P.z - q.pos[1]) < 19); return { x: P.x, z: P.z, area: a ? a.id : null, place: a ? a.name : P.x > 140 ? 'sala de clasă' : 'piața Mintoriei' }; },
   goNear: (x, z, area) => { if (area && areaLocked(area)) { toast('Colegul e în lumea altei clase: acolo nu poți intra.'); return; } seated = false; teleport(x + 1.6, z + 1.6, 0.8); toast('Ai ajuns lângă coleg!'); }
+});
+initWorlds({
+  scene, shadow, colliders: W.colliders, labelHook: (l) => glow.addExcludedMesh(l), SFX, toast, askOne, confetti, refreshHud,
+  teleport: (x, z, y = 0.5) => { seated = false; teleport(x, z, y); }, setYaw: (y) => { yaw = y; yawS = y; },
+  cheer: () => { cheerT = 3; }, setFight: () => {},
+  backHub: () => { seated = false; teleport(W.spawn.x, W.spawn.z); yaw = yaw0; yawS = yaw0; toast('Înapoi în piața Mintoriei!'); },
+  confirm: (text, yes) => { showPanel(`<h2 style="font-size:22px">${text}</h2><div class="row"><button class="btn light" type="button" data-close>Nu</button><button class="btn" type="button" id="cfYes">Da</button></div>`); $('cfYes').onclick = () => { $('panel').hidden = true; yes(); }; }
 });
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
@@ -236,6 +245,7 @@ scene.registerBeforeRender(() => {
     if (Math.hypot(c.x - P.x, c.z - P.z) < 2.8 && Math.abs(P.y - c.top) < 1.2) near = { type: 'chest', c };
   }
   updatePortals(dt, P, t);
+  updateWorlds(dt, t, P, paused());
   for (const p of W.pads) {
     p.ring.rotation.y += dt; p.ring.position.y = 1.6 + Math.sin(t * 2) * 0.2;
     const dp = Math.hypot(p.x - P.x, p.z - P.z);

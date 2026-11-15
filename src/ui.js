@@ -216,7 +216,7 @@ function renderQ() {
       $('tHalf').remove();
     };
   }
-  $('tQuit').onclick = () => { closeDraft(); $('quiz').hidden = true; Q = null; };
+  $('tQuit').onclick = () => { closeDraft(); $('quiz').hidden = true; const cb = Q && Q.mode === 'world' && Q.cb; Q = null; if (cb) cb(null); };
   if ($('tHint')) $('tHint').onclick = () => {
     if (q.done) return; q.used = Math.min(q.used + 1, hs.length); SFX.tap();
     $('hintBox').innerHTML = `<div class="hint"><b>Indiciu ${q.used} din ${hs.length}</b>${hs.slice(0, q.used).map((h) => `<span>${esc(h)}</span>`).join('')}</div>`;
@@ -243,7 +243,7 @@ function answer(k) {
   $('fbBox').innerHTML = `<div class="fb ${ok ? 'ok' : 'no'}">${ok ? `<b>Corect! +${gain} ${gain === 1 ? 'monedă' : 'monede'}${combo >= 3 ? ' (combo!)' : ''}</b>`
       : `<b>Greșit. Ai ales: ${esc(mine)}</b><div class="why"><b>Unde ai greșit:</b> ${esc(why || 'Compară pașii de mai jos cu ce ai făcut tu și caută unde ai luat-o pe alt drum.')}</div><b class="truth">Răspunsul corect: ${esc(ansTxt)}</b>`}
     <span>${ok ? 'Iată cum se face:' : 'Cum se face corect, pas cu pas (exercițiul acesta revine mâine, ca să-l prinzi):'}</span><ol>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol></div>
-    <div class="row" style="margin-top:10px"><button class="btn" type="button" id="next">${last ? 'Vezi rezultatul' : 'Mai departe'}</button></div>`;
+    <div class="row" style="margin-top:10px"><button class="btn" type="button" id="next">${Q.mode === 'world' ? 'Înapoi în lume' : last ? 'Vezi rezultatul' : 'Mai departe'}</button></div>`;
   $('next').onclick = () => { closeDraft(); if (last) finish(); else { Q.i++; renderQ(); } };
   $('fbBox').scrollIntoView({ block: 'nearest' });
 }
@@ -256,7 +256,13 @@ function checkUnlock() {
   S.unlocked[g + 1] = true; save(); H.missionsChanged && H.missionsChanged(); SFX.fanfare(); confetti();
   setTimeout(() => toast(`Ai terminat lumea clasei tale! S-a deschis portalul spre ${GRADE_NAMES[g + 1]}.`), 600);
 }
+// o singură întrebare dintr-o lume 3D (poartă, cristal, etaj, tarabă, boss): rezultatul merge înapoi la lume
+export function askOne(types, title, cb) {
+  if (!$('quiz').hidden) return;
+  Q = { mode: 'world', m: { title, id: 'world' }, qs: [mk(pick(types))], i: 0, ok: 0, res: [], cb }; openQuiz();
+}
 function finish() {
+  if (Q.mode === 'world') { const ok = Q.ok > 0, cb = Q.cb; closeDraft(); $('quiz').hidden = true; Q = null; cb && cb(ok); return; }
   const n = Q.qs.length;
   let html;
   if (Q.mode === 'test') {

@@ -11,6 +11,7 @@ import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom, createRoom, inviteLink } from './net.js';
 import { startPlacement } from './placement.js';
+import { hasWorld, enterWorld } from './worlds/index.js';
 import { creditsHtml } from './credits.js';
 
 const $ = (id) => document.getElementById(id);
@@ -147,7 +148,7 @@ function preview(id) {
     <div class="pv-scene"><i class="pv-cloud a"></i><i class="pv-cloud b"></i><i class="pv-isl"></i><span class="pv-art">${icon(t.icon)}</span><i class="pv-spark s1">★</i><i class="pv-spark s2">★</i></div>
     <div class="pv-body"><h2>${esc(t.name)}</h2><p>${esc(LEARN[id] || t.sub)}</p>${where}
       ${mates ? `<p class="pv-mates">În camera ta: ${mates} ${mates === 1 ? 'coleg' : 'colegi'}</p>` : ''}
-      <div class="pv-btns"><button class="btn" type="button" id="pvSolo">Joacă singur</button>
+      <div class="pv-btns">${subj && hasWorld(subj) ? `<button class="btn" type="button" id="pvWorld">Intră în lumea 3D</button><button class="btn light" type="button" id="pvSolo">Lecțiile pe capitole</button>` : '<button class="btn" type="button" id="pvSolo">Joacă singur</button>'}
         <button class="btn light" type="button" id="pvMates">Joacă cu colegii</button>
         <button class="btn light" type="button" id="pvLink">Trimite link</button></div>
       <button class="iconbtn pv-x" type="button" id="pvX" aria-label="Închide">✕</button></div></div>`;
@@ -156,6 +157,7 @@ function preview(id) {
   box.onclick = (e) => { if (e.target === box) close(); };
   $('pvX').onclick = close;
   $('pvSolo').onclick = () => { close(); play(id); };
+  if ($('pvWorld')) $('pvWorld').onclick = () => { close(); closeHome(); enterWorld(subj); };
   $('pvMates').onclick = async () => {
     close();
     if (id === 'monstri') { closeHome(); return portalPick(); } // acolo e „Cheamă colegii la cursă”
