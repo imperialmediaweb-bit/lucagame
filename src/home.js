@@ -10,6 +10,7 @@ import { openWrite, openFise, chapterOk } from './extra.js';
 import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom } from './net.js';
+import { startPlacement } from './placement.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -87,12 +88,13 @@ export function openHome() {
         <span class="hm-art">${icon(t.icon)}</span><b>${esc(t.name)}</b><small>${esc(t.sub)}</small>
         <span class="hm-meta">${t.tags.map((x) => `<i>${x}</i>`).join('')}<em>${esc(t.prog)}</em></span></button>`).join('')}</div>
       <div class="hm-join"><b>Ai un cod de la un coleg?</b><input id="hmCode" maxlength="4" placeholder="ABCD" autocapitalize="characters"><button class="btn" type="button" id="hmJoin">Intră</button></div>
-      <div class="row" style="justify-content:center"><button class="btn light" type="button" id="hmHelp">Cum se joacă</button></div>
+      <div class="row" style="justify-content:center"><button class="btn light" type="button" id="hmPlace">Unde am ajuns? (test 5 min)</button><button class="btn light" type="button" id="hmHelp">Cum se joacă</button></div>
     </div>`;
   $('home').hidden = false; H.stop && H.stop();
   $('home').querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { SFX.tap(); tile(b.dataset.t); });
   if ($('hmRec')) $('hmRec').onclick = () => { closeHome(); startMission(rec.m); };
   $('hmMenu').onclick = () => { openMenu(); };
+  $('hmPlace').onclick = () => startPlacement(() => openHome());
   $('hmHelp').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
   $('hmJoin').onclick = async () => { const c = $('hmCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{4}$/.test(c)) { toast('Codul are 4 litere/cifre.'); return; } closeHome(); try { await joinRoom(c); } catch (e) { toast(e.message); } };
 }
@@ -124,9 +126,9 @@ export function subjectMap(k) {
   $('home').innerHTML = `<div class="hm-top"><button class="iconbtn" type="button" id="hmBack">← Înapoi</button><b class="hm-title">${esc(names[k])}</b>
       <span class="pill"><span class="st">★</span>${starsOf(list)} / ${list.length * 3}</span></div>
     <div class="hm-body"><div class="hm-path" style="--c:${c}">
-      ${list.map((m, i) => { const st = (S.missions[m.id] || {}).stars || 0, school = chapterOk(m); return `<button class="hm-node ${i % 2 ? 'r' : 'l'} ${i === firstTodo ? 'now' : ''} ${st === 3 ? 'gold' : ''}" type="button" data-m="${m.id}">
+      ${list.map((m, i) => { const st = (S.missions[m.id] || {}).stars || 0, school = chapterOk(m); return `<button class="hm-node ${i % 2 ? 'r' : 'l'} ${i === firstTodo ? 'now' : ''} ${st === 3 ? 'gold' : ''} ${school ? '' : 'fog'}" type="button" data-m="${m.id}">
         <span class="hm-dot">${st === 3 ? '★' : i + 1}</span><span class="hm-lbl"><b>${esc(m.title)}</b><small>${esc(m.desc)}</small>
-        <span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3 - st)}</span></span>${school ? '' : '<i>încă nu la școală</i>'}</span></button>`; }).join('')}
+        <span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3 - st)}</span></span>${school ? '' : '<i>în ceață · încă nu ați ajuns la școală</i>'}</span></button>`; }).join('')}
       ${k === 'romana' ? `<button class="hm-node ${list.length % 2 ? 'r' : 'l'}" type="button" id="hmWrite"><span class="hm-dot">✎</span><span class="hm-lbl"><b>Scriu o compunere</b><small>Jocul verifică titlul, alineatele, ortogramele</small></span></button>` : ''}
     </div>
     <div class="row" style="justify-content:center"><button class="btn light" type="button" id="hmFise">Fișă de lucru pentru această materie</button></div></div>`;

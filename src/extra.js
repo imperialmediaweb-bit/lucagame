@@ -98,14 +98,16 @@ function printFisa(mid, n) {
 }
 
 /* ---------------- unde am ajuns la școală ---------------- */
+import { startPlacement } from './placement.js';
 export function openChapters() {
   const g = String(G()), ms = MISSIONS.filter((m) => m.area === g && m.types);
   const done = new Set(S.chapters || ms.map((m) => m.id));
   showPanel(`<div class="eyebrow">${GRADE_NAMES[G()]}</div><h2>Unde am ajuns la școală?</h2>
     <p>Bifează capitolele făcute deja la clasă. Antrenamentul zilnic și misiunile recomandate vor fi doar din ele, ca să nu primești ce n-ai învățat încă.</p>
     <div class="jgrade">${ms.map((m) => `<label class="jrow" style="grid-template-columns:auto minmax(0,1fr)"><input type="checkbox" data-c="${m.id}" ${done.has(m.id) ? 'checked' : ''} style="width:22px;height:22px"><span><b>${esc(m.subject ? SUBJECT_NAMES[m.subject] + ': ' : '')}${esc(m.title)}</b><small> · ${esc(m.desc)}</small></span></label>`).join('')}</div>
-    <div class="row"><button class="btn light" type="button" id="cAll">Toate</button><button class="btn light" type="button" id="cNone">Niciunul</button><button class="btn" type="button" id="cSave">Salvează</button></div>`);
+    <div class="row"><button class="btn light" type="button" id="cTest">Află singur (test 5 min)</button><button class="btn light" type="button" id="cAll">Toate</button><button class="btn light" type="button" id="cNone">Niciunul</button><button class="btn" type="button" id="cSave">Salvează</button></div>`);
   const boxes = () => [...$('panelCard').querySelectorAll('[data-c]')];
+  $('cTest').onclick = () => startPlacement();
   $('cAll').onclick = () => boxes().forEach((b) => (b.checked = true));
   $('cNone').onclick = () => boxes().forEach((b) => (b.checked = false));
   $('cSave').onclick = () => { const ids = boxes().filter((b) => b.checked).map((b) => b.dataset.c); S.chapters = ids.length === ms.length ? null : ids; save(); $('panel').hidden = true; toast(ids.length ? `Gata: ${ids.length} capitole făcute la școală.` : 'Nu ai bifat niciun capitol.'); };

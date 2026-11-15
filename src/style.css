@@ -227,3 +227,9 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 #waitBox,.knock{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px 14px;box-shadow:0 5px 0 var(--ink);display:flex;flex-direction:column;gap:6px}
 #waitBox span,.knock span{color:var(--muted);font-size:14px;display:block}
 .knock .row{justify-content:flex-end;margin:0}
+.pl-bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}.pl-bar i{display:block;height:100%;background:#2EC4A6;transition:width .3s}
+/* capitolele în ceață pe harta materiei */
+.hm-node.fog .hm-dot{background:#c9cfd8;color:#fff;filter:blur(.3px)}
+.hm-node.fog .hm-lbl{background:linear-gradient(90deg,#eef1f5,#fff);opacity:.75;border-style:dashed}
+.hm-node.fog .hm-dot::after{content:"☁";position:absolute;font-size:30px;color:#fff;transform:translate(14px,-18px);text-shadow:0 2px 0 rgba(0,0,0,.15)}
+.hm-dot{position:relative}

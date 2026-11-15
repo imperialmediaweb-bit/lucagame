@@ -23,6 +23,7 @@ import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
+import { offerPlacement } from './placement.js';
 window.__portal = (id) => portalPanel(id);
 import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered, mpReveal, mpEnd, classStart, classProgress, classEnd, setClassHooks, summonUI } from './mpui.js';
 
@@ -175,7 +176,7 @@ setClassHooks({
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
   reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
-  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else { openHome(); if (!S.tutorial) showTutorial(touch); } }
+  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else { openHome(); if (!S.tutorial) showTutorial(touch); else if (!S.placed) offerPlacement(() => openHome()); } }
 };
 window.__profile = () => profileMenu(hooks);
 initHome({ stop, showPanel });
