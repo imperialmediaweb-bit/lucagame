@@ -2,8 +2,11 @@
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { buildMate } from './mate.js';
 import { buildRomana } from './romana.js';
+import { buildStiinte } from './stiinte.js';
+import { buildEngleza } from './engleza.js';
+import { buildCivica } from './civica.js';
 
-const BUILDERS = { mate: buildMate, romana: buildRomana };
+const BUILDERS = { mate: buildMate, romana: buildRomana, stiinte: buildStiinte, engleza: buildEngleza, civica: buildCivica };
 const WORLDS = {};
 let ctx = null, cur = null, sky0 = null;
 
