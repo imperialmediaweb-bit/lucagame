@@ -1,4 +1,6 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
+import { CREDITS } from './credits.js';
+import { diagnose } from './mistakes.js';
 import { POWERS, has as hasPower, count as countPower, use as usePower, buy as buyPower, doubleOn, doubleLeft } from './powers.js';
 import { initColumn, showColumn, exprFrom, resetColumn } from './column.js';
 import { S, save, DAY, GOAL, starsTotal, reviewMark, dueTypes, pickWeighted, areaLocked, GRADE_NAMES, G } from './state.js';
@@ -72,6 +74,7 @@ export function openMenu() {
       <button class="item" type="button" id="mM"><b>Sunete</b><span>${S.mute ? 'oprite' : 'pornite'}</span></button>
       <button class="item" type="button" id="mMu"><b>Muzică</b><span>${Music.on() ? 'pornită' : 'oprită'}</span></button>
       <button class="item" type="button" id="mH"><b>Acasă</b><span>alege jocul</span></button>
+      <button class="item" type="button" id="mAbout"><b>Despre Mintoria</b><span>cine a făcut jocul</span></button>
       <button class="item" type="button" id="mPr"><b>Profilul meu</b><span>${esc(S.name || 'fără profil')}</span></button>
       <button class="item" type="button" id="mA"><b>Atelierul problemelor</b><span>problemele din test, pas cu pas</span></button>
       <button class="item" type="button" id="mC"><b>Joacă cu colegii</b><span>cameră cu link</span></button>
@@ -88,6 +91,10 @@ export function openMenu() {
   $('mA').onclick = () => openAtelier();
   $('mCh').onclick = () => openChapters(); $('mF').onclick = () => openFise();
   $('mPr').onclick = () => window.__profile && window.__profile();
+  $('mAbout').onclick = () => showPanel(`<div class="eyebrow">Despre</div><img src="./logo.svg" alt="Mintoria" style="width:min(280px,100%);align-self:center">
+    <p>Mintoria e un joc în care înveți materia școlii jucându-te: misiuni, monștri, colegi și teste.</p>
+    <div class="jgrade">${CREDITS.map(([r, n]) => `<div class="jrow" style="grid-template-columns:minmax(0,1fr) auto"><span>${r}</span><b>${n}</b></div>`).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
   $('mH').onclick = () => { hidePanel(); document.getElementById('openHome').click(); };
   $('mG').onclick = () => { toast(`Ești în ${GRADE_NAMES[G()]}. Când termini toată lumea clasei tale, se deschide clasa următoare.`); };
   $('mV').onclick = () => { const o = ['incet', 'mediu', 'rapid']; S.camSpeed = o[(o.indexOf(S.camSpeed || 'incet') + 1) % 3]; save(); openMenu(); }; $('mH').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
@@ -232,8 +239,10 @@ function answer(k) {
   else { combo = 0; SFX.no(); }
   Q.res[Q.i] = ok; save(); refreshHud();
   const last = Q.i === Q.qs.length - 1, ansTxt = q.kind === 'tap' ? q.toks[q.ans] : q.ans;
-  $('fbBox').innerHTML = `<div class="fb ${ok ? 'ok' : 'no'}"><b>${ok ? `Corect! +${gain} ${gain === 1 ? 'monedă' : 'monede'}${combo >= 3 ? ' (combo!)' : ''}` : 'Nu chiar. Răspunsul corect: ' + esc(ansTxt)}</b>
-    <span>${ok ? 'Iată cum se face:' : 'Hai să vedem pas cu pas. Acest tip de exercițiu revine mâine, ca să-l prinzi.'}</span><ol>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol></div>
+  const mine = q.kind === 'tap' ? q.toks[k] : q.opts[k], why = ok ? null : ((q.why && q.why[mine]) || diagnose(q, mine));
+  $('fbBox').innerHTML = `<div class="fb ${ok ? 'ok' : 'no'}">${ok ? `<b>Corect! +${gain} ${gain === 1 ? 'monedă' : 'monede'}${combo >= 3 ? ' (combo!)' : ''}</b>`
+      : `<b>Greșit. Ai ales: ${esc(mine)}</b><div class="why"><b>Unde ai greșit:</b> ${esc(why || 'Compară pașii de mai jos cu ce ai făcut tu și caută unde ai luat-o pe alt drum.')}</div><b class="truth">Răspunsul corect: ${esc(ansTxt)}</b>`}
+    <span>${ok ? 'Iată cum se face:' : 'Cum se face corect, pas cu pas (exercițiul acesta revine mâine, ca să-l prinzi):'}</span><ol>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol></div>
     <div class="row" style="margin-top:10px"><button class="btn" type="button" id="next">${last ? 'Vezi rezultatul' : 'Mai departe'}</button></div>`;
   $('next').onclick = () => { closeDraft(); if (last) finish(); else { Q.i++; renderQ(); } };
   $('fbBox').scrollIntoView({ block: 'nearest' });

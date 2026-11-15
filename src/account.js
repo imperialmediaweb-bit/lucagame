@@ -1,5 +1,6 @@
 // Profilul copilului: username + PIN, progres salvat pe server, cod de recuperare pentru părinte.
 import { worldName } from './home.js';
+import { creditsHtml } from './credits.js';
 import { S, save, loadState, setOnSave, level, G, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, refreshHud } from './ui.js';
@@ -60,7 +61,7 @@ function welcome(hooks, invite) {
       <button class="item" type="button" id="wNew"><b>Fac profil nou</b><span>username + PIN</span></button>
       <button class="item" type="button" id="wLogin"><b>Am deja profil</b><span>intru cu PIN-ul</span></button>
     </div>
-    <div class="row"><button class="btn light" type="button" id="wParent">Pentru părinți</button><button class="btn light" type="button" id="wGuest">Joc fără profil</button></div>`);
+    <div class="row"><button class="btn light" type="button" id="wParent">Pentru părinți</button><button class="btn light" type="button" id="wGuest">Joc fără profil</button></div>${creditsHtml()}`);
   lock();
   $('wNew').onclick = () => register(hooks, invite);
   $('wLogin').onclick = () => login(hooks, invite);

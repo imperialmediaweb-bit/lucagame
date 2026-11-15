@@ -284,3 +284,7 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 .col-msg{font-size:15px;line-height:1.35;background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 10px}
 @media (max-width:420px){#colPad{--cw:34px}.cc{font-size:24px;height:38px}}
 .item.pw{gap:4px}.pwi{font:800 28px var(--font-d);width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:#7B5CF6;color:#fff;border:2px solid var(--ink);margin:0 auto}
+.fb .why{background:#fff;border:2px dashed var(--bad);border-radius:10px;padding:6px 10px;margin:6px 0;font-size:15px;line-height:1.35}
+.fb .truth{display:block;color:var(--good);font-size:18px;margin-bottom:4px}
+.credits{display:block;text-align:center;font-family:var(--font-b);font-size:13px;color:var(--muted);line-height:1.5}
+.credits b{color:var(--ink)}

@@ -11,6 +11,7 @@ import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom, createRoom, inviteLink } from './net.js';
 import { startPlacement } from './placement.js';
+import { creditsHtml } from './credits.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -89,6 +90,7 @@ export function openHome() {
         <span class="hm-meta">${t.tags.map((x) => `<i>${x}</i>`).join('')}<em>${esc(t.prog)}</em></span></button>`).join('')}</div>
       <div class="hm-join"><b>Ai un cod de la un coleg?</b><input id="hmCode" maxlength="4" placeholder="ABCD" autocapitalize="characters"><button class="btn" type="button" id="hmJoin">Intră</button></div>
       <div class="row" style="justify-content:center"><button class="btn light" type="button" id="hmPlace">Unde am ajuns? (test 5 min)</button><button class="btn light" type="button" id="hmHelp">Cum se joacă</button></div>
+      ${creditsHtml()}
     </div>`;
   $('home').hidden = false; H.stop && H.stop();
   $('home').querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { SFX.tap(); tile(b.dataset.t); });

@@ -18,3 +18,5 @@ export function opts(ans, cands = []) {
 
 /** Variante text: corectul + greșelile date. */
 export const textOpts = (ans, wrong) => shuffle([ans, ...wrong.filter((w) => w !== ans)].slice(0, 4));
+// explicația pentru fiecare variantă greșită: why(ans, [valoare, 'ce ai greșit'], ...)
+export const why = (ans, ...pairs) => { const o = {}; for (const [v, t] of pairs) if (v !== ans && !(v in o)) o[v] = t; return o; };
