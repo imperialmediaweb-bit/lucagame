@@ -10,6 +10,7 @@ const URL = process.env.URL || 'http://localhost:4174/';
   await p.goto(URL); await p.waitForTimeout(6000);
   await p.click('#wGuest'); await p.fill('#gN', 'Robot'); await p.click('#gG [data-g="3"]'); await p.click('#gGo'); await p.waitForTimeout(400);
   await p.click('[data-close]').catch(() => {});
+  await p.evaluate(() => { const h = document.getElementById('home'); if (h) h.hidden = true; document.getElementById('panel').hidden = true; });
   await p.addStyleTag({ content: '#quest{visibility:hidden}' });
 
   const fails = []; let runs = 0;
