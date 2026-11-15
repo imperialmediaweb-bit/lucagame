@@ -162,14 +162,20 @@ function endGame(r) {
 export function attachMultiplayer(server) {
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 4096 });
   wss.on('connection', (ws) => {
-    let room = null, me = null, last = 0;
+    let room = null, me = null, last = 0, pendingId = 0, pendingRoom = null;
+    const enter = (m, id) => {
+      me = { id, ws, name: clean(m.name), look: cleanLook(m.look), x: 0, y: 0.5, z: 5, f: 0, score: 0, host: room.players.size === 0 };
+      room.players.set(me.id, me);
+      send(ws, { t: 'joined', you: me.id, room: roomState(room) });
+      bcast(room, { t: 'player', p: pub(me) }, ws);
+    };
     ws.on('message', (buf) => {
       let m; try { m = JSON.parse(buf); } catch { return; }
       const now = Date.now();
       if (m.t !== 'pos' && now - last < 120) return; // anti-spam
       if (m.t !== 'pos') last = now;
       if (m.t === 'create' || m.t === 'join') {
-        if (room) return;
+        if (room || pendingId) return;
         if (m.t === 'create') {
           const c = code(); room = { code: c, grade: [0, 1, 2, 3, 4].includes(+m.grade) ? +m.grade : 3, subject: ['mate', 'romana', 'mix', 'test', 'stiinte', 'civica', 'engleza', 'compuneri'].includes(m.subject) ? m.subject : 'mix', players: new Map(), game: null };
           rooms.set(c, room);
@@ -177,11 +183,26 @@ export function attachMultiplayer(server) {
           room = rooms.get(String(m.code || '').toUpperCase());
           if (!room) { send(ws, { t: 'error', msg: 'Camera nu există sau s-a închis. Cere un link nou.' }); room = null; return; }
           if (room.players.size >= 30) { send(ws, { t: 'error', msg: 'Camera e plină (30 de jucători).' }); room = null; return; }
+          // siguranță: gazda aprobă pe oricine intră
+          const r = room, pid = nextId++; room = null; pendingId = pid;
+          r.pending = r.pending || new Map();
+          if (r.pending.size >= 10) { send(ws, { t: 'error', msg: 'Prea mulți așteaptă la ușă. Încearcă peste un minut.' }); return; }
+          const done = () => { clearTimeout(p.timer); r.pending.delete(pid); pendingId = 0; };
+          const p = { name: clean(m.name), look: m.look,
+            admit: () => { done(); if (ws.readyState !== 1 || !rooms.has(r.code)) return; room = r; enter(m, pid); },
+            deny: (msg) => { done(); send(ws, { t: 'error', msg }); } };
+          p.timer = setTimeout(() => p.deny('Gazda nu a răspuns. Roagă-l pe colegul tău să te primească și încearcă din nou.'), 120000);
+          r.pending.set(pid, p); pendingRoom = r;
+          send(ws, { t: 'wait', code: r.code });
+          const host = [...r.players.values()].find((x) => x.host); if (host) send(host.ws, { t: 'knock', id: pid, name: p.name });
+          return;
         }
-        me = { id: nextId++, ws, name: clean(m.name), look: cleanLook(m.look), x: 0, y: 0.5, z: 5, f: 0, score: 0, host: room.players.size === 0 };
-        room.players.set(me.id, me);
-        send(ws, { t: 'joined', you: me.id, room: roomState(room) });
-        bcast(room, { t: 'player', p: pub(me) }, ws);
+        enter(m, nextId++);
+        return;
+      }
+      if (m.t === 'admit' && me && me.host && room && room.pending) {
+        const p = room.pending.get(m.id | 0); if (!p) return;
+        if (m.ok) p.admit(); else p.deny('Gazda nu te-a primit în cameră.');
         return;
       }
       if (!room || !me) return;
@@ -205,6 +226,7 @@ export function attachMultiplayer(server) {
       else if (m.t === 'stop' && me.host && room.game) endGame(room);
     });
     ws.on('close', () => {
+      if (pendingId && pendingRoom && pendingRoom.pending) { const p = pendingRoom.pending.get(pendingId); if (p) { clearTimeout(p.timer); pendingRoom.pending.delete(pendingId); } }
       if (!room || !me) return;
       if (room.race) { room.race.joined.delete(me.id); const x = room.race.runners.get(me.id); if (x) { x.out = true; } if (room.race.phase === 'run' && [...room.race.runners.values()].every((y) => y.done || y.out)) raceEnd(room); }
       room.players.delete(me.id);

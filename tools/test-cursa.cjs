@@ -23,9 +23,10 @@ const results = []; const ok = (n, c, i = '') => results.push({ n, pass: !!c, i 
     for (let k = 0; k < n; k++) { const t = (await btns.nth(k).textContent()).trim(); if ((t === ans) === right) { await btns.nth(k).dispatchEvent('pointerdown'); return; } }
   };
   const L = await kid('Luca');
-  await L.click('#openMenu'); await L.click('#mC'); await L.click('#cGo'); await L.waitForTimeout(1200);
+  await L.click('[data-t="colegi"]'); await L.click('#cGo'); await L.waitForTimeout(1200);
   const link = await L.inputValue('#lnk'); await L.click('[data-close]');
-  const A = await kid('Ana', link), M = await kid('Mihai', link);
+  const admit = async () => { await L.waitForSelector('.knock', { timeout: 8000 }); await L.click('.knock [data-ok="1"] >> nth=0'); await L.waitForTimeout(1200); };
+  const A = await kid('Ana', link); await admit(); const M = await kid('Mihai', link); await admit();
   await L.waitForTimeout(1000);
 
   // „Cheamă colegii la mine”

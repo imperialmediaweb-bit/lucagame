@@ -222,3 +222,8 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .hm-lbl .stars{font-size:15px}.hm-lbl i{display:block;font-size:11px;color:var(--bad);font-style:normal;font-weight:800}
 @media (max-width:520px){.hm-node{width:100%}.hm-node.l{flex-direction:row;text-align:left}.hm-path::before{left:32px}.hm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-art{height:80px}.hm-stats .pill{font-size:14px;padding:2px 8px}}
 @media (prefers-reduced-motion:reduce){.hm-node.now .hm-dot{animation:none}}
+/* ușa camerei: aprobarea gazdei */
+#waitBox,#knocks{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 70px);z-index:45;display:flex;flex-direction:column;gap:8px;width:min(360px,calc(100% - 24px))}
+#waitBox,.knock{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px 14px;box-shadow:0 5px 0 var(--ink);display:flex;flex-direction:column;gap:6px}
+#waitBox span,.knock span{color:var(--muted);font-size:14px;display:block}
+.knock .row{justify-content:flex-end;margin:0}
