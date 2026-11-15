@@ -134,7 +134,7 @@ function knock(id, name) {
   let box = document.getElementById('knocks');
   if (!box) { box = document.createElement('div'); box.id = 'knocks'; document.body.appendChild(box); }
   const el = document.createElement('div'); el.className = 'knock';
-  el.innerHTML = `<b>${esc(name)}</b> vrea să intre în camera ta.<span>Îl primești doar dacă îl cunoști.</span><div class="row"><button class="btn light" type="button" data-ok="0">Nu</button><button class="btn" type="button" data-ok="1">Primește</button></div>`;
+  el.innerHTML = `<div><b>${esc(name)}</b> vrea să intre în camera ta.</div><span>Îl primești doar dacă îl cunoști.</span><div class="row"><button class="btn light" type="button" data-ok="0">Nu</button><button class="btn" type="button" data-ok="1">Primește</button></div>`;
   el.querySelectorAll('[data-ok]').forEach((b) => b.onclick = () => { sendMsg({ t: 'admit', id, ok: b.dataset.ok === '1' }); el.remove(); });
   box.appendChild(el); SFX.talk();
   setTimeout(() => el.remove(), 120000);

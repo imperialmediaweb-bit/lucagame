@@ -233,3 +233,22 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .hm-node.fog .hm-lbl{background:linear-gradient(90deg,#eef1f5,#fff);opacity:.75;border-style:dashed}
 .hm-node.fog .hm-dot::after{content:"☁";position:absolute;font-size:30px;color:#fff;transform:translate(14px,-18px);text-shadow:0 2px 0 rgba(0,0,0,.15)}
 .hm-dot{position:relative}
+/* previzualizarea unui joc */
+.pv-back{position:fixed;inset:0;z-index:19;background:rgba(20,30,50,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.pv{position:relative;width:min(460px,100%);max-height:100%;overflow:auto;background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink)}
+.pv-scene{position:relative;height:170px;overflow:hidden;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 55%,#bfe9ff),var(--c));border-bottom:3px solid var(--ink)}
+.pv-isl{position:absolute;left:50%;bottom:-38px;width:260px;height:90px;margin-left:-130px;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#7fd67a,#3f9c4a);border:3px solid var(--ink)}
+.pv-art{position:absolute;left:50%;top:22px;margin-left:-48px;animation:pvFloat 2.6s ease-in-out infinite}.pv-art svg{width:96px;height:96px;filter:drop-shadow(0 6px 0 rgba(0,0,0,.25))}
+.pv-cloud{position:absolute;width:70px;height:22px;border-radius:20px;background:rgba(255,255,255,.85);animation:pvCloud 14s linear infinite}
+.pv-cloud.a{top:20px;left:-80px}.pv-cloud.b{top:60px;left:-80px;animation-delay:-7s;transform:scale(.7)}
+.pv-spark{position:absolute;color:#FFC93C;font-style:normal;font-size:22px;animation:pvTw 1.8s ease-in-out infinite}.pv-spark.s1{left:22%;top:40px}.pv-spark.s2{right:22%;top:80px;animation-delay:-.9s}
+@keyframes pvFloat{50%{transform:translateY(-10px) rotate(3deg)}}
+@keyframes pvCloud{to{left:110%}}
+@keyframes pvTw{50%{opacity:.2;transform:scale(.6)}}
+.pv-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.pv-body h2{font-family:var(--font-d);font-size:26px;margin:0}.pv-body p{margin:0}
+.pv-stats{display:flex;flex-wrap:wrap;gap:6px}.pv-stats span{background:#f1eefc;border-radius:10px;padding:4px 9px;font-size:14px}
+.pv-mates{color:var(--good);font-weight:800}
+.pv-btns{display:grid;grid-template-columns:1fr;gap:8px;margin-top:4px}.pv-btns .btn{width:100%}
+.pv-x{position:absolute;right:10px;top:10px}
+@media (prefers-reduced-motion:reduce){.pv-art,.pv-cloud,.pv-spark{animation:none}}

@@ -1,4 +1,5 @@
 // Profilul copilului: username + PIN, progres salvat pe server, cod de recuperare pentru părinte.
+import { worldName } from './home.js';
 import { S, save, loadState, setOnSave, level, G, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, refreshHud } from './ui.js';
@@ -51,9 +52,10 @@ const PIN_ATTR = 'maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplet
 const pinOnly = (id) => { const el = $(id); if (el) el.addEventListener('input', () => { const v = el.value.replace(/\D/g, '').slice(0, 4); if (v !== el.value) el.value = v; }); };
 const input = (id, ph, extra = '') => `<input id="${id}" ${extra} placeholder="${ph}" style="font:700 20px var(--font-b);padding:10px 12px;border:2px solid var(--ink);border-radius:12px;width:100%;box-sizing:border-box">`;
 
+const lume = () => worldName(new URLSearchParams(location.search).get('lume') || '');
 function welcome(hooks, invite) {
   showPanel(`<div class="eyebrow">${invite ? 'Ai primit o invitație de la un coleg' : 'Bun venit!'}</div><img src="./logo.svg" alt="Mintoria" style="width:min(300px,100%);align-self:center">
-    <p>${invite ? `Te așteaptă în camera <b>${esc(invite.toUpperCase())}</b>. ` : ''}Fă-ți un profil ca să-ți păstrezi monedele, stelele și hainele, pe telefon și pe calculator.</p>
+    <p>${invite ? `Te așteaptă în camera <b>${esc(invite.toUpperCase())}</b>${lume() ? `, în <b>${esc(lume())}</b>` : ''}. ` : ''}Fă-ți un profil ca să-ți păstrezi monedele, stelele și hainele, pe telefon și pe calculator.</p>
     <div class="shopgrid">
       <button class="item" type="button" id="wNew"><b>Fac profil nou</b><span>username + PIN</span></button>
       <button class="item" type="button" id="wLogin"><b>Am deja profil</b><span>intru cu PIN-ul</span></button>

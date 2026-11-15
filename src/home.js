@@ -9,12 +9,12 @@ import { openAtelier } from './atelier.js';
 import { openWrite, openFise, chapterOk } from './extra.js';
 import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
-import { NET, joinRoom } from './net.js';
+import { NET, joinRoom, createRoom, inviteLink } from './net.js';
 import { startPlacement } from './placement.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let H = {};
+let H = {}, TILES = [];
 
 // pictograme desenate (SVG), în stilul Mintoria
 const IC = {
@@ -73,7 +73,7 @@ export function openHome() {
     { id: 'insula', icon: 'insula', name: 'Explorează insula', sub: 'Personaje, comori, trambuline', color: '#42c0d8', tags: ['Singur', 'Cu colegii'], prog: `${starsTotal()} ★ adunate` },
     { id: 'garderoba', icon: 'garderoba', name: 'Garderoba', sub: 'Haine, pălării, fețe', color: '#f2b632', tags: [], prog: `${S.coins} monede` }
   ];
-  const rec = recommend(subj);
+  TILES = tiles; const rec = recommend(subj);
   $('home').innerHTML = `<div class="hm-top">
       <div class="hm-me"><div class="hm-av" style="background:${S.look.shirt}"><span style="background:${S.look.skin}"></span></div>
         <div><b>${esc(S.name || 'Jucător')}</b><small>${esc(GRADE_NAMES[G()])} · nivelul ${lv}</small><div class="hm-xp"><i style="width:${pct}%"></i></div></div></div>
@@ -106,16 +106,78 @@ function recommend(subj) {
   return null;
 }
 function tile(id) {
+  if (id === 'colegi') { closeHome(); return NET.room ? openLobby() : openCreate(); }
+  if (id === 'garderoba') { closeHome(); return openShop(); }
+  preview(id);
+}
+function play(id) {
   if (id.startsWith('subj:')) return subjectMap(id.slice(5));
   closeHome();
   if (id === 'monstri') return portalPick();
   if (id === 'antrenament') return openDaily();
   if (id === 'test') return startMission(MISSIONS.find((m) => m.test));
   if (id === 'atelier') return openAtelier();
-  if (id === 'colegi') return NET.room ? openLobby() : openCreate();
-  if (id === 'garderoba') return openShop();
   if (id === 'insula') return toast('Explorează! Caută personajele cu „!”.');
 }
+
+/* previzualizarea unui joc: scenă animată, ce înveți, unde ai ajuns, și cum joci */
+const LEARN = {
+  'subj:mate': 'Calcule, ordinea operațiilor, probleme, fracții, măsuri, geometrie.',
+  'subj:romana': 'Ortograme, părți de vorbire, punctuație, compuneri.',
+  'subj:stiinte': 'Viețuitoare, corpul omului, apa, Pământul, forțe și magneți.',
+  'subj:engleza': 'Cuvinte, numere, propoziții simple în engleză.',
+  'subj:civica': 'Ce e bine și ce nu, drepturi, reguli, prietenie.',
+  monstri: 'Calcul rapid: fiecare răspuns bun te duce mai aproape de ieșire. Monstrul vine din spate!',
+  antrenament: 'Amestec din capitolele tale + repetarea a ce ai greșit acum 1, 3 și 7 zile.',
+  test: 'Un test ca la școală, cu notă de la 1 la 10.',
+  atelier: 'Problemele grele, pas cu pas: privești, completezi, faci singur.',
+  insula: 'Lumea 3D: personaje cu misiuni, comori, trambuline, obstacole.'
+};
+const ROOM_SUBJ = { 'subj:mate': 'mate', 'subj:romana': 'romana', 'subj:stiinte': 'stiinte', 'subj:engleza': 'engleza', 'subj:civica': 'civica', test: 'test' };
+function preview(id) {
+  const t = TILES.find((x) => x.id === id); if (!t) return play(id);
+  const subj = id.startsWith('subj:') ? id.slice(5) : null, list = subj ? lessons(subj) : [];
+  const fog = list.filter((m) => !chapterOk(m)).length;
+  const where = subj ? `<div class="pv-stats"><span><b>${list.length}</b> capitole</span><span><b>${list.length - fog}</b> făcute la școală</span><span><b>${fog}</b> în ceață</span><span><b>${starsOf(list)}</b> / ${list.length * 3} ★</span></div>` : `<div class="pv-stats"><span><b>${esc(t.prog)}</b></span></div>`;
+  const mates = NET.room ? NET.room.players.length - 1 : 0;
+  const box = document.createElement('div'); box.className = 'pv-back';
+  box.innerHTML = `<div class="pv" style="--c:${t.color}">
+    <div class="pv-scene"><i class="pv-cloud a"></i><i class="pv-cloud b"></i><i class="pv-isl"></i><span class="pv-art">${icon(t.icon)}</span><i class="pv-spark s1">★</i><i class="pv-spark s2">★</i></div>
+    <div class="pv-body"><h2>${esc(t.name)}</h2><p>${esc(LEARN[id] || t.sub)}</p>${where}
+      ${mates ? `<p class="pv-mates">În camera ta: ${mates} ${mates === 1 ? 'coleg' : 'colegi'}</p>` : ''}
+      <div class="pv-btns"><button class="btn" type="button" id="pvSolo">Joacă singur</button>
+        <button class="btn light" type="button" id="pvMates">Joacă cu colegii</button>
+        <button class="btn light" type="button" id="pvLink">Trimite link</button></div>
+      <button class="iconbtn pv-x" type="button" id="pvX" aria-label="Închide">✕</button></div></div>`;
+  $('home').appendChild(box);
+  const close = () => box.remove();
+  box.onclick = (e) => { if (e.target === box) close(); };
+  $('pvX').onclick = close;
+  $('pvSolo').onclick = () => { close(); play(id); };
+  $('pvMates').onclick = async () => {
+    close();
+    if (id === 'monstri') { closeHome(); return portalPick(); } // acolo e „Cheamă colegii la cursă”
+    if (NET.room) { closeHome(); return openLobby(); }
+    closeHome(); await room(id);
+  };
+  $('pvLink').onclick = async () => { const ok = await room(id); if (ok) share(t); };
+}
+// face o cameră (dacă nu e deja) pentru jocul ales
+async function room(id) {
+  if (NET.room) return true;
+  try { await createRoom(G(), ROOM_SUBJ[id] || 'mix'); } catch (e) { toast(e.message); return false; }
+  for (let i = 0; i < 50 && !NET.room; i++) await new Promise((r) => setTimeout(r, 100));
+  if (!NET.room) { toast('Nu am putut face camera. Mai încearcă.'); return false; }
+  return true;
+}
+function share(t) {
+  const url = inviteLink() + '&lume=' + encodeURIComponent(t.id);
+  const msg = `${S.name || 'Un coleg'} te cheamă în ${t.name} din Mintoria! Apasă aici:`;
+  if (navigator.share) { navigator.share({ title: 'Mintoria', text: msg, url }).catch(() => {}); return; }
+  if (matchMedia('(pointer:coarse)').matches) { location.href = 'https://wa.me/?text=' + encodeURIComponent(msg + ' ' + url); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Linkul e copiat. Lipește-l pe WhatsApp.'), () => toast(url));
+}
+export const worldName = (id) => ({ 'subj:mate': 'Lumea Matematicii', 'subj:romana': 'Lumea Cuvintelor', 'subj:stiinte': 'Laboratorul Naturii', 'subj:engleza': 'English Island', 'subj:civica': 'Orașul Bunătății', monstri: 'Fuga de monștri', test: 'Arena Testului', antrenament: 'Antrenamentul zilei', atelier: 'Atelierul problemelor', insula: 'insula Mintoria' }[id]);
 
 /* harta capitolelor unei materii: un drum cu noduri și stele */
 export function subjectMap(k) {
