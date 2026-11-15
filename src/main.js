@@ -180,6 +180,7 @@ initWorlds({
   teleport: (x, z, y = 0.5) => { seated = false; teleport(x, z, y); }, setYaw: (y) => { yaw = y; yawS = y; },
   cheer: () => { cheerT = 3; }, setFight: () => {},
   backHub: () => { seated = false; teleport(W.spawn.x, W.spawn.z); yaw = yaw0; yawS = yaw0; toast('Înapoi în piața Mintoriei!'); },
+  info: (html) => showPanel(html + '<div class="row"><button class="btn" type="button" data-close>Am înțeles</button></div>'),
   confirm: (text, yes) => { showPanel(`<h2 style="font-size:22px">${text}</h2><div class="row"><button class="btn light" type="button" data-close>Nu</button><button class="btn" type="button" id="cfYes">Da</button></div>`); $('cfYes').onclick = () => { $('panel').hidden = true; yes(); }; }
 });
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
@@ -225,7 +226,9 @@ scene.registerBeforeRender(() => {
 
   const cd = camDist, tgt = new Vector3(P.x, P.y + 1.8, P.z);
   camPos.set(P.x + Math.sin(yawS) * cd * Math.cos(pitch), P.y + 1.8 + cd * Math.sin(pitch), P.z + Math.cos(yawS) * cd * Math.cos(pitch));
-  camera.position = Vector3.Lerp(camera.position, camPos, Math.min(1, dt * 8)); camera.setTarget(tgt);
+  // după o teleportare departe (lumi, sală), camera sare direct, nu zboară peste hartă
+  if (Vector3.Distance(camera.position, camPos) > 40) camera.position.copyFrom(camPos); else camera.position = Vector3.Lerp(camera.position, camPos, Math.min(1, dt * 8));
+  camera.setTarget(tgt);
   // umbra urmărește jucătorul
   sun.position.set(P.x + 30, 60, P.z + 25);
 
@@ -277,7 +280,7 @@ let qm = null;
 $('qGo').onclick = () => { if (qm) goTo(qm); };
 function updateQuest() {
   const m = nextMission(), el = $('quest');
-  if (!m || paused() || P.x > 140 || P.z < -300) { el.hidden = true; return; }
+  if (!m || paused() || P.x > 140 || P.z < -300 || worldAt(P)) { el.hidden = true; return; }
   el.hidden = false;
   if (m !== qm) { qm = m; $('qTitle').textContent = m.title; }
   const n = W.npcs.find((x) => x.m.id === m.id), d = Math.round(Math.hypot(n.x - P.x, n.z - P.z));

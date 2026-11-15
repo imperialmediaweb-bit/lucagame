@@ -1,8 +1,9 @@
 // Lumile separate (o hartă pentru fiecare materie). Se construiesc la prima intrare, departe de insulă.
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { buildMate } from './mate.js';
+import { buildRomana } from './romana.js';
 
-const BUILDERS = { mate: buildMate };
+const BUILDERS = { mate: buildMate, romana: buildRomana };
 const WORLDS = {};
 let ctx = null, cur = null, sky0 = null;
 

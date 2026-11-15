@@ -35,7 +35,7 @@ const { chromium } = require('playwright');
   const pos = (k) => [538 + Math.cos(k * 1.05) * 10, Math.sin(k * 1.05) * 10];
   let [x0, z0] = pos(0); await tp(x0, z0); await p.waitForTimeout(250);
   for (let step = 0; step < 9; step++) {
-    if (await p.locator('#quiz').isHidden()) break;
+    if (!(await p.waitForSelector('#quiz:not([hidden])', { timeout: 3000 }).then(() => true, () => false))) break;
     await answer(step !== 2);
     await p.waitForTimeout(300);
     const P = await p.evaluate(() => ({ ...window.__dbg.P }));
@@ -53,7 +53,7 @@ const { chromium } = require('playwright');
   await away(); await tp(600, 62); await p.waitForTimeout(600);
   console.log('intrat în castel', await p.evaluate(() => window.__dbg.P.z) > 61);
   await tp(600, 76); await p.waitForTimeout(400); await p.click('#cfYes');
-  for (let i = 0; i < 7; i++) { await answer(i !== 1); await p.waitForTimeout(1100); if (await p.locator('#quiz').isHidden()) break; }
+  for (let i = 0; i < 7; i++) { await answer(i !== 1); if (!(await p.waitForSelector('#quiz:not([hidden])', { timeout: 3000 }).then(() => true, () => false))) break; }
   await p.waitForTimeout(500);
   console.log('dragon învins', (await M()).boss, 'monede', await p.evaluate(() => window.__ui.S.coins));
   await p.screenshot({ path: dir + '/t-dragon.png' });

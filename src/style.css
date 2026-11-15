@@ -288,3 +288,8 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 .fb .truth{display:block;color:var(--good);font-size:18px;margin-bottom:4px}
 .credits{display:block;text-align:center;font-family:var(--font-b);font-size:13px;color:var(--muted);line-height:1.5}
 .credits b{color:var(--ink)}
+/* întrebarea din Labirintul Cuvintelor */
+#wq{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 108px);z-index:6;width:min(560px,calc(100% - 24px));background:#fff;border:3px solid var(--ink);border-radius:16px;padding:8px 12px;box-shadow:0 4px 0 var(--ink);display:flex;flex-direction:column;gap:2px;text-align:center}
+#wq small{color:#2f8f46;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+#wq b{font-family:var(--font-d);font-size:19px;line-height:1.2;white-space:pre-line}#wq b span{color:#e04848}
+#wq em{font-style:normal;font-size:13px;color:var(--muted)}
