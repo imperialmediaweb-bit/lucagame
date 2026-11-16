@@ -3,6 +3,18 @@
 import { WebSocketServer } from 'ws';
 import { GEN, typesFor, TEST_ITEMS, ROMANA } from './src/content/missions.js';
 import { SPEED } from './src/content/speed.js';
+import { classRooms, shaHash } from './api.js';
+import { db } from './db.js';
+
+// identitatea din profil (token) și legarea camerei de o clasă: colegii din clasă intră fără aprobare
+async function whoIs(token) { try { const D = await db(); const s = await D.getSession(shaHash(String(token))); return s ? s.username : null; } catch { return null; } }
+async function bindClass(room, cc, who) {
+  try {
+    const D = await db(), K = await D.getKV('class:' + cc);
+    if (!K || !K.members.includes(who)) return;
+    room.classCode = cc; room.className = K.name; room.classUsers = new Set(K.members); classRooms.set(cc, room.code);
+  } catch { /* fără clasă */ }
+}
 
 const rooms = new Map();
 const EMOTES = ['Bravo!', 'Hai!', 'Super!', 'Mulțumesc!', 'Ups!', 'Încă o rundă?', '👍', '🎉'];
@@ -20,7 +32,7 @@ function bcast(room, m, except) { const s = JSON.stringify(m); for (const p of r
 const num = (v, a, b) => { v = Math.round(+v * 10) / 10; return Number.isFinite(v) ? Math.min(b, Math.max(a, v)) : a; };
 const cleanInfo = (i = {}) => ({ lv: num(i.lv, 1, 999), st: num(i.st, 0, 99999), tb: num(i.tb, 0, 10), g: num(i.g, 0, 8) | 0, pr: num(i.pr, 0, 999) | 0, pt: num(i.pt, 0, 999) | 0 });
 const pub = (p) => ({ id: p.id, name: p.name, look: p.look, info: p.info, x: p.x, y: p.y, z: p.z, f: p.f, score: p.score, host: p.host });
-const roomState = (r) => ({ code: r.code, grade: r.grade, subject: r.subject, players: [...r.players.values()].map(pub), game: r.game ? { mode: r.game.mode, n: r.game.qs.length, i: r.game.i, bossHp: r.game.bossHp, bossMax: r.game.bossMax } : null });
+const roomState = (r) => ({ code: r.code, grade: r.grade, subject: r.subject, className: r.className || null, players: [...r.players.values()].map(pub), game: r.game ? { mode: r.game.mode, n: r.game.qs.length, i: r.game.i, bossHp: r.game.bossHp, bossMax: r.game.bossMax } : null });
 
 function makeQuestions(r, n) {
   const types = typesFor(r.grade, r.subject); const qs = [];
@@ -176,15 +188,23 @@ export function attachMultiplayer(server) {
       const now = Date.now();
       if (m.t !== 'pos' && now - last < 120) return; // anti-spam
       if (m.t !== 'pos') last = now;
+      // cine e (după profil): folosit la camera clasei, unde colegii intră fără aprobare
+      if ((m.t === 'create' || m.t === 'join') && m.token && m.who === undefined) { whoIs(m.token).then((u) => { m.who = u || ''; handle(m); }); return; }
+      handle(m);
+    });
+    function handle(m) {
       if (m.t === 'create' || m.t === 'join') {
         if (room || pendingId) return;
         if (m.t === 'create') {
           const c = code(); room = { code: c, grade: [0, 1, 2, 3, 4].includes(+m.grade) ? +m.grade : 3, subject: ['mate', 'romana', 'mix', 'test', 'stiinte', 'civica', 'engleza', 'compuneri'].includes(m.subject) ? m.subject : 'mix', players: new Map(), game: null };
           rooms.set(c, room);
+          if (m.classCode && m.who) bindClass(room, String(m.classCode).toUpperCase(), m.who);
         } else {
           room = rooms.get(String(m.code || '').toUpperCase());
           if (!room) { send(ws, { t: 'error', msg: 'Camera nu există sau s-a închis. Cere un link nou.' }); room = null; return; }
           if (room.players.size >= 30) { send(ws, { t: 'error', msg: 'Camera e plină (30 de jucători).' }); room = null; return; }
+          // colegii din clasa camerei intră direct
+          if (room.classCode && m.who && room.classUsers && room.classUsers.has(m.who)) { enter(m, nextId++); return; }
           // siguranță: gazda aprobă pe oricine intră
           const r = room, pid = nextId++; room = null; pendingId = pid;
           r.pending = r.pending || new Map();
@@ -227,13 +247,13 @@ export function attachMultiplayer(server) {
       else if (m.t === 'summon') { const x = +m.x, z = +m.z; if (Number.isFinite(x) && Number.isFinite(z)) bcast(room, { t: 'summon', from: me.id, name: me.name, x, z, place: String(m.place || '').slice(0, 40) }, ws); }
       else if (m.t === 'answer') answer(room, me, m.i | 0, m.c | 0);
       else if (m.t === 'stop' && me.host && room.game) endGame(room);
-    });
+    }
     ws.on('close', () => {
       if (pendingId && pendingRoom && pendingRoom.pending) { const p = pendingRoom.pending.get(pendingId); if (p) { clearTimeout(p.timer); pendingRoom.pending.delete(pendingId); } }
       if (!room || !me) return;
       if (room.race) { room.race.joined.delete(me.id); const x = room.race.runners.get(me.id); if (x) { x.out = true; } if (room.race.phase === 'run' && [...room.race.runners.values()].every((y) => y.done || y.out)) raceEnd(room); }
       room.players.delete(me.id);
-      if (room.players.size === 0) { if (room.game) clearTimeout(room.game.timer); rooms.delete(room.code); return; }
+      if (room.players.size === 0) { if (room.game) clearTimeout(room.game.timer); rooms.delete(room.code); if (room.classCode && classRooms.get(room.classCode) === room.code) classRooms.delete(room.classCode); return; }
       if (me.host) { const h = room.players.values().next().value; h.host = true; }
       bcast(room, { t: 'left', id: me.id, room: roomState(room) });
       if (room.game && room.game.mode === 'class') { room.game.sheets.delete(me.id); if ([...room.game.sheets.values()].every((x) => x.finished)) classEnd(room); }

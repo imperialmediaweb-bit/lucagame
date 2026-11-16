@@ -17,7 +17,8 @@ import { createAvatar } from './avatar.js';
 import { buildWorld } from './world.js';
 import { initUI, refreshHud, toast, paused, talkTo, showTutorial, tickTime, nextMission, confetti, showPanel, askOne } from './ui.js';
 import { initNet, tick as netTick, sendLook, NET, joinRoom } from './net.js';
-import { startFlow, profileMenu } from './account.js';
+import { startFlow, profileMenu, loggedIn } from './account.js';
+import { requestJoin } from './social.js';
 import { Music } from './music.js';
 import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
@@ -186,7 +187,10 @@ initWorlds({
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
   reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
-  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else { openHome(); if (!S.tutorial) showTutorial(touch); else if (!S.placed) offerPlacement(() => openHome()); } }
+  ready: async (invite) => { if (invite) { try { await joinRoom(invite); } catch (e) { toast(e.message); } } else { openHome(); if (!S.tutorial) showTutorial(touch); else if (!S.placed) offerPlacement(() => openHome()); }
+    // link de clasă: ?clasa=COD (se ține minte până își face profil)
+    let cl = new URLSearchParams(location.search).get('clasa'); try { if (cl) localStorage.setItem('mintoria-clasa', cl); else cl = localStorage.getItem('mintoria-clasa'); } catch { /* fără salvare */ }
+    if (cl) { if (loggedIn()) { try { localStorage.removeItem('mintoria-clasa'); } catch { /* */ } requestJoin(cl); } else toast('Ai primit linkul unei clase: fă-ți profil ca să intri în ea.'); } }
 };
 window.__profile = () => profileMenu(hooks);
 initHome({ stop, showPanel });

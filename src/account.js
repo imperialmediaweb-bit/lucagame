@@ -21,6 +21,7 @@ async function api(path, method = 'GET', body) {
   return j;
 }
 export const apiCall = api;
+export const authToken = () => token;
 function setToken(t) { token = t; try { t ? localStorage.setItem(TK, t) : localStorage.removeItem(TK); } catch { /* fără salvare */ } }
 
 // trimite progresul pe server la câteva secunde după fiecare schimbare

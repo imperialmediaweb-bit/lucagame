@@ -3,6 +3,7 @@ import { createAvatar, makeLabel } from './avatar.js';
 import { S, save } from './state.js';
 import { SFX } from './audio.js';
 import { myInfo } from './placement.js';
+import { authToken } from './account.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -28,8 +29,8 @@ function connect(first) {
 }
 const sendMsg = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
 
-export async function createRoom(grade, subject) { await connect({ t: 'create', name: S.name, look: S.look, info: myInfo(), grade, subject }); }
-export async function joinRoom(code) { await connect({ t: 'join', code, name: S.name, look: S.look, info: myInfo() }); }
+export async function createRoom(grade, subject, classCode) { await connect({ t: 'create', name: S.name, look: S.look, info: myInfo(), grade, subject, classCode, token: authToken() || undefined }); }
+export async function joinRoom(code) { await connect({ t: 'join', code, name: S.name, look: S.look, info: myInfo(), token: authToken() || undefined }); }
 export const sendInfo = () => sendMsg({ t: 'info', info: myInfo() });
 export function leave(silent) {
   if (ws && !silent) { const w = ws; ws = null; w.onclose = null; w.close(); }

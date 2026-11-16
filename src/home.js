@@ -11,6 +11,8 @@ import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom, createRoom, inviteLink } from './net.js';
 import { startPlacement } from './placement.js';
+import { openClass, openFriends, socialBadges } from './social.js';
+import { loggedIn } from './account.js';
 import { hasWorld, enterWorld } from './worlds/index.js';
 import { creditsHtml } from './credits.js';
 
@@ -32,6 +34,8 @@ const IC = {
   test: '<rect x="14" y="10" width="36" height="44" rx="5" fill="#fff"/><text x="19" y="42" font-size="22" font-weight="800" fill="#e0582f">10</text>',
   colegi: '<circle cx="22" cy="24" r="8" fill="#fff"/><circle cx="42" cy="24" r="8" fill="#fff"/><path d="M8 52c2-10 9-14 14-14s12 4 14 14zM28 52c2-10 9-14 14-14s12 4 14 14z" fill="#fff"/>',
   insula: '<ellipse cx="32" cy="46" rx="24" ry="8" fill="#fff"/><path d="M30 44V22" stroke="#fff" stroke-width="4"/><path d="M30 22c-10-6-16 0-16 0M30 22c10-6 16 0 16 0M30 22c-4-8 2-12 2-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>',
+  clasa: '<path d="M8 28L32 12l24 16" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/><rect x="14" y="28" width="36" height="24" rx="3" fill="#fff"/><rect x="28" y="38" width="8" height="14" fill="#23935a"/><circle cx="32" cy="22" r="3" fill="#FFC93C"/>',
+  prieteni: '<path d="M22 50C10 41 6 34 10 27c3-5 9-4 12 1 3-5 9-6 12-1 4 7 0 14-12 23z" fill="#fff"/><path d="M44 44c-8-6-11-11-8-16 2-4 6-3 8 1 2-4 6-5 8-1 3 5 0 10-8 16z" fill="#FFC93C"/>',
   garderoba: '<path d="M22 10l-12 8 6 10 6-4v30h20V24l6 4 6-10-12-8c-2 4-6 6-10 6s-8-2-10-6z" fill="#fff"/>'
 };
 const icon = (k) => `<svg viewBox="0 0 64 64" aria-hidden="true" style="font-family:'Baloo 2',sans-serif">${IC[k]}</svg>`;
@@ -71,6 +75,8 @@ export function openHome() {
     ...(G() === 3 ? [
       { id: 'test', icon: 'test', name: 'Arena Testului', sub: 'Testul cu notă de la 1 la 10', color: '#e0582f', tags: ['Singur'], prog: S.testBest ? 'cea mai bună: ' + String(S.testBest).replace('.', ',') : 'nejucat' },
       { id: 'atelier', icon: 'atelier', name: 'Atelierul problemelor', sub: 'Metoda pas cu pas', color: '#23935a', tags: ['Singur'], prog: `${Object.values(S.atelier || {}).filter((l) => l >= 5).length} / 8 stăpânite` }] : []),
+    { id: 'clasa', icon: 'clasa', name: 'Clasa mea', sub: 'Colegii, clasamentul săptămânii, trofee', color: '#23935a', tags: ['Cu colegii'], prog: loggedIn() ? 'deschide' : 'ai nevoie de profil' },
+    { id: 'prieteni', icon: 'prieteni', name: 'Prieteni', sub: 'Adaugă prieteni, vezi nivelul lor', color: '#e04878', tags: ['Cu colegii'], prog: loggedIn() ? 'deschide' : 'ai nevoie de profil' },
     { id: 'colegi', icon: 'colegi', name: 'Joacă cu colegii', sub: 'Test în clasă, cursă, duel, echipă', color: '#1F2B3A', tags: ['Cu colegii'], prog: NET.room ? `Camera ${NET.room.code} · ${NET.room.players.length}` : 'fă o cameră' },
     { id: 'insula', icon: 'insula', name: 'Explorează insula', sub: 'Personaje, comori, trambuline', color: '#42c0d8', tags: ['Singur', 'Cu colegii'], prog: `${starsTotal()} ★ adunate` },
     { id: 'garderoba', icon: 'garderoba', name: 'Magazin', sub: 'Puteri, haine, pălării, fețe', color: '#f2b632', tags: [], prog: `${S.coins} monede` }
@@ -95,6 +101,13 @@ export function openHome() {
     </div>`;
   $('home').hidden = false; H.stop && H.stop();
   $('home').querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { SFX.tap(); tile(b.dataset.t); });
+  // cereri noi la clasă / prieteni: apar pe carduri
+  socialBadges().then((bd) => {
+    if (!bd || $('home').hidden) return;
+    const set = (id, txt, hot) => { const em = $('home').querySelector(`[data-t="${id}"] .hm-meta em`); if (em) { em.textContent = txt; em.classList.toggle('hot', !!hot); } };
+    set('clasa', bd.classReq ? `${bd.classReq} cereri noi!` : bd.className || 'fă-ți clasa', bd.classReq);
+    set('prieteni', bd.friendReq ? `${bd.friendReq} cereri noi!` : `${bd.friends} prieteni`, bd.friendReq);
+  });
   if ($('hmRec')) $('hmRec').onclick = () => { closeHome(); startMission(rec.m); };
   $('hmMenu').onclick = () => { openMenu(); };
   $('hmPlace').onclick = () => startPlacement(() => openHome());
@@ -109,6 +122,8 @@ function recommend(subj) {
   return null;
 }
 function tile(id) {
+  if (id === 'clasa') { closeHome(); return openClass(); }
+  if (id === 'prieteni') { closeHome(); return openFriends(); }
   if (id === 'colegi') { closeHome(); return NET.room ? openLobby() : openCreate(); }
   if (id === 'garderoba') { closeHome(); return openShop('puteri'); }
   preview(id);

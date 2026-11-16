@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS scores (
   PRIMARY KEY (username, board)
 );
 CREATE INDEX IF NOT EXISTS scores_board ON scores(board, grade, score DESC);
+CREATE TABLE IF NOT EXISTS kv (
+  k TEXT PRIMARY KEY,
+  v JSONB NOT NULL
+);
 `;
 
 async function pgImpl(url) {
@@ -54,6 +58,8 @@ async function pgImpl(url) {
       WHERE scores.score < EXCLUDED.score OR (scores.score = EXCLUDED.score AND scores.ms > EXCLUDED.ms)`, [u, board, grade, score, ms]),
     top: (board, grade, n) => q(`SELECT s.username, p.display, s.score, s.ms FROM scores s JOIN profiles p USING(username)
       WHERE s.board=$1 AND s.grade=$2 ORDER BY s.score DESC, s.ms ASC LIMIT $3`, [board, grade, n]),
+    getKV: async (k) => ((await q('SELECT v FROM kv WHERE k=$1', [k]))[0] || {}).v || null,
+    setKV: (k, v) => q('INSERT INTO kv(k,v) VALUES($1,$2) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v', [k, v]),
     rankOf: async (board, grade, u) => {
       const r = await q(`SELECT 1 + (SELECT count(*) FROM scores t WHERE t.board=s.board AND t.grade=s.grade AND (t.score > s.score OR (t.score = s.score AND t.ms < s.ms)))::int AS rank, s.score, s.ms
         FROM scores s WHERE s.board=$1 AND s.grade=$2 AND s.username=$3`, [board, grade, u]);
@@ -65,14 +71,16 @@ async function pgImpl(url) {
 function fileImpl() {
   const file = path.join(process.cwd(), 'data', 'db.json');
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  let D = { profiles: {}, sessions: {}, scores: {} };
+  let D = { profiles: {}, sessions: {}, scores: {}, kv: {} };
   try { D = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* bază nouă */ }
   let t; const persist = () => { clearTimeout(t); t = setTimeout(() => fs.writeFileSync(file, JSON.stringify(D)), 200); };
   const sorted = (board, grade) => Object.values(D.scores).filter((s) => s.board === board && s.grade === grade).sort((a, b) => b.score - a.score || a.ms - b.ms);
   return {
     getProfile: async (u) => D.profiles[u] || null,
     createProfile: async (p) => { if (D.profiles[p.username]) throw Object.assign(new Error('dup'), { code: '23505' }); D.profiles[p.username] = { ...p }; persist(); },
-    updateProfile: async (u, f) => { Object.assign(D.profiles[u], f); persist(); },
+    updateProfile: async (u, f) => { Object.assign(D.profiles[u], f, { updated_at: new Date().toISOString() }); persist(); },
+    getKV: async (k) => ((D.kv || {})[k] ? JSON.parse(JSON.stringify(D.kv[k])) : null),
+    setKV: async (k, v) => { D.kv = D.kv || {}; D.kv[k] = JSON.parse(JSON.stringify(v)); persist(); },
     addSession: async (h, u) => { D.sessions[h] = u; persist(); },
     getSession: async (h) => (D.sessions[h] ? { username: D.sessions[h] } : null),
     dropSessions: async (u) => { for (const k in D.sessions) if (D.sessions[k] === u) delete D.sessions[k]; persist(); },

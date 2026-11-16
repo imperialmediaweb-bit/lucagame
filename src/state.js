@@ -13,7 +13,10 @@ export const S = JSON.parse(JSON.stringify(DEFAULTS));
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, migrate(s)); } catch (e) { /* fără salvare */ }
 let onSave = null;
 export const setOnSave = (f) => { onSave = f; };
-export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } if (onSave) onSave(); }
+// punctele de experiență ale săptămânii (pentru clasamentul clasei); săptămâna începe luni
+export const weekId = () => Math.floor((Date.now() / 86400000 + 3) / 7);
+function weekTick() { const w = weekId(); if (!S.week || S.week.id !== w) S.week = { id: w, base: S.xp || 0, xp: 0 }; S.week.xp = Math.max(0, (S.xp || 0) - S.week.base); }
+export function save() { weekTick(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* fără salvare */ } if (onSave) onSave(); }
 /** Înlocuiește progresul cu cel din profil (păstrând valorile implicite pentru câmpuri noi). */
 export function loadState(st) {
   for (const k of Object.keys(S)) delete S[k];

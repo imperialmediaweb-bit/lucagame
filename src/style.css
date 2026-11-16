@@ -293,3 +293,16 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 #wq small,.wq small{color:#2f8f46;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
 #wq b,.wq b{font-family:var(--font-d);font-size:19px;line-height:1.2;white-space:pre-line}#wq b span,.wq b span{color:#e04848}
 #wq em,.wq em{font-style:normal;font-size:13px;color:var(--muted)}
+/* clasa mea și prietenii */
+.sc-box{display:flex;flex-direction:column;gap:6px;background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+.sc-box span{color:var(--muted);font-size:14px}.sc-box input{flex:1;min-width:140px;font:700 17px var(--font-b);padding:8px 10px;border:2px solid var(--ink);border-radius:10px}
+.sc-list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto}
+.sc-row{display:flex;gap:10px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:12px;padding:6px 10px}
+.sc-row>span{flex:1;min-width:0}.sc-row b{display:block}.sc-row small{color:var(--muted);font-size:13px}
+.sc-av{flex:none;width:36px;height:36px;border-radius:10px;border:2px solid var(--ink);display:grid;place-items:start center;padding-top:4px;box-sizing:border-box}.sc-av i{width:16px;height:14px;border-radius:4px;border:2px solid var(--ink)}
+.sc-rank{font-style:normal;font-family:var(--font-d);font-size:20px;width:26px;text-align:center}.sc-pts{font-family:var(--font-d);font-size:18px}
+.sc-row.medal.m0{background:#fff6cf;border-color:#FFC93C}.sc-row.medal.m1{background:#f1f3f7;border-color:#b8c0cc}.sc-row.medal.m2{background:#fbe9dc;border-color:#d08a52}
+.sc-troph{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.sc-troph span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;border:2px dashed var(--line);border-radius:12px;opacity:.45;text-align:center}
+.sc-troph span.on{opacity:1;border:2px solid #FFC93C;background:#fff6cf}.sc-troph i{font-style:normal;font-size:26px}.sc-troph small{color:var(--muted)}
+.hm-meta em.hot{color:#e04848}

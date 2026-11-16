@@ -107,9 +107,117 @@ export async function handleApi(req, res, urlPath) {
       const top = (await D.top(board, grade, 20)).map((r, i) => ({ rank: i + 1, username: r.display, score: r.score, ms: r.ms }));
       return json(res, 200, { board, grade, top, me: u ? await D.rankOf(board, grade, u) : null });
     }
+    if (/^\/api\/(class|friend|social)/.test(urlPath)) {
+      const u = await auth(D, req); if (!u) return err(res, 401, 'Ai nevoie de profil ca să ai clasă și prieteni.');
+      return await social(D, req, res, urlPath, u, ip);
+    }
     return err(res, 404, 'Nu există');
   } catch (e) {
     console.error('api', urlPath, e.message);
     return err(res, 500, 'Ceva n-a mers. Mai încearcă.');
   }
 }
+
+/* ---------- clasa permanentă și prietenii ---------- */
+// camerele de joc deschise acum pentru fiecare clasă (cod clasă → cod cameră), completat de serverul de joc
+export const classRooms = new Map();
+const CLS_RE = /^[A-Z0-9]{6}$/;
+const classCode = () => Array.from({ length: 6 }, () => ALPH[crypto.randomInt(ALPH.length)]).join('');
+const userDoc = async (D, u) => (await D.getKV('user:' + u)) || { classes: [], friends: [], reqIn: [], reqOut: [] };
+const weekId = () => Math.floor((Date.now() / 86400000 + 3) / 7); // săptămâna începe luni
+// ce vede un coleg sau un prieten: nivel (din xp), stele, xp-ul săptămânii, când a fost activ; fără greșeli și fără date private
+async function card(D, u) {
+  const p = await D.getProfile(u); if (!p) return null;
+  const st = p.state || {}, stars = Object.values(st.missions || {}).reduce((a, m) => a + ((m && m.stars) || 0), 0);
+  const wk = st.week && st.week.id === weekId() ? st.week.xp || 0 : 0;
+  return { username: p.display, grade: p.grade, xp: +st.xp || 0, stars, weekXp: wk, look: st.look || null, seen: p.updated_at ? new Date(p.updated_at).getTime() : 0 };
+}
+async function social(D, req, res, urlPath, u, ip) {
+  const body = req.method === 'POST' ? await readBody(req) : {};
+  const me = await userDoc(D, u), saveMe = () => D.setKV('user:' + u, me);
+  if (urlPath === '/api/social' && req.method === 'GET') {
+    const classes = [];
+    for (const c of me.classes) { const k = await D.getKV('class:' + c); if (k) classes.push({ code: k.code, name: k.name, owner: k.owner === u, pending: k.owner === u ? k.pending.length : 0, members: k.members.length }); }
+    const cards = async (list) => (await Promise.all(list.map((x) => card(D, x)))).filter(Boolean);
+    const waiting = [];
+    for (const c of me.waiting || []) { const k = await D.getKV('class:' + c); if (k && k.pending.some((x) => x.u === u)) waiting.push({ code: c, name: k.name }); }
+    me.waiting = waiting.map((w) => w.code); await saveMe();
+    return json(res, 200, { classes, waiting, friends: await cards(me.friends), reqIn: await cards(me.reqIn), reqOut: await cards(me.reqOut) });
+  }
+  if (urlPath === '/api/class/create' && req.method === 'POST') {
+    const name = String(body.name || '').trim().replace(/\s+/g, ' ').slice(0, 32);
+    if (name.length < 2) return err(res, 400, 'Scrie numele clasei, de exemplu „a III-a B”.');
+    if (BAD.some((w) => name.toLowerCase().includes(w))) return err(res, 400, 'Alege alt nume, te rog.');
+    if (me.classes.length >= 5) return err(res, 400, 'Poți fi în cel mult 5 clase.');
+    if (limited('cls|' + ip)) return err(res, 429, 'Prea multe clase făcute. Mai încearcă mai târziu.'); fail('cls|' + ip);
+    let code; do code = classCode(); while (await D.getKV('class:' + code));
+    await D.setKV('class:' + code, { code, name, owner: u, members: [u], pending: [], created: Date.now() });
+    me.classes.push(code); await saveMe();
+    return json(res, 200, { code, name });
+  }
+  const code = String(body.code || new URL(req.url, 'http://x').searchParams.get('code') || '').toUpperCase().trim();
+  if (urlPath.startsWith('/api/class')) {
+    if (!CLS_RE.test(code)) return err(res, 400, 'Codul clasei are 6 litere și cifre.');
+    const K = await D.getKV('class:' + code); if (!K) return err(res, 404, 'Nu există o clasă cu acest cod.');
+    const saveK = () => D.setKV('class:' + code, K), isOwner = K.owner === u, isMember = K.members.includes(u);
+    if (urlPath === '/api/class/join' && req.method === 'POST') {
+      if (isMember) return json(res, 200, { member: true, name: K.name });
+      if (limited('join|' + u)) return err(res, 429, 'Prea multe cereri. Mai încearcă mai târziu.'); fail('join|' + u);
+      if (me.classes.length >= 5) return err(res, 400, 'Poți fi în cel mult 5 clase.');
+      if (K.members.length >= 40) return err(res, 400, 'Clasa e plină (40 de copii).');
+      if (!K.pending.some((x) => x.u === u)) { K.pending.push({ u, at: Date.now() }); K.pending = K.pending.slice(-30); await saveK(); }
+      me.waiting = [...new Set([...(me.waiting || []), code])]; await saveMe();
+      return json(res, 200, { pending: true, name: K.name });
+    }
+    if (urlPath === '/api/class/approve' && req.method === 'POST') {
+      if (!isOwner) return err(res, 403, 'Doar cel care a făcut clasa poate primi colegi.');
+      const who = String(body.username || '').toLowerCase(); if (!K.pending.some((x) => x.u === who)) return err(res, 404, 'Cererea nu mai există.');
+      K.pending = K.pending.filter((x) => x.u !== who);
+      if (body.ok && K.members.length < 40) {
+        K.members.push(who); const d = await userDoc(D, who);
+        d.classes = [...new Set([...d.classes, code])].slice(0, 5); d.waiting = (d.waiting || []).filter((c) => c !== code); await D.setKV('user:' + who, d);
+      }
+      await saveK(); return json(res, 200, { ok: true });
+    }
+    if (urlPath === '/api/class/leave' && req.method === 'POST') {
+      const who = body.username ? String(body.username).toLowerCase() : u;
+      if (who !== u && !isOwner) return err(res, 403, 'Doar cel care a făcut clasa poate scoate un coleg.');
+      if (who === K.owner && K.members.length > 1) return err(res, 400, 'Ești șeful clasei: dă-o întâi altcuiva sau scoate-i pe toți.');
+      K.members = K.members.filter((x) => x !== who); await saveK();
+      const d = await userDoc(D, who); d.classes = d.classes.filter((c) => c !== code); await D.setKV('user:' + who, d);
+      return json(res, 200, { ok: true });
+    }
+    if (urlPath === '/api/class' && req.method === 'GET') {
+      if (!isMember) return err(res, 403, 'Nu ești (încă) în această clasă.');
+      const members = (await Promise.all(K.members.map((x) => card(D, x).then((c) => c && { ...c, owner: x === K.owner })))).filter(Boolean);
+      const pending = isOwner ? (await Promise.all(K.pending.map((x) => card(D, x.u)))).filter(Boolean) : [];
+      return json(res, 200, { code, name: K.name, owner: isOwner, members, pending, room: classRooms.get(code) || null, week: weekId() });
+    }
+  }
+  if (urlPath.startsWith('/api/friend') && req.method === 'POST') {
+    const who = String(body.username || '').trim().toLowerCase();
+    if (!USER_RE.test(who) || who === u) return err(res, 400, 'Scrie username-ul prietenului.');
+    const other = await D.getProfile(who); if (!other) return err(res, 404, 'Nu există un copil cu acest username.');
+    const od = await userDoc(D, who), saveO = () => D.setKV('user:' + who, od);
+    if (urlPath === '/api/friend/request') {
+      if (me.friends.includes(who)) return json(res, 200, { friends: true });
+      if (me.friends.length >= 50) return err(res, 400, 'Ai deja 50 de prieteni.');
+      if (limited('fr|' + u)) return err(res, 429, 'Prea multe cereri. Mai încearcă mai târziu.'); fail('fr|' + u);
+      if (me.reqIn.includes(who)) { me.reqIn = me.reqIn.filter((x) => x !== who); od.reqOut = od.reqOut.filter((x) => x !== u); me.friends.push(who); od.friends.push(u); await saveMe(); await saveO(); return json(res, 200, { friends: true }); }
+      me.reqOut = [...new Set([...me.reqOut, who])]; od.reqIn = [...new Set([...od.reqIn, u])].slice(-30); await saveMe(); await saveO();
+      return json(res, 200, { sent: true });
+    }
+    if (urlPath === '/api/friend/answer') {
+      if (!me.reqIn.includes(who)) return err(res, 404, 'Cererea nu mai există.');
+      me.reqIn = me.reqIn.filter((x) => x !== who); od.reqOut = od.reqOut.filter((x) => x !== u);
+      if (body.ok) { me.friends = [...new Set([...me.friends, who])]; od.friends = [...new Set([...od.friends, u])]; }
+      await saveMe(); await saveO(); return json(res, 200, { ok: true });
+    }
+    if (urlPath === '/api/friend/remove') {
+      me.friends = me.friends.filter((x) => x !== who); me.reqOut = me.reqOut.filter((x) => x !== who); od.friends = od.friends.filter((x) => x !== u); od.reqIn = od.reqIn.filter((x) => x !== u);
+      await saveMe(); await saveO(); return json(res, 200, { ok: true });
+    }
+  }
+  return err(res, 404, 'Nu există');
+}
+export { auth as authUser, db as dbHandle, sha as shaHash };
