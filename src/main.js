@@ -24,6 +24,7 @@ import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
+import { initNatura } from './natura.js';
 import { initWorlds, updateWorlds, worldAt, currentWorld } from './worlds/index.js';
 import { offerPlacement } from './placement.js';
 window.__portal = (id) => portalPanel(id);
@@ -194,6 +195,7 @@ const hooks = {
 };
 window.__profile = () => profileMenu(hooks);
 initHome({ stop, showPanel });
+initNatura({ stop, home: () => openHome() });
 document.getElementById('openHome').onclick = () => openHome();
 startFlow(hooks);
 

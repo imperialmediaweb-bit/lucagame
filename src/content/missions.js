@@ -6,8 +6,9 @@ import { G0 } from './grade0.js';
 import { G4 } from './grade4.js';
 import { G3C } from './grade3c.js';
 import { SUBJECTS3 } from './subjects3.js';
+import { NATURA3 } from './natura3.js';
 
-export const GEN = { ...G0, ...G1, ...G2, ...G3, ...G3B, ...G3C, ...G4, ...SUBJECTS3 };
+export const GEN = { ...G0, ...G1, ...G2, ...G3, ...G3B, ...G3C, ...G4, ...SUBJECTS3, ...NATURA3 };
 export { TEST_ITEMS };
 
 export const AREAS = [
@@ -90,11 +91,13 @@ export const MISSIONS = [
   { id: 'hub-engleza', area: '3', npc: 'Teacher Emma', look: ['#f3c9a0', '#3b7ddd', '#2b2f38', 'nimic', 'zambet'], title: 'Limba engleză', desc: 'Words, numbers, grammar.', hub: 'engleza' },
   { id: 'hub-compuneri', area: '3', npc: 'Scriitorul Pană', look: ['#c98e5f', '#7a5a3b', '#2b2f38', 'ochelari', 'zambet'], title: 'Compuneri', desc: 'Părțile compunerii, ordinea ideilor, bilet, invitație.', hub: 'compuneri' },
   // lecțiile din fiecare materie (nu stau pe hartă: le deschide profesorul)
-  { id: 's3-viata', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Lumea vie', desc: 'Nevoi, creștere, reacții la mediu.', types: ['sViata'] },
-  { id: 's3-animale', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Grupe de animale', desc: 'Insecte, pești, amfibieni, reptile, păsări, mamifere.', types: ['sAnimale'] },
-  { id: 's3-pamant', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Pământul și apa', desc: 'Circuitul apei, fenomene, resurse, poluare.', types: ['sPamant'] },
-  { id: 's3-corpuri', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Corpuri și forțe', desc: 'Stări de agregare, magneți, busola, frecare, mișcare.', types: ['sCorpuri'] },
-  { id: 's3-omul', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Omul sănătos', desc: 'Activitate, odihnă, organe.', types: ['sOmul'] },
+  { id: 's3-viata', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Lumea vie', desc: 'Nevoi, creștere, înmulțire, reacții la mediu.', types: ['n3viata', 'sViata'] },
+  { id: 's3-animale', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Grupe de animale', desc: 'Insecte, pești, amfibieni, reptile, păsări, mamifere.', types: ['n3animale', 'sAnimale'] },
+  { id: 's3-pamant', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Apa și Pământul', desc: 'Surse de apă, stările apei, circuitul apei, ploaie, vânt, fulger.', types: ['n3apa', 'sPamant'] },
+  { id: 's3-corpuri', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Corpuri și forțe', desc: 'Proprietăți, stări de agregare, metale, magneți, busola, frecare, mișcare.', types: ['n3corpuri', 'sCorpuri'] },
+  { id: 's3-omul', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Omul sănătos', desc: 'Igienă, hrană sănătoasă, activitate și odihnă.', types: ['n3om', 'sOmul'] },
+  { id: 's3-mediu', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Natura curată', desc: 'Resurse naturale, poluare, reciclare.', types: ['n3mediu'] },
+  { id: 's3-cuvinte', area: '3', subject: 'stiinte', hidden: true, npc: 'Profesorul Natură', look: [], title: 'Cuvinte de știință', desc: 'Termenii de la științe: ce înseamnă fiecare.', types: ['n3cuvinte'] },
   { id: 'c3-morala', area: '3', subject: 'civica', hidden: true, npc: 'Doamna Bunătate', look: [], title: 'Ce e bine?', desc: 'Bunătate, sinceritate, curaj, modestie, respect, drepturi și îndatoriri.', types: ['civica'] },
   { id: 'e3-vocab', area: '3', subject: 'engleza', hidden: true, npc: 'Teacher Emma', look: [], title: 'Words', desc: 'Culori, familie, animale, mâncare, școală, corp, haine, casă, zile, vreme.', types: ['enVocab'] },
   { id: 'e3-numere', area: '3', subject: 'engleza', hidden: true, npc: 'Teacher Emma', look: [], title: 'Numbers 1–100', desc: 'Numerele în engleză.', types: ['enNumere'] },
@@ -126,7 +129,7 @@ export const TYPE_NAMES = {
   numarare: 'Numărare', vecini31: 'Vecinii numerelor (0–31)', compara10: 'Mai mare / mai mic', adun10: 'Adunări până la 10', scad10: 'Scăderi până la 10', forme: 'Forme geometrice', sunetInitial: 'Primul sunet', rima: 'Rime',
   numere1m: 'Numere până la 1.000.000', calc1m: 'Calcule până la 1.000.000', inm2c: 'Înmulțirea cu 2 cifre', imp1c: 'Împărțirea la o cifră', fractiiIV: 'Fracții (clasa a IV-a)', masuriIV: 'Măsuri mari', corpuri: 'Corpuri geometrice', ipoteza: 'Metoda falsei ipoteze',
   verbTimp: 'Timpul verbului',
-  sViata: 'Științe: lumea vie', sAnimale: 'Științe: grupe de animale', sPamant: 'Științe: Pământul și apa', sCorpuri: 'Științe: corpuri și forțe', sOmul: 'Științe: omul sănătos', civica: 'Civică: ce e bine', enVocab: 'Engleză: cuvinte', enNumere: 'Engleză: numere', enGramatica: 'Engleză: gramatică', compParti: 'Compunere: structura', compOrdine: 'Compunere: ordinea ideilor',
+  sViata: 'Științe: lumea vie', sAnimale: 'Științe: grupe de animale', sPamant: 'Științe: Pământul și apa', sCorpuri: 'Științe: corpuri și forțe', sOmul: 'Științe: omul sănătos', n3viata: 'Științe: lumea vie', n3animale: 'Științe: grupe de animale', n3om: 'Științe: omul sănătos', n3apa: 'Științe: apa și Pământul', n3mediu: 'Științe: natura curată', n3corpuri: 'Științe: corpuri și forțe', n3cuvinte: 'Științe: cuvinte de știință', civica: 'Civică: ce e bine', enVocab: 'Engleză: cuvinte', enNumere: 'Engleză: numere', enGramatica: 'Engleză: gramatică', compParti: 'Compunere: structura', compOrdine: 'Compunere: ordinea ideilor',
   ordonare: 'Ordonare, par / impar', proprietati: 'Proprietățile adunării și înmulțirii', inm3: 'Înmulțirea cu numere de 3 cifre', deOri: '„de … ori mai mult / mai puțin”', fractii3: 'Fracții: citire și comparare',
   figuri3: 'Figuri geometrice', ceas: 'Ceasul', calendar: 'Calendarul', tabel: 'Tabele și date', alfabet: 'Ordinea alfabetică', orto3: 'Ortograme (toate)', punct3: 'Virgula și două puncte', silabe3: 'Silabe (cuvinte lungi)', pronume: 'Pronumele personal', numeral: 'Numeralul', acordAdj: 'Acordul adjectivului', omonime: 'Omonime', textTip: 'Tipuri de text', substantiv: 'Substantivul', propozitie: 'Propoziția și dialogul'
 };

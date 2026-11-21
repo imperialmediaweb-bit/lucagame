@@ -32,7 +32,11 @@ export function confetti() {
     box.appendChild(e); setTimeout(() => e.remove(), 1400);
   }
 }
-export const paused = () => !$('quiz').hidden || !$('panel').hidden || ($('home') && !$('home').hidden);
+export const paused = () => !$('quiz').hidden || !$('panel').hidden || ($('home') && !$('home').hidden) || ($('nmap') && !$('nmap').hidden);
+// după o misiune pornită din altă parte (ex. Harta Naturii), te întorci acolo
+let afterQuiz = null;
+export const onQuizDone = (fn) => { afterQuiz = fn; };
+const runAfter = () => { const f = afterQuiz; afterQuiz = null; if (f) f(); };
 const starsHtml = (n, max = 3) => `<span class="stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(max - n)}</span></span>`;
 export function refreshHud() {
   $('coins').textContent = S.coins; $('stars').textContent = starsTotal();
@@ -216,7 +220,7 @@ function renderQ() {
       $('tHalf').remove();
     };
   }
-  $('tQuit').onclick = () => { closeDraft(); $('quiz').hidden = true; const cb = Q && Q.mode === 'world' && Q.cb; Q = null; if (cb) cb(null); };
+  $('tQuit').onclick = () => { closeDraft(); $('quiz').hidden = true; const cb = Q && Q.mode === 'world' && Q.cb; Q = null; if (cb) cb(null); runAfter(); };
   if ($('tHint')) $('tHint').onclick = () => {
     if (q.done) return; q.used = Math.min(q.used + 1, hs.length); SFX.tap();
     $('hintBox').innerHTML = `<div class="hint"><b>Indiciu ${q.used} din ${hs.length}</b>${hs.slice(0, q.used).map((h) => `<span>${esc(h)}</span>`).join('')}</div>`;
@@ -291,7 +295,7 @@ function finish() {
   const m = Q.m;
   $('again').onclick = () => (Q.mode === 'daily' ? openDaily() : startMission(m));
   checkUnlock();
-  $('back').onclick = () => { $('quiz').hidden = true; Q = null; checkGoal(); };
+  $('back').onclick = () => { $('quiz').hidden = true; Q = null; checkGoal(); runAfter(); };
   void again;
 }
 
@@ -336,7 +340,7 @@ export function openShop(tab) {
   if (tab) shopTab = tab;
   const slots = { puteri: 'Puteri', skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
   if (shopTab === 'puteri') return powerShop(slots);
-  const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).map(([v, n]) => [v, n, PRICES[shopTab][v]]);
+  const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).filter(([v]) => v !== 'explorator' || S.owned.includes('hat:explorator')).map(([v, n]) => [v, n, v === 'explorator' ? 0 : PRICES[shopTab][v]]);
   const owned = (v, p) => p === 0 || shopTab === 'skin' || S.owned.includes(shopTab + ':' + v);
   showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Garderoba</h2>
     <div class="tabs">${Object.entries(slots).map(([k, n]) => `<button class="tab ${k === shopTab ? 'on' : ''}" type="button" data-tab="${k}">${n}</button>`).join('')}</div>

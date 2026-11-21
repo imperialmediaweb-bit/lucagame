@@ -72,7 +72,7 @@ async function answerCurrent(p, correct) {
     ok('Monstrul: fără răspunsuri → „Misiune pierdută”', (await p.textContent('#panelCard h2')).includes('Misiune pierdută'));
     // Profesorii pe materii: lista de lecții și o lecție de științe
     await p.evaluate(() => window.__ui.openHub('stiinte'));
-    ok('Profesorul de științe arată 5 lecții', (await p.locator('#panelCard [data-play]').count()) === 5);
+    ok('Profesorul de științe arată 7 lecții', (await p.locator('#panelCard [data-play]').count()) === 7);
     await p.click('#panelCard [data-play] >> nth=1');
     ok('Lecția de științe pornește', await p.locator('#quiz').isVisible());
     for (let i = 0; i < 5; i++) await answerCurrent(p, true);
