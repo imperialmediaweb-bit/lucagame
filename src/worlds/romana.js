@@ -7,6 +7,7 @@ import { S, save, G } from '../state.js';
 import { GEN, typesFor } from '../content/missions.js';
 import { shuffle, pick } from '../content/util.js';
 import { diagnose } from '../mistakes.js';
+import { optsBanner } from './games.js';
 
 const O = { x: -600, z: 0 };
 const T3 = {
@@ -116,15 +117,15 @@ export function buildRomana(ctx) {
   K.plat(-98, 0.1, 0, 8, 16, '#FFC93C', 0.2); K.box(-98, 2, -8, 8, 4, 1, '#2f7d3b'); K.box(-98, 2, 8, 8, 4, 1, '#2f7d3b');
   K.label('Ai ieșit din labirint!', '', '#d4a017', 4, -99, 4, 0);
   const banner = document.createElement('div'); banner.id = 'wq'; banner.hidden = true; document.body.appendChild(banner);
-  let MQ = null, archLbls = [];
+  let MQ = null, archLbls = [], mazeStale = false;
   function newMazeQ() {
     archLbls.forEach((l) => l.dispose()); archLbls = [];
     const r = st().room; if (r >= ROOMS.length) { MQ = null; return; }
     const q = GEN[pick(types('maze'))](), wrong = shuffle(q.opts.filter((o) => o !== q.ans)).slice(0, 2), opts = shuffle([q.ans, ...wrong]);
     MQ = { q, opts, room: r };
     const wx = ROOMS[r] - RW / 2;
-    opts.forEach((o, i) => { archLbls.push(K.label(String(o), '', '#2f8f46', 3.6, wx + 0.9, 2.7, ARCH[i])); });
-    banner.innerHTML = `<small>Labirintul Cuvintelor · camera ${r + 1} din ${ROOMS.length}</small><b>${esc(q.text)}${q.expr ? ' <span>' + esc(q.expr) + '</span>' : ''}</b><em>Mergi prin ușa cu răspunsul corect.</em>`;
+    opts.forEach((o, i) => { archLbls.push(K.label('ABC'[i], '', '#2f8f46', 4.6, wx + 1.6, 2.3, ARCH[i])); });
+    banner.innerHTML = optsBanner('Labirintul Cuvintelor', r, ROOMS.length, q, opts);
   }
   ROOMS.forEach((cx, ri) => ARCH.forEach((z, ai) => trig(cx - RW / 2 - 0.6, z, 1.1, () => {
     if (!MQ || MQ.room !== ri) return;
@@ -206,6 +207,7 @@ export function buildRomana(ctx) {
     update(dt, t, P, here) {
       const lx = P.x - O.x, lz = P.z - O.z, inMaze = here && MQ && lx < -37 && lx > -103 && Math.abs(lz) < 8;
       banner.hidden = !inMaze || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
+      if (!inMaze && MQ) mazeStale = true; else if (inMaze && mazeStale) { mazeStale = false; newMazeQ(); }
       if (!here) return;
       letters.forEach((l, i) => { const a = t * 0.5 + i * 0.52; l.position.set(X(Math.cos(a) * 3.2), 4.6 + Math.sin(t * 2 + i) * 0.3, Z(Math.sin(a) * 3.2)); });
       exitRing.rotation.z += dt;

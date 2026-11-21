@@ -1,6 +1,7 @@
 // Laboratorul Naturii (Științe): Sanctuarul Animalelor, Corpul Uriaș, Poteca Pământului.
 import { makeKit } from './kit.js';
 import { worldBase, makeBanner } from './games.js';
+import { animal } from './animals.js';
 
 const O = { x: 600, z: 600 };
 
@@ -14,7 +15,7 @@ export function buildStiinte(ctx) {
   K.label('Laboratorul Naturii', 'Lumea Științelor · 3 locuri de descoperit', '#23935a', 9, 0, 9, -3);
   const ring = W.exit(0, 8);
   W.sign(-4, -13, '↑ Sanctuarul Animalelor', '#d35400'); W.sign(13, -4, '→ Corpul Uriaș', '#e04848'); W.sign(-13, 4, '← Poteca Pământului', '#3b7ddd');
-  for (let i = 0; i < 40; i++) { const a = i * 2.4, r = 30 + (i * 13) % 60; const x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.abs(x) < 16 && z < -15 && z > -95) continue; if (x > 40 && Math.abs(z) < 25) continue; if (x < -30 && Math.abs(z) < 12) continue; K.tree(x, z, 1 + (i % 3) * 0.3, ['#2f8f46', '#3f9c4a', '#1f7a3b'][i % 3]); }
+  for (let i = 0; i < 40; i++) { const a = i * 2.4, r = 30 + (i * 13) % 60; const x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.abs(x) < 16 && z < -15 && z > -95) continue; if (x > 40 && Math.abs(z) < 25) continue; if ([[-40, -60], [35, -70], [-20, -85], [50, -40], [-55, -30], [20, -95]].some(([ax, az]) => Math.hypot(ax - x, az - z) < 8)) continue; if (x < -30 && Math.abs(z) < 12) continue; K.tree(x, z, 1 + (i % 3) * 0.3, ['#2f8f46', '#3f9c4a', '#1f7a3b'][i % 3]); }
   // cascada
   K.box(-60, 8, -70, 18, 16, 6, '#7d8a8f', { cast: true }); K.box(-60, 7, -66.8, 8, 14, 0.4, '#7fd3ff', { collide: false, glow: 0.3 }); K.cyl(-60, 0.1, -62, 14, 0.2, '#5ab8e8', { glow: 0.2 });
 
@@ -24,13 +25,9 @@ export function buildStiinte(ctx) {
   K.label('Sanctuarul Animalelor', 'găsește cele 6 animale rătăcite', '#d35400', 8, 0, 6, -32);
   const AN = [['vulpea', '#e67e22', -40, -60], ['ursul', '#7b4a2a', 35, -70], ['iepurele', '#f4f4f4', -20, -85], ['broasca', '#5ccf3a', 50, -40], ['căprioara', '#c89b6a', -55, -30], ['bufnița', '#9a8f86', 20, -95]];
   const animals = AN.map(([name, c, x, z], i) => {
-    const body = K.box(x, 0.9, z, 1.6, 1, 2.2, c, { collide: false, cast: true });
-    const head = K.box(x, 1.7, z - 1.2, 1.1, 1, 1, c, { collide: false, cast: true });
-    const legs = [[-0.5, -0.7], [0.5, -0.7], [-0.5, 0.7], [0.5, 0.7]].map(([dx, dz]) => K.box(x + dx, 0.3, z + dz, 0.3, 0.6, 0.3, c, { collide: false }));
-    const eyes = [-0.3, 0.3].map((dx) => K.box(x + dx, 1.85, z - 1.72, 0.18, 0.18, 0.05, '#1F2B3A', { collide: false }));
-    const lb = K.label(name, 'rătăcit · atinge-l', '#d35400', 2.6, x, 3.2, z);
-    const parts = [body, head, ...legs, ...eyes];
-    return { name, x, z, parts, lb, home: { x: -8 + i * 3.2, z: -32 } };
+    const parts = animal(K, name, x, z);
+    const lb = K.label(name, 'rătăcit · atinge-l', '#d35400', 2.6, x, name === 'ursul' || name === 'căprioara' ? 6.6 : 4.4, z);
+    return { name, x, z, parts, lb, home: { x: -9 + i * 3.6, z: -32 } };
   });
   const moveAnimal = (a, hx, hz) => { const dx = X(hx) - a.parts[0].position.x, dz = Z(hz) - a.parts[0].position.z; a.parts.forEach((p) => { p.position.x += dx; p.position.z += dz; }); a.lb.dispose(); };
   const nAnimals = W.collect({ key: 'animals', state: st, items: animals.map((a) => ({ x: a.x, z: a.z, r: 2.2 })), types: () => W.typesOf(['sAnimale', 'sViata'], 'stiinte'),
@@ -91,10 +88,11 @@ export function buildStiinte(ctx) {
     place: (P) => { const lx = P.x - O.x, lz = P.z - O.z; return lz < -20 ? 'Sanctuarul Animalelor' : lx > 45 ? 'Corpul Uriaș' : lx < -30 ? 'Poteca Pământului' : 'Laboratorul Naturii'; },
     update(dt, t, P, here) {
       const lx = P.x - O.x, lz = P.z - O.z;
-      banner.hidden = !(here && path.active() && lx < -30 && lx > -84 && Math.abs(lz) < 8) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
+      const inPath = here && lx < -30 && lx > -84 && Math.abs(lz) < 8; path.tick(inPath);
+      banner.hidden = !(inPath && path.active()) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
       if (!here) return;
       ring.rotation.z += dt;
-      animals.forEach((a, i) => { a.parts[1].position.y = 1.7 + Math.sin(t * 3 + i) * 0.08; });
+      animals.forEach((a, i) => { const k = Math.sin(t * 3 + i) * 0.04; a.parts.forEach((m) => (m.rotation.y = k)); });
       organs.forEach((o, i) => { if (o.s.visibility === 1) o.s.scaling.setAll(1 + Math.sin(t * 4 + i) * 0.08); });
       giant.update(dt, { wave: nOrgans() >= 5 });
     }

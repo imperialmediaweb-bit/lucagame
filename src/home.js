@@ -71,6 +71,7 @@ export function openHome() {
   ].map((x) => ({ ...x, list: lessons(x.k) })).filter((x) => x.list.length);
   const tiles = [
     ...subj.map((x) => ({ id: 'subj:' + x.k, icon: x.k, name: x.name, sub: x.sub, color: x.color, tags: ['Singur'], prog: `${starsOf(x.list)} / ${x.list.length * 3} ★` })),
+    ...(G() === 3 ? [{ id: 'natura', icon: 'stiinte', name: 'Harta Naturii', sub: 'Științe: animale, corp, apă, magneți + album', color: '#23935a', tags: ['Singur', 'Nou'], prog: `🏅 ${Object.keys((S.nat || {}).badges || {}).length}/6 insigne` }] : []),
     { id: 'monstri', icon: 'monstri', name: 'Fuga de monștri', sub: 'Calcul rapid, monstrul vine din spate!', color: '#4a2470', tags: ['Singur', 'Cu colegii'], prog: `${SPEED_IDS.filter((p) => (S.records || {})['portal-' + p]).length} / ${SPEED_IDS.length} portaluri` },
     { id: 'antrenament', icon: 'antrenament', name: 'Antrenamentul zilei', sub: '20 de minute care te fac campion', color: '#ff7a2f', tags: ['Singur'], prog: `${Math.min(20, Math.floor(S.today.sec / 60))} / 20 min azi` },
     ...(G() === 3 ? [
@@ -123,6 +124,7 @@ function recommend(subj) {
   return null;
 }
 function tile(id) {
+  if (id === 'natura') { closeHome(); return openNatura(); }
   if (id === 'clasa') { closeHome(); return openClass(); }
   if (id === 'prieteni') { closeHome(); return openFriends(); }
   if (id === 'colegi') { closeHome(); return NET.room ? openLobby() : openCreate(); }

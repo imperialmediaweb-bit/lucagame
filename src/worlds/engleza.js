@@ -86,7 +86,8 @@ export function buildEngleza(ctx) {
     place: (P) => { const lx = P.x - O.x, lz = P.z - O.z; return lz > 50 ? 'The Ship Harbour' : lx > 40 ? 'Balloon Tower' : lx < -30 ? 'Grammar Bridge' : 'English Island'; },
     update(dt, t, P, here) {
       const lx = P.x - O.x, lz = P.z - O.z;
-      banner.hidden = !(here && path.active() && lx < -30 && lx > -84 && Math.abs(lz) < 8) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
+      const inPath = here && lx < -30 && lx > -84 && Math.abs(lz) < 8; path.tick(inPath);
+      banner.hidden = !(inPath && path.active()) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
       if (!here) return;
       ring.rotation.z += dt; hand.rotation.z = -t * 0.5;
       ships.forEach((s, i) => {

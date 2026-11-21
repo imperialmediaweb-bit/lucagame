@@ -45,25 +45,35 @@ function checkAlbum() {
 }
 
 /* ---------- harta ---------- */
-const POS = { viata: [22, 26], animale: [72, 20], om: [80, 56], apa: [50, 48], mediu: [24, 70], corpuri: [60, 82] };
+const POS = { viata: [24, 22], animale: [74, 18], apa: [50, 44], om: [80, 58], corpuri: [56, 82], mediu: [20, 68] };
+const DECO = { viata: ['🌲', '🍄', '🐞', '🌼'], animale: ['🐾', '🦋', '🐦', '🌿'], apa: ['☁️', '🌧️', '🐟', '🌊'], om: ['🍎', '🏃', '🦷', '💤'], corpuri: ['⚙️', '🧭', '🔩', '🍏'], mediu: ['🌳', '🗑️', '🌻', '♻️'] };
+const ORDER = ['viata', 'animale', 'apa', 'om', 'corpuri', 'mediu'];
 export function openNatura() {
   SFX.tap(); H.stop && H.stop();
   const badges = Object.keys(sub('badges')).length, learned = Object.keys(sub('words')).length;
-  root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBack">← Acasă</button><b class="nm-title">Harta Naturii</b>
-      <span class="pill">🏅 ${badges}/6</span><button class="iconbtn" type="button" id="nmAlbum">📒 Album ${learned}/${WORDS.length}</button></div>
-    <p class="nm-hint">Științe ale naturii, clasa a III-a. Alege un ținut. În fiecare: <b>citești</b>, <b>înveți cuvintele</b>, <b>joci</b> și <b>exersezi</b>. Le faci pe toate 4 și primești <b>insigna</b> ținutului.</p>
+  const next = ORDER.map((id) => REGIONS.find((r) => r.id === id)).find((r) => !sub('badges')[r.id] && !steps(r).fog);
+  const pts = ORDER.map((id) => POS[id].join(',')).join(' ');
+  root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBack">← Acasă</button><b class="nm-title">🗺️ Harta Naturii</b>
+      <span class="pill">🏅 ${badges}/6</span><button class="iconbtn" type="button" id="nmAlbum">📒 ${learned}/${WORDS.length}</button></div>
     <div class="nm-map">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 62 C 20 55, 35 70, 50 52 S 80 40, 100 46 L100 100 L0 100Z" fill="#8fd18a"/>
-        <path d="M0 0 H100 V46 C 80 40, 65 52, 50 52 S 20 55, 0 62Z" fill="#b6e6a1"/>
-        <path d="M52 0 C 46 20, 58 30, 50 50 S 40 80, 46 100" stroke="#5ab8e8" stroke-width="4" fill="none" stroke-linecap="round"/>
-        <path d="M74 0 L86 18 L98 0Z M8 84 L18 70 L28 84Z" fill="#a39a8f"/>
+        <defs><linearGradient id="nmSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfeaff"/><stop offset=".35" stop-color="#d9f5c9"/><stop offset="1" stop-color="#9fdc86"/></linearGradient></defs>
+        <rect width="100" height="100" fill="url(#nmSky)"/>
+        <path d="M0 34 C 18 26, 30 36, 48 30 S 80 22, 100 30 L100 100 L0 100Z" fill="#b5e7a0"/>
+        <path d="M0 62 C 20 54, 38 70, 54 58 S 82 50, 100 56 L100 100 L0 100Z" fill="#8fd47a"/>
+        <path d="M60 0 C 52 18, 62 30, 52 46 S 40 74, 46 100" stroke="#4fb3e8" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9"/>
+        <path d="M60 0 C 52 18, 62 30, 52 46 S 40 74, 46 100" stroke="#bfe9ff" stroke-width="1.2" fill="none" stroke-dasharray="3 4"/>
+        <path d="M78 0 L88 14 L98 0Z" fill="#a39a8f"/><path d="M85 4 L88 8 L91 4Z" fill="#fff"/>
+        <polyline points="${pts}" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.2 2.2" stroke-linecap="round" opacity=".9"/>
       </svg>
+      <span class="nm-cloud c1">☁️</span><span class="nm-cloud c2">☁️</span><span class="nm-sun">☀️</span>
+      ${REGIONS.map((r) => { const [x, y] = POS[r.id]; return DECO[r.id].map((e, k) => `<span class="nm-deco" style="left:${x + [-13, 12, -10, 13][k]}%;top:${y + [-7, -5, 8, 7][k]}%;animation-delay:${-k * 0.7}s">${e}</span>`).join(''); }).join('')}
       ${REGIONS.map((r) => { const s = steps(r), n = doneCount(r), [x, y] = POS[r.id], b = sub('badges')[r.id];
-        return `<button class="nm-node ${s.fog ? 'fog' : ''} ${b ? 'done' : ''}" type="button" data-r="${r.id}" style="left:${x}%;top:${y}%;--c:${r.color}">
-          <span class="nm-em">${r.emoji}</span><b>${esc(r.name)}</b><small>${s.fog ? 'în ceață · nu la școală încă' : b ? '🏅 insignă câștigată' : `${n}/4 pași`}</small>
-          <span class="nm-dots">${[s.facts, s.words, s.game, s.ex].map((v) => `<i class="${v ? 'on' : ''}"></i>`).join('')}</span></button>`; }).join('')}
-    </div>`;
+        return `<button class="nm-node ${s.fog ? 'fog' : ''} ${b ? 'done' : ''} ${next === r ? 'next' : ''}" type="button" data-r="${r.id}" style="left:${x}%;top:${y}%;--c:${r.color}">
+          ${next === r ? '<span class="nm-here">Aici!</span>' : ''}<span class="nm-em">${r.emoji}${b ? '<i class="nm-medal">🏅</i>' : ''}</span><b>${esc(r.name)}</b>
+          <span class="nm-prog"><i style="width:${n * 25}%"></i></span><small>${s.fog ? '☁️ încă nu la școală' : b ? 'insignă câștigată' : `${n}/4 pași`}</small></button>`; }).join('')}
+    </div>
+    <p class="nm-hint">Științe ale naturii · clasa a III-a. În fiecare ținut: <b>citești</b>, <b>înveți cuvintele</b>, <b>joci</b> și <b>exersezi</b> → primești <b>insigna</b>. Cuvintele învățate se lipesc în <b>Album</b>.</p>`;
   root.hidden = false;
   $('nmBack').onclick = () => { close(); H.home && H.home(); };
   $('nmAlbum').onclick = openAlbum;
@@ -75,18 +85,22 @@ function openRegion(r) {
   SFX.tap();
   const s = steps(r), learned = r.words.filter(([t]) => sub('words')[t]).length, best = sub('sort')[r.id] || 0, st = (S.missions[r.mission] || {}).stars || 0;
   const card = (id, ok, ic, t, d) => `<button class="nm-step ${ok ? 'ok' : ''}" type="button" id="${id}"><span>${ic}</span><b>${t}</b><small>${d}</small>${ok ? '<i>✓</i>' : ''}</button>`;
-  root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmMap">← Harta</button><b class="nm-title" style="color:${r.color}">${r.emoji} ${esc(r.name)}</b>
-      ${sub('badges')[r.id] ? '<span class="pill">🏅 Insignă</span>' : `<span class="pill">${doneCount(r)}/4</span>`}</div>
-    <p class="nm-hint">${esc(r.sub)}${s.fog ? ' · <b>La școală încă n-ați ajuns aici</b>, dar poți să te uiți dinainte.' : ''}</p>
+  const tfBest = sub('tf')[r.id] || 0;
+  root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmMap">← Harta</button><span class="pill">${sub('badges')[r.id] ? '🏅 Insignă' : `${doneCount(r)}/4 pași`}</span></div>
+    <div class="nm-hero" style="--c:${r.color}"><span class="nm-hero-em">${r.emoji}</span><div><b>${esc(r.name)}</b><small>${esc(r.sub)}</small>
+      <span class="nm-prog big"><i style="width:${doneCount(r) * 25}%"></i></span></div>${DECO[r.id].map((e, k) => `<em style="right:${6 + k * 9}%;animation-delay:${-k * 0.6}s">${e}</em>`).join('')}</div>
+    ${s.fog ? '<p class="nm-hint"><b>La școală încă n-ați ajuns aici</b>, dar poți să te uiți dinainte.</p>' : ''}
     <div class="nm-steps">
       ${card('nsFacts', s.facts, '📖', '1. Ce trebuie să știi', `${r.facts.length} cartonașe, 2 minute`)}
       ${card('nsWords', s.words, '🃏', '2. Cuvinte de știință', `${learned}/${r.words.length} învățate · fiecare intră în album`)}
       ${card('nsGame', s.game, '🎮', '3. Joacă: ' + esc(r.sort.title), best ? `cel mai bun: ${'★'.repeat(best)}${'☆'.repeat(3 - best)}` : 'sortează repede și corect')}
       ${r.id === 'apa' ? card('nsCycle', (N().cycle || 0) >= 2, '🔄', '3b. Circuitul apei', N().cycle ? `${'★'.repeat(N().cycle)}${'☆'.repeat(3 - N().cycle)}` : 'atinge pe desen') : ''}
       ${card('nsEx', s.ex, '✏️', '4. Exerciții', st ? `${'★'.repeat(st)}${'☆'.repeat(3 - st)} · ai nevoie de ★★` : '5 întrebări, cu explicații')}
+      ${card('nsTf', tfBest >= 3, '⚡', 'Bonus: Adevărat sau fals?', tfBest ? `cel mai bun: ${'★'.repeat(tfBest)}${'☆'.repeat(3 - tfBest)}` : 'răspunde repede, înainte să se termine timpul')}
     </div>`;
   $('nmMap').onclick = openNatura;
   $('nsFacts').onclick = () => facts(r, 0);
+  $('nsTf').onclick = () => tfGame(r);
   $('nsWords').onclick = () => words(r);
   $('nsGame').onclick = () => sortGame(r);
   if ($('nsCycle')) $('nsCycle').onclick = () => cycleGame(r);
@@ -96,7 +110,7 @@ function openRegion(r) {
 /* 1. cartonașele „Ce trebuie să știi” */
 function facts(r, i) {
   const [ic, t] = r.facts[i], last = i === r.facts.length - 1;
-  root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Ce trebuie să știi</b><span class="pill">${i + 1}/${r.facts.length}</span></div>
+  root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Ce trebuie să știi</b><span class="pill">${i + 1}/${r.facts.length}</span></div>
     <div class="nm-fact" style="--c:${r.color}"><span>${ic}</span><p>${md(t)}</p></div>
     <div class="row" style="justify-content:center">${i ? '<button class="btn light" type="button" id="nfPrev">Înapoi</button>' : ''}<button class="btn" type="button" id="nfNext">${last ? 'Am înțeles!' : 'Mai departe'}</button></div>`;
   $('nmBackR').onclick = () => openRegion(r);
@@ -115,7 +129,7 @@ function words(r) {
   let i = 0, flipped = false;
   const draw = () => {
     const [t, d, em] = deck[i];
-    root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Cuvinte de știință</b><span class="pill">${i + 1}/${deck.length}</span></div>
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Cuvinte de știință</b><span class="pill">${i + 1}/${deck.length}</span></div>
       <p class="nm-hint">Citește cuvântul, spune în gând ce înseamnă, apoi întoarce cartonașul.</p>
       <button class="nm-card ${flipped ? 'flip' : ''}" type="button" id="nwCard" style="--c:${r.color}"><span class="f"><em>${em}</em><b>${esc(t)}</b><small>atinge ca să întorci</small></span><span class="b"><b>${esc(t)}</b><p>${esc(d)}</p></span></button>
       <div class="row" style="justify-content:center">${flipped ? '<button class="btn light" type="button" id="nwAgain">Mai repet</button><button class="btn" type="button" id="nwKnow">Știu!</button>' : ''}</div>`;
@@ -133,7 +147,7 @@ function sortGame(r) {
   const items = shuffle([...r.sort.items]); let i = 0, miss = 0, lock = false;
   const draw = (fb) => {
     const it = items[i]; if (location.hostname === 'localhost') window.__natAns = it[1];
-    root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">${esc(r.sort.title)}</b><span class="pill">${i + 1}/${items.length}</span></div>
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">${esc(r.sort.title)}</b><span class="pill">${i + 1}/${items.length}</span></div>
       <div class="nm-item ${fb || ''}">${esc(it[0])}</div>
       <div class="nm-buckets">${r.sort.buckets.map((b, k) => `<button class="nm-bucket" type="button" data-k="${k}" style="--c:${r.color}">${esc(b)}</button>`).join('')}</div>
       <p class="nm-hint">Greșeli: ${miss}</p>`;
@@ -151,7 +165,7 @@ function sortGame(r) {
     if (stars > prev) { sub('sort')[r.id] = stars; coins(10 * (stars - prev), `${'★'.repeat(stars)} la „${r.sort.title}”!`); }
     if (stars === 3) confetti();
     checkBadge(r);
-    root.innerHTML = `<div class="nm-fact" style="--c:${r.color}"><span>${'⭐'.repeat(stars)}</span><p><b>${stars === 3 ? 'Perfect!' : stars === 2 ? 'Foarte bine!' : 'Bun început!'}</b> Ai greșit de ${miss} ori din ${items.length}.${stars < 2 ? ' Ai nevoie de ★★ pentru insignă.' : ''}</p></div>
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-fact" style="--c:${r.color}"><span>${'⭐'.repeat(stars)}</span><p><b>${stars === 3 ? 'Perfect!' : stars === 2 ? 'Foarte bine!' : 'Bun început!'}</b> Ai greșit de ${miss} ori din ${items.length}.${stars < 2 ? ' Ai nevoie de ★★ pentru insignă.' : ''}</p></div>
       <div class="row" style="justify-content:center"><button class="btn light" type="button" id="nsAgain">Încă o dată</button><button class="btn" type="button" id="nsOk">Gata</button></div>`;
     $('nsAgain').onclick = () => sortGame(r); $('nsOk').onclick = () => openRegion(r);
   };
@@ -163,7 +177,7 @@ function cycleGame(r) {
   const order = shuffle([...CYCLE]); let i = 0, miss = 0;
   const draw = () => {
     const [part, ask] = order[i]; if (location.hostname === 'localhost') window.__natAns = part;
-    root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Circuitul apei</b><span class="pill">${i + 1}/${order.length}</span></div>
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">Circuitul apei</b><span class="pill">${i + 1}/${order.length}</span></div>
       <p class="nm-ask">${esc(ask)}</p>
       <svg class="nm-cycle" viewBox="0 0 320 220" role="img" aria-label="Circuitul apei">
         <rect width="320" height="220" fill="#d7f0ff"/>
@@ -187,9 +201,40 @@ function cycleGame(r) {
     const stars = miss === 0 ? 3 : miss <= 2 ? 2 : 1, prev = N().cycle || 0;
     if (stars > prev) { N().cycle = stars; coins(10 * (stars - prev), `${'★'.repeat(stars)} la circuitul apei!`); }
     checkBadge(r);
-    root.innerHTML = `<div class="nm-fact" style="--c:${r.color}"><span>${'⭐'.repeat(stars)}</span><p><b>Circuitul apei:</b> Soarele încălzește marea → apa se evaporă → vaporii se condensează în nori → plouă → râurile duc apa înapoi în mare.</p></div>
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-fact" style="--c:${r.color}"><span>${'⭐'.repeat(stars)}</span><p><b>Circuitul apei:</b> Soarele încălzește marea → apa se evaporă → vaporii se condensează în nori → plouă → râurile duc apa înapoi în mare.</p></div>
       <div class="row" style="justify-content:center"><button class="btn light" type="button" id="ncAgain">Încă o dată</button><button class="btn" type="button" id="ncOk">Gata</button></div>`;
     $('ncAgain').onclick = () => cycleGame(r); $('ncOk').onclick = () => openRegion(r);
+  };
+  draw();
+}
+
+/* Bonus: Adevărat sau fals, contra cronometru */
+function tfGame(r) {
+  const list = shuffle([...r.tf]); let i = 0, good = 0, timer = null;
+  const draw = () => {
+    const [t, v] = list[i]; if (location.hostname === 'localhost') window.__natAns = v;
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmBackR">← ${esc(r.name)}</button><b class="nm-title">⚡ Adevărat sau fals?</b><span class="pill">${i + 1}/${list.length} · ✓ ${good}</span></div>
+      <div class="nm-timer"><i id="tfBar"></i></div>
+      <div class="nm-fact" style="--c:${r.color}"><p>${esc(t)}</p></div>
+      <div class="nm-tf"><button class="nm-bucket" type="button" data-v="1" style="--c:#23935a">✔ Adevărat</button><button class="nm-bucket" type="button" data-v="0" style="--c:#e04848">✘ Fals</button></div>`;
+    $('nmBackR').onclick = () => { clearTimeout(timer); openRegion(r); };
+    const bar = $('tfBar'); bar.style.transition = 'none'; bar.style.width = '100%'; requestAnimationFrame(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; });
+    const answer = (pick) => {
+      clearTimeout(timer); root.querySelectorAll('[data-v]').forEach((b) => (b.disabled = true));
+      const ok = pick === v; if (ok) { good++; SFX.ok(); } else { SFX.no(); toast(pick === null ? `Timpul a expirat! Era ${v ? 'ADEVĂRAT' : 'FALS'}.` : `Nu: e ${v ? 'ADEVĂRAT' : 'FALS'}.`); }
+      const btn = root.querySelector(`[data-v="${v}"]`); if (btn) btn.classList.add('right');
+      setTimeout(() => { i++; if (i < list.length) draw(); else end(); }, ok ? 450 : 1200);
+    };
+    timer = setTimeout(() => answer(null), 7000);
+    root.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => answer(+b.dataset.v));
+  };
+  const end = () => {
+    const stars = good === list.length ? 3 : good >= list.length - 2 ? 2 : good >= list.length / 2 ? 1 : 0, prev = sub('tf')[r.id] || 0;
+    if (stars > prev) { sub('tf')[r.id] = stars; coins(8 * (stars - prev), `${'★'.repeat(stars)} la Adevărat sau fals!`); }
+    if (stars === 3) confetti();
+    root.scrollTop = 0; root.innerHTML = `<div class="nm-fact" style="--c:${r.color}"><span>${stars ? '⭐'.repeat(stars) : '💪'}</span><p><b>${good} din ${list.length}</b> corecte!${stars < 3 ? ' Mai încearcă pentru ★★★.' : ' Perfect!'}</p></div>
+      <div class="row" style="justify-content:center"><button class="btn light" type="button" id="tfAgain">Încă o dată</button><button class="btn" type="button" id="tfOk">Gata</button></div>`;
+    $('tfAgain').onclick = () => tfGame(r); $('tfOk').onclick = () => openRegion(r);
   };
   draw();
 }
@@ -198,7 +243,7 @@ function cycleGame(r) {
 function openAlbum() {
   SFX.tap();
   const learned = sub('words');
-  root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmMap">← Harta</button><b class="nm-title">📒 Albumul Naturii</b><span class="pill">${Object.keys(learned).length}/${WORDS.length}</span></div>
+  root.scrollTop = 0; root.innerHTML = `<div class="nm-top"><button class="iconbtn" type="button" id="nmMap">← Harta</button><b class="nm-title">📒 Albumul Naturii</b><span class="pill">${Object.keys(learned).length}/${WORDS.length}</span></div>
     <p class="nm-hint">Fiecare cuvânt de știință învățat lipește un cartonaș. Albumul complet îți aduce <b>Pălăria de explorator</b> și 100 de monede.${N().album ? ' <b>Ai completat albumul!</b>' : ''}</p>
     <div class="nm-album">${REGIONS.map((r) => `<h4 style="color:${r.color}">${r.emoji} ${esc(r.name)}</h4><div class="nm-grid">${r.words.map(([t, d, em]) => learned[t]
       ? `<span class="nm-sticker" style="--c:${r.color}" title="${esc(d)}"><em>${em}</em><b>${esc(t)}</b><small>${esc(d)}</small></span>`

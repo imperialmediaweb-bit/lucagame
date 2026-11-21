@@ -38,6 +38,11 @@ const results = []; const ok = (n, c, i = '') => results.push({ n, pass: !!c, i 
       for (let k = 0; k < 8; k++) { if (!(await p.locator('.nm-cycle').count())) break; const part = await p.evaluate(() => window.__natAns); if (k === 1) await p.screenshot({ path: dir + '/n-circuit.png' }); await p.$eval(`.nm-cycle [data-p="${part}"]`, (el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true }))); await p.waitForTimeout(600); }
       await p.click('#ncOk');
     }
+    // bonus: adevărat sau fals
+    await p.click('#nsTf');
+    for (let k = 0; k < 10; k++) { if (!(await p.locator('.nm-tf').count())) break; const v = await p.evaluate(() => window.__natAns); if (ri === 0 && k === 1) await p.screenshot({ path: dir + '/n-tf.png' }); const before = await p.textContent('.nm-fact p'); await p.click(`.nm-tf [data-v="${v}"]`); await p.waitForFunction((b) => !document.querySelector('.nm-tf') || document.querySelector('.nm-fact p').textContent !== b, before, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(150); }
+    await p.click('#tfOk');
+    if (ri === 0) await p.screenshot({ path: dir + '/n-tinut.png' });
     // 4. exerciții: 5/5
     await p.click('#nsEx'); await p.waitForTimeout(300);
     for (let k = 0; k < 5; k++) {
@@ -49,6 +54,8 @@ const results = []; const ok = (n, c, i = '') => results.push({ n, pass: !!c, i 
     await p.click('#nmMap');
   }
   ok('Albumul e complet și dă Pălăria de explorator', await p.evaluate(() => !!window.__ui.S.nat.album && window.__ui.S.owned.includes('hat:explorator')));
+  const tfs = await p.evaluate(() => JSON.stringify(window.__ui.S.nat.tf));
+  ok('Adevărat sau fals: ★★★ la toate', Object.values(JSON.parse(tfs)).filter((x) => x === 3).length === 6, tfs);
   ok('Monede adunate pe hartă', (await coins()) > 400, await coins());
   await p.screenshot({ path: dir + '/n-harta-final.png' });
   await p.click('#nmAlbum'); await p.waitForTimeout(300); await p.screenshot({ path: dir + '/n-album.png' });

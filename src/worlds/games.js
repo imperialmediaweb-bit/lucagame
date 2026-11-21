@@ -52,8 +52,8 @@ export function worldBase(ctx, K, id, O) {
       const r = M[key]; if (r >= stages.length) { Q = null; return; }
       const q = GEN[pick(types())](), wrong = shuffle(q.opts.filter((o) => o !== q.ans)).slice(0, 2), opts = shuffle([q.ans, ...wrong]);
       Q = { q, opts, r };
-      stages[r].gates.forEach((g, i) => { if (opts[i] !== undefined) lbls.push(K.label(String(opts[i]), '', gateColor, 3.6, g.x, g.y || 2.7, g.z)); });
-      banner.innerHTML = `<small>${esc(title)} · ${r + 1} din ${stages.length}</small><b>${esc(q.text)}${q.expr ? ' <span>' + esc(q.expr) + '</span>' : ''}</b><em>Treci prin poarta cu răspunsul corect.</em>`;
+      stages[r].gates.forEach((g, i) => { if (opts[i] !== undefined) lbls.push(K.label('ABC'[i], '', gateColor, 4.6, g.x + 1.6, (g.y || 2.7) - 0.4, g.z)); });
+      banner.innerHTML = optsBanner(title, r, stages.length, q, opts);
     }
     stages.forEach((s, ri) => s.gates.forEach((g, gi) => trig(g.x, g.tz ?? g.z, 1.2, () => {
       if (!Q || Q.r !== ri || Q.opts[gi] === undefined) return;
@@ -70,11 +70,18 @@ export function worldBase(ctx, K, id, O) {
       }
     }, g.y ? g.y - 2.2 : 0.5)));
     next();
-    return { reset: () => { M[key] = 0; save(); next(); }, current: () => Q && { opts: Q.opts, ans: Q.q.ans, r: Q.r }, active: () => !!Q };
+    // dacă pleci din zonă și revii, primești o întrebare nouă
+    let stale = false;
+    const tick = (inside) => { if (!inside && Q) stale = true; else if (inside && stale) { stale = false; next(); } };
+    return { reset: () => { M[key] = 0; save(); next(); }, current: () => Q && { opts: Q.opts, ans: Q.q.ans, r: Q.r }, active: () => !!Q, tick };
   }
 
   return { X, Z, st, triggers, trig, typesOf, reward, fence, exit, sign, collect, paths };
 }
 
+// întrebarea + variantele A, B, C, scrise mare (porțile au doar litera)
+export function optsBanner(title, r, n, q, opts) {
+  return `<small>${esc(title)} · ${r + 1} din ${n}</small><b>${esc(q.text)}${q.expr ? ' <span>' + esc(q.expr) + '</span>' : ''}</b><div class="wq-opts">${opts.map((o, i) => `<span><i>${'ABC'[i]}</i>${esc(o)}</span>`).join('')}</div><em>Mergi prin poarta cu litera răspunsului corect.</em>`;
+}
 // bannerul cu întrebarea, sus pe ecran (folosit de „alege drumul”)
 export function makeBanner(id) { const b = document.createElement('div'); b.id = id; b.className = 'wq'; b.hidden = true; document.body.appendChild(b); return b; }

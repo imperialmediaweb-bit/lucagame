@@ -82,7 +82,8 @@ export function buildCivica(ctx) {
     place: (P) => { const lx = P.x - O.x, lz = P.z - O.z; return lz < -25 ? 'cartierul Vecinilor' : lx > 40 ? 'Grădina Prieteniei' : lx < -30 ? 'Strada cu Reguli' : 'Orașul Bunătății'; },
     update(dt, t, P, here) {
       const lx = P.x - O.x, lz = P.z - O.z;
-      banner.hidden = !(here && path.active() && lx < -30 && lx > -84 && Math.abs(lz) < 8) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
+      const inPath = here && lx < -30 && lx > -84 && Math.abs(lz) < 8; path.tick(inPath);
+      banner.hidden = !(inPath && path.active()) || !document.getElementById('quiz').hidden || !document.getElementById('panel').hidden;
       if (!here) return;
       ring.rotation.z += dt;
       neighbours.forEach((n) => n.av.update(dt, { dance: n.happy, wave: !n.happy }));

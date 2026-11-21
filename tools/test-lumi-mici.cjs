@@ -34,7 +34,7 @@ const W = {
     }
     // poteca cu porți: prima greșită, apoi corecte
     const STG = [-38, -56, -74], AR = [-4.5, 0, 4.5];
-    await away(); await tp(-28, 0); await p.waitForTimeout(400);
+    await away(); await tp(-28, 0); await p.waitForTimeout(300); await tp(STG[0] + 5, 0); await p.waitForTimeout(500);
     let first = true;
     for (let g = 0; g < 6; g++) {
       const q = await p.evaluate((d) => window[d].path(), w.dbg); if (!q) break;

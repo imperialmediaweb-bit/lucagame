@@ -165,7 +165,10 @@ export function showLesson(key, title, after) {
 /* ---------- quiz: misiune, antrenament, test ---------- */
 let Q = null, combo = 0, goalShown = false;
 if (location.hostname === 'localhost') window.__ui = { Q: () => Q, S, MISSIONS, startMission: (id) => startMission(missionById(id)), openDaily: () => openDaily(), openHub: (x) => openHub(x), openWrite: () => openWrite(), openFise: () => openFise(), openChapters: () => openChapters() };
-const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t, G()) }, GEN[t](), extra);
+// nu repeta întrebările: ține minte ultimele 60 și generează alta dacă a mai apărut de curând
+const RECENT = []; const keyOf = (q) => (q.text || '') + '|' + (q.expr || '') + '|' + (q.toks ? q.toks.join('') : '');
+function fresh(t) { let q; for (let k = 0; k < 15; k++) { q = GEN[t](); if (!RECENT.includes(keyOf(q))) break; } RECENT.push(keyOf(q)); if (RECENT.length > 60) RECENT.shift(); return q; }
+const mk = (t, extra = {}) => Object.assign({ type: t, area: typeArea(t, G()) }, fresh(t), extra);
 export function startMission(m) {
   if (areaLocked(m.area)) { toast(`Misiunea e pentru ${areaById(m.area).short}. Tu ești în ${GRADE_NAMES[G()]}.`); return; }
   if (m.atelier) { openAtelier(); return; }
