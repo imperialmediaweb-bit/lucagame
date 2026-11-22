@@ -266,4 +266,60 @@ export const G2R = {
     ]);
   }
 };
-export const GRADE2B = { ...G2B, ...G2M, ...G2R };
+
+/* ---------------- din fișele de lucru: tipuri noi (clasa a II-a) ---------------- */
+const TEXTE = [
+  { t: 'Ariciul cel grijuliu', x: 'Toamna, ariciul Țepușel aduna mere și frunze uscate. Își făcea un culcuș cald sub o tufă de măceș. Prietena lui, veverița Roșcata, îl întrebă:\n— De ce aduni atâtea frunze?\n— Iarna dorm mult și am nevoie de un pat moale, răspunse ariciul.\nCând căzu prima zăpadă, Țepușel dormea liniștit.',
+    q: [['Cum se numea ariciul?', 'Țepușel', ['Roșcata', 'Grivei', 'Pufulete']], ['Ce aduna ariciul?', 'mere și frunze uscate', ['nuci și pietre', 'flori de câmp', 'bețe de chibrit']], ['Unde își făcea culcușul?', 'sub o tufă de măceș', ['într-o scorbură', 'în casa bunicii', 'lângă râu']],
+      ['Cine l-a întrebat ce face?', 'veverița Roșcata', ['ursul', 'vulpea', 'bufnița']], ['De ce aduna frunze?', 'ca să aibă un pat moale pentru iarnă', ['ca să le mănânce', 'ca să se joace cu ele', 'ca să le dea veveriței']], ['În ce anotimp începe povestea?', 'toamna', ['vara', 'primăvara', 'iarna']], ['Care este titlul textului?', 'Ariciul cel grijuliu', ['Veverița Roșcata', 'Prima zăpadă', 'Tufa de măceș']]] },
+  { t: 'La piață cu bunica', x: 'Sâmbătă dimineață, Matei a mers cu bunica la piață. Au cumpărat roșii, castraveți și un pepene mare. Matei a cărat sacoșa cu legume, deși era grea. Bunica i-a cumpărat o înghețată de ciocolată, ca răsplată.',
+    q: [['Când au mers la piață?', 'sâmbătă dimineață', ['duminică seara', 'luni la prânz', 'vineri noaptea']], ['Cu cine a mers Matei?', 'cu bunica', ['cu tata', 'cu sora lui', 'singur']], ['Ce NU au cumpărat?', 'mere', ['roșii', 'castraveți', 'un pepene']],
+      ['Ce a cărat Matei?', 'sacoșa cu legume', ['pepenele singur', 'un coș cu ouă', 'nimic']], ['Ce a primit ca răsplată?', 'o înghețată de ciocolată', ['o minge', 'o carte', 'un măr']], ['Cum era sacoșa?', 'grea', ['goală', 'ușoară', 'ruptă']]] },
+  { t: 'Prima zăpadă', x: 'Ana s-a trezit și a privit pe geam. Totul era alb! Fulgii mari cădeau încet. A îmbrăcat geaca groasă, căciula și mănușile roșii. Împreună cu fratele ei, Radu, a făcut un om de zăpadă cu nas de morcov.',
+    q: [['Ce a văzut Ana pe geam?', 'totul era alb, ninsese', ['ploua tare', 'era soare de vară', 'era noapte']], ['Ce culoare aveau mănușile?', 'roșii', ['albastre', 'verzi', 'galbene']], ['Cu cine a făcut omul de zăpadă?', 'cu fratele ei, Radu', ['cu mama', 'cu bunicul', 'singură']],
+      ['Din ce era nasul omului de zăpadă?', 'dintr-un morcov', ['dintr-un castravete', 'dintr-o nucă', 'dintr-un creion']], ['Cum cădeau fulgii?', 'încet', ['foarte repede', 'în sus', 'deloc']], ['În ce anotimp se petrece întâmplarea?', 'iarna', ['vara', 'toamna', 'primăvara']]] },
+  { t: 'Cățelul Bobiță', x: 'Bobiță este un cățel jucăuș. Are blana maro și o pată albă pe ureche. În fiecare dimineață îl conduce pe Luca până la poartă. Când Luca vine de la școală, Bobiță sare de bucurie și dă din coadă.',
+    q: [['Ce culoare are blana lui Bobiță?', 'maro', ['neagră', 'albă', 'gri']], ['Unde are pata albă?', 'pe ureche', ['pe coadă', 'pe nas', 'pe lăbuță']], ['Pe cine conduce până la poartă?', 'pe Luca', ['pe poștaș', 'pe pisică', 'pe bunica']],
+      ['Ce face când vine Luca de la școală?', 'sare de bucurie și dă din coadă', ['doarme', 'latră supărat', 'fuge de el']], ['Cum este Bobiță?', 'jucăuș', ['leneș', 'rău', 'trist']]] },
+  { t: 'Grădina școlii', x: 'Primăvara, elevii clasei a II-a au plantat flori în grădina școlii. Doamna învățătoare le-a dat semințe de lalele și de panseluțe. Fiecare copil a udat o floare. După două săptămâni au apărut primele frunzulițe verzi.',
+    q: [['Cine a plantat flori?', 'elevii clasei a II-a', ['părinții', 'grădinarul', 'directorul']], ['Ce semințe au primit?', 'de lalele și de panseluțe', ['de roșii', 'de dovleac', 'de floarea-soarelui']], ['Ce a făcut fiecare copil?', 'a udat o floare', ['a cules o floare', 'a cumpărat o floare', 'a desenat o floare']],
+      ['După cât timp au apărut frunzulițele?', 'după două săptămâni', ['după o zi', 'după un an', 'după o oră']], ['În ce anotimp au plantat?', 'primăvara', ['iarna', 'toamna', 'vara']]] }
+];
+const PROP = ['Ana citește o carte frumoasă.', 'Copiii se joacă în parc.', 'Bunica face plăcinte cu mere.', 'Pisica bea lapte din castron.', 'Mâine mergem la munte cu tata.', 'Fluturele zboară peste flori.', 'Matei aleargă repede în curte.', 'Iarna ninge mult la noi.'];
+export const G2X = {
+  lectura2() {
+    const T = pick(TEXTE), [q, a, w] = pick(T.q);
+    return { text: `„${T.t}”\n\n${T.x}\n\n${q}`, ans: a, opts: textOpts(a, w), steps: ['Răspunsul se găsește în text: citește încă o dată propoziția care vorbește despre asta.', `Răspuns: ${a}`] };
+  },
+  ordoneaza() {
+    const ok = pick(PROP), words = ok.replace('.', '').split(' '), low = words.map((w, i) => (i === 0 && !/^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(w) ? w : i === 0 && ['Ana', 'Matei'].includes(w) ? w : i === 0 ? w.toLowerCase() : w));
+    const sent = (arr) => { const t = arr.join(' '); return t.charAt(0).toUpperCase() + t.slice(1) + '.'; };
+    const wrong = new Set(); for (let k = 0; wrong.size < 3 && k < 40; k++) { const c = sent(shuffle([...low])); if (c !== ok) wrong.add(c); }
+    return { text: 'Ordonează cuvintele ca să formezi o propoziție:', expr: shuffle([...low]).join(' / '), ans: ok, opts: textOpts(ok, [...wrong]), steps: ['Întâi: cine face? Apoi: ce face? La sfârșit: unde, cum, ce?', `Propoziția: ${ok}`] };
+  },
+  sirNumere() {
+    const step = pick([1, 2, 5, 10, 100]), start = step === 100 ? rnd(1, 4) * 100 + rnd(0, 9) * 10 : rnd(100, 900), up = Math.random() < 0.7 || start - 4 * step < 0;
+    const seq = Array.from({ length: 5 }, (_, i) => start + (up ? 1 : -1) * i * step), miss = rnd(2, 4), ans = seq[miss];
+    return { text: `Completează șirul (${up ? 'crescător' : 'descrescător'}, din ${step} în ${step}):`, expr: seq.map((v, i) => (i === miss ? '___' : v)).join(', '), ans, opts: opts(ans, [ans + step, ans - step, ans + 1 === ans + step ? ans + 10 : ans + 1]), steps: [`Fiecare număr e cu ${step} mai ${up ? 'mare' : 'mic'} decât cel dinainte.`, `${seq[miss - 1]} ${up ? '+' : '−'} ${step} = ${ans}`] };
+  },
+  celMaiMare() {
+    let d; do { d = [rnd(1, 9), rnd(0, 9), rnd(0, 9)]; } while (new Set(d).size < 3);
+    const P = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]].map((p) => p.map((k) => d[k])).filter((p) => p[0] !== 0).map((p) => +p.join(''));
+    const xs = shuffle([...new Set(P)]).slice(0, 4), big = Math.random() < 0.5, ans = big ? Math.max(...xs) : Math.min(...xs);
+    return { text: `Care este cel mai ${big ? 'MARE' : 'MIC'} număr?`, expr: xs.join(', '), ans, opts: xs, steps: ['Compari întâi sutele; dacă sunt egale, zecile; apoi unitățile.', `Cel mai ${big ? 'mare' : 'mic'}: ${ans}`] };
+  },
+  descompune() {
+    const n = rnd(101, 999), s = Math.floor(n / 100) * 100, z = Math.floor((n % 100) / 10) * 10, u = n % 10, ans = `${s} + ${z} + ${u}`;
+    return { text: `Scrie numărul ${n} ca sumă de sute, zeci și unități:`, ans, opts: textOpts(ans, [`${s / 100} + ${z / 10} + ${u}`, `${s} + ${u * 10} + ${z / 10}`, `${s + 100} + ${z} + ${u}`]), steps: [`${n} = ${s / 100} sute + ${z / 10} zeci + ${u} unități`, `= ${ans}`] };
+  },
+  compSume() {
+    const a = rnd(10, 60), b = rnd(5, 39), L = a + b; let c = rnd(30, 99), d; if (Math.random() < 0.3 && L < c) d = c - L; else d = rnd(1, c - 1);
+    const R = c - d, ans = L < R ? '<' : L > R ? '>' : '=';
+    return { text: 'Ce semn pui între cele două calcule?', expr: `${a} + ${b} ___ ${c} − ${d}`, ans, opts: ['<', '>', '='], steps: [`Calculezi stânga: ${a} + ${b} = ${L}`, `Calculezi dreapta: ${c} − ${d} = ${R}`, `${L} ${ans} ${R}`] };
+  },
+  proba() {
+    if (Math.random() < 0.5) { const a = rnd(100, 700), b = rnd(10, 999 - a), s = a + b, ans = `${s} − ${b} = ${a}`; return { text: `Ai calculat ${a} + ${b} = ${s}. Cum faci proba (verificarea)?`, ans, opts: textOpts(ans, [`${s} + ${b} = ${s + b}`, `${a} − ${b} = ${a - b}`, `${b} + ${b} = ${2 * b}`]), steps: ['Proba adunării se face prin scădere: din sumă scazi un termen și obții celălalt.', ans] }; }
+    const a = rnd(200, 999), b = rnd(10, a - 50), d = a - b, ans = `${d} + ${b} = ${a}`; return { text: `Ai calculat ${a} − ${b} = ${d}. Cum faci proba (verificarea)?`, ans, opts: textOpts(ans, [`${d} − ${b} = ${d - b}`, `${a} + ${b} = ${a + b}`, `${d} + ${a} = ${d + a}`]), steps: ['Proba scăderii se face prin adunare: diferența + scăzătorul = descăzutul.', ans] };
+  }
+};
+export const GRADE2B = { ...G2B, ...G2M, ...G2R, ...G2X };
