@@ -4,13 +4,14 @@ import { S, save, G, GRADE_NAMES, level, xpFor, starsTotal, areaLocked, levelNow
 import { SFX } from './audio.js';
 import { MISSIONS, ROMANA, SUBJECT_NAMES } from './content/missions.js';
 import { SPEED, SPEED_IDS } from './content/speed.js';
-import { startMission, openDaily, openShop, openProgress, toast, showTutorial, openMenu } from './ui.js';
+import { startMission, openDaily, openShop, openProgress, toast, showTutorial, openMenu, confetti } from './ui.js';
 import { openAtelier } from './atelier.js';
 import { openWrite, openFise, chapterOk, fogWhy } from './extra.js';
 import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom, createRoom, inviteLink } from './net.js';
 import { startPlacement } from './placement.js';
+import { adventDay, isWinter } from './season.js';
 import { openClass, openFriends, socialBadges } from './social.js';
 import { loggedIn } from './account.js';
 import { hasWorld, enterWorld } from './worlds/index.js';
@@ -37,6 +38,7 @@ const IC = {
   insula: '<ellipse cx="32" cy="46" rx="24" ry="8" fill="#fff"/><path d="M30 44V22" stroke="#fff" stroke-width="4"/><path d="M30 22c-10-6-16 0-16 0M30 22c10-6 16 0 16 0M30 22c-4-8 2-12 2-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>',
   clasa: '<path d="M8 28L32 12l24 16" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/><rect x="14" y="28" width="36" height="24" rx="3" fill="#fff"/><rect x="28" y="38" width="8" height="14" fill="#23935a"/><circle cx="32" cy="22" r="3" fill="#FFC93C"/>',
   prieteni: '<path d="M22 50C10 41 6 34 10 27c3-5 9-4 12 1 3-5 9-6 12-1 4 7 0 14-12 23z" fill="#fff"/><path d="M44 44c-8-6-11-11-8-16 2-4 6-3 8 1 2-4 6-5 8-1 3 5 0 10-8 16z" fill="#FFC93C"/>',
+  advent: '<rect x="10" y="16" width="44" height="38" rx="5" fill="#fff"/><path d="M10 30h44M32 16v38" stroke="#d62828" stroke-width="5"/><path d="M32 16c-6-10-16-6-10 0M32 16c6-10 16-6 10 0" stroke="#FFC93C" stroke-width="4" fill="none"/>',
   garderoba: '<path d="M22 10l-12 8 6 10 6-4v30h20V24l6 4 6-10-12-8c-2 4-6 6-10 6s-8-2-10-6z" fill="#fff"/>'
 };
 const icon = (k) => `<svg viewBox="0 0 64 64" aria-hidden="true" style="font-family:'Baloo 2',sans-serif">${IC[k]}</svg>`;
@@ -71,6 +73,7 @@ export function openHome() {
   ].map((x) => ({ ...x, list: lessons(x.k) })).filter((x) => x.list.length);
   const tiles = [
     ...subj.map((x) => ({ id: 'subj:' + x.k, icon: x.k, name: x.name, sub: x.sub, color: x.color, tags: ['Singur'], prog: `${starsOf(x.list)} / ${x.list.length * 3} ★` })),
+    ...(adventDay() ? [{ id: 'advent', icon: 'advent', name: 'Calendarul de Advent', sub: 'O ferestruică pe zi până la Crăciun!', color: '#d62828', tags: ['Nou', 'Crăciun'], prog: adventLeft() }] : []),
     ...(G() === 3 ? [{ id: 'natura', icon: 'stiinte', name: 'Harta Naturii', sub: 'Științe: animale, corp, apă, magneți + album', color: '#23935a', tags: ['Singur', 'Nou'], prog: `🏅 ${Object.keys((S.nat || {}).badges || {}).length}/6 insigne` }] : []),
     { id: 'monstri', icon: 'monstri', name: 'Fuga de monștri', sub: 'Calcul rapid, monstrul vine din spate!', color: '#4a2470', tags: ['Singur', 'Cu colegii'], prog: `${SPEED_IDS.filter((p) => (S.records || {})['portal-' + p]).length} / ${SPEED_IDS.length} portaluri` },
     { id: 'antrenament', icon: 'antrenament', name: 'Antrenamentul zilei', sub: '20 de minute care te fac campion', color: '#ff7a2f', tags: ['Singur'], prog: `${Math.min(20, Math.floor(S.today.sec / 60))} / 20 min azi` },
@@ -103,6 +106,7 @@ export function openHome() {
     </div>`;
   $('home').hidden = false; H.stop && H.stop();
   $('home').querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { SFX.tap(); tile(b.dataset.t); });
+  if (isWinter()) $('home').insertAdjacentHTML('afterbegin', `<div class="hm-snow" aria-hidden="true">${Array.from({ length: 36 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i * 0.7) % 9}s;animation-duration:${7 + (i % 5)}s;font-size:${10 + (i % 4) * 5}px">❄</i>`).join('')}</div>`);
   // cereri noi la clasă / prieteni: apar pe carduri
   socialBadges().then((bd) => {
     if (!bd || $('home').hidden) return;
@@ -125,6 +129,7 @@ function recommend(subj) {
   return null;
 }
 function tile(id) {
+  if (id === 'advent') return openAdvent();
   if (id === 'natura') { closeHome(); return openNatura(); }
   if (id === 'clasa') { closeHome(); return openClass(); }
   if (id === 'prieteni') { closeHome(); return openFriends(); }
@@ -245,4 +250,22 @@ function pickLevel() {
       <button class="item ${cur ? '' : 'on'}" type="button" data-l="0"><b>📅 Automat</b><span>după lună: acum ${LEVELS[autoLevel()]}</span></button></div>
     <div class="row"><button class="btn light" type="button" data-close>Închide</button></div>`);
   document.querySelectorAll('#panelCard [data-l]').forEach((b) => b.onclick = () => { S.lvlPer = +b.dataset.l || null; save(); document.getElementById('panel').hidden = true; toast(`Nivel: ${LEVELS[levelNow()]}`); openHome(); });
+}
+
+/* Calendarul de Advent: 1–24 decembrie, o ferestruică pe zi */
+const ADV = () => { const y = new Date().getFullYear(); if (!S.advent || S.advent.y !== y) S.advent = { y, o: {} }; return S.advent; };
+function adventLeft() { const d = adventDay(), left = Array.from({ length: d }, (_, i) => i + 1).filter((x) => !ADV().o[x]).length; return left ? `${left} ${left === 1 ? 'ferestruică te așteaptă' : 'ferestruici te așteaptă'}!` : 'deschis azi ✓'; }
+function adventPrize(d) { return d === 6 ? { coins: 50, hat: 'mos', txt: 'Moș Nicolae îți aduce Căciula lui Moș Crăciun!' } : d === 24 ? { coins: 100, hat: 'ren', txt: 'Ajunul Crăciunului: Coarnele de ren și 100 de monede!' } : { coins: 10 + d, txt: `${10 + d} monede` }; }
+function openAdvent() {
+  const today = adventDay(), A = ADV();
+  H.showPanel(`<div class="eyebrow">🎄 Crăciunul vine!</div><h2>Calendarul de Advent</h2>
+    <p>În fiecare zi, de pe 1 până pe 24 decembrie, deschizi o ferestruică (și pe cele din zilele trecute, dacă le-ai ratat). Pe <b>6 decembrie</b> (Moș Nicolae) și pe <b>24 decembrie</b> sunt surprize mari!</p>
+    <div class="adv">${Array.from({ length: 24 }, (_, i) => { const d = i + 1, open = A.o[d], now = d <= today && !open, past = false;
+      return `<button class="adv-w ${open ? 'open' : ''} ${now ? 'now' : ''} ${d > today ? 'later' : ''}" type="button" data-d="${d}" ${now ? '' : 'disabled'}>${open ? (d === 6 ? '🎅' : d === 24 ? '🦌' : '🎁') : past ? '❄️' : d}</button>`; }).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-close>Închide</button></div>`);
+  document.querySelectorAll('#panelCard .adv-w.now').forEach((b) => b.onclick = () => {
+    const d = +b.dataset.d, pr = adventPrize(d); A.o[d] = Date.now(); S.coins += pr.coins;
+    if (pr.hat) { S.owned = S.owned || []; if (!S.owned.includes('hat:' + pr.hat)) S.owned.push('hat:' + pr.hat); }
+    save(); SFX.fanfare(); confetti(); toast(`Ziua ${d}: ${pr.txt}${pr.hat ? ' (o găsești la Garderobă → Pălărie)' : ''}`); openAdvent(); openHome();
+  });
 }

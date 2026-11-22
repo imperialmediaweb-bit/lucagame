@@ -26,6 +26,7 @@ import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceL
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
 import { accOn } from './accessories.js';
+import { initSeason } from './season.js';
 import { initNatura } from './natura.js';
 import { initWorlds, updateWorlds, worldAt, currentWorld } from './worlds/index.js';
 import { offerPlacement } from './placement.js';
@@ -200,6 +201,7 @@ initWorlds({
   info: (html) => showPanel(html + '<div class="row"><button class="btn" type="button" data-close>Am înțeles</button></div>'),
   confirm: (text, yes) => { showPanel(`<h2 style="font-size:22px">${text}</h2><div class="row"><button class="btn light" type="button" data-close>Nu</button><button class="btn" type="button" id="cfYes">Da</button></div>`); $('cfYes').onclick = () => { $('panel').hidden = true; yes(); }; }
 });
+const season = initSeason({ scene, getP: () => P, glowExclude: (l) => glow.addExcludedMesh(l), coarse: COARSE, colliders: W.colliders });
 $('roomBtn').onclick = openLobby; $('openMulti').onclick = multiplayer;
 const hooks = {
   reload: () => { me.setLook(S.look); missionsChanged(); refreshHud(); },
@@ -228,6 +230,7 @@ function cullFar() {
 scene.registerBeforeRender(() => {
   const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
   cullT -= dt; if (cullT <= 0) { cullT = 0.4; cullFar(); }
+  season.update(dt, t);
   tickTime(dt); hudT += dt; if (hudT > 5) { hudT = 0; save(); refreshHud(); }
   let fwd = 0, side = 0;
   if (!paused()) {

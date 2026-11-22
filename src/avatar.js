@@ -21,7 +21,7 @@ export function mat(scene, hex, emissive = 0) {
 
 export const SKINS = ['#f3c9a0', '#e0b48a', '#c98e5f', '#8a5a3b', '#5c3a24'];
 export const COLORS = { '#e04848': 'Roșu', '#3b7ddd': 'Albastru', '#2fae5f': 'Verde', '#8a5cf6': 'Mov', '#f2b632': 'Auriu', '#ff8ac0': 'Roz', '#2b2f38': 'Negru', '#ffffff': 'Alb', '#42c0d8': 'Turcoaz', '#ff7a2f': 'Portocaliu', '#2b3a55': 'Bleumarin', '#7a5a3b': 'Maro' };
-export const HATS = { explorator: 'Pălărie de explorator (din Albumul Naturii)', nimic: 'Fără', sapca: 'Șapcă', casca: 'Căști', fundita: 'Fundiță', coif: 'Coif de cavaler', palarie: 'Pălărie', vrajitor: 'Pălărie de vrăjitor', urechi: 'Urechi de veveriță', bucatar: 'Bonetă de bucătar', ochelari: 'Ochelari', coroana: 'Coroană', basma: 'Basma' };
+export const HATS = { mos: 'Căciula lui Moș Crăciun (Advent)', ren: 'Coarne de ren (Advent)', explorator: 'Pălărie de explorator (din Albumul Naturii)', nimic: 'Fără', sapca: 'Șapcă', casca: 'Căști', fundita: 'Fundiță', coif: 'Coif de cavaler', palarie: 'Pălărie', vrajitor: 'Pălărie de vrăjitor', urechi: 'Urechi de veveriță', bucatar: 'Bonetă de bucătar', ochelari: 'Ochelari', coroana: 'Coroană', basma: 'Basma' };
 export const FACES = { zambet: 'Zâmbet', cool: 'Cool', surprins: 'Surprins', fericit: 'Fericit', ninja: 'Ninja', robot: 'Robot' };
 
 function faceTexture(scene, face) {
@@ -125,6 +125,8 @@ function buildHat(scene, hat, type, name, shadow) {
       const l = B(0.12, 0.3, 0.3, '#ff7a2f'); l.position.set(-0.38, -0.28, 0); const r = B(0.12, 0.3, 0.3, '#ff7a2f'); r.position.set(0.38, -0.28, 0); break; }
     case 'fundita': { const a = B(0.26, 0.22, 0.1, '#ff4f8a'); a.position.set(-0.16, 0.05, 0); a.rotation.z = 0.4; const b = B(0.26, 0.22, 0.1, '#ff4f8a'); b.position.set(0.16, 0.05, 0); b.rotation.z = -0.4; B(0.1, 0.12, 0.12, '#d8306a').position.y = 0.05; break; }
     case 'coif': { const h = B(0.74, 0.32, 0.7, '#9aa4b2'); h.position.y = 0; const p = B(0.1, 0.3, 0.5, '#e04848'); p.position.y = 0.3; break; }
+    case 'mos': { C(0.16, 0.74, 0.74, '#ffffff').position.y = 0; const c = C(0.62, 0, 0.66, '#d62828'); c.position.y = 0.38; c.rotation.z = 0.35; const p = C(0.18, 0.18, 0.18, '#ffffff'); p.position.set(0.24, 0.62, 0); break; }
+    case 'ren': { [-1, 1].forEach((sd) => { const a = B(0.08, 0.5, 0.08, '#8a5a2b'); a.position.set(sd * 0.24, 0.24, 0); a.rotation.z = -sd * 0.3; const b = B(0.07, 0.25, 0.07, '#8a5a2b'); b.position.set(sd * 0.36, 0.36, 0); b.rotation.z = -sd * 1.1; }); break; }
     case 'explorator': { C(0.05, 1.2, 1.2, '#c8a96a').position.y = 0; C(0.34, 0.6, 0.68, '#d9bf86').position.y = 0.19; C(0.08, 0.69, 0.69, '#2f7d3b').position.y = 0.1; break; }
     case 'palarie': { C(0.05, 1.1, 1.1, '#3b2a1f').position.y = 0; C(0.36, 0.62, 0.66, '#3b2a1f').position.y = 0.2; break; }
     case 'vrajitor': { C(0.05, 1.0, 1.0, '#4b3cc4').position.y = 0; const c = C(0.9, 0, 0.6, '#4b3cc4'); c.position.y = 0.47; c.rotation.z = 0.15; break; }

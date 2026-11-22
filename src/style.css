@@ -381,3 +381,13 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 #wq em,.wq em{display:none}
 #nmap>*{flex-shrink:0}
 .hm-lvl{display:inline-block;margin-left:6px;font:800 12px var(--font-d);background:#2EC4A6;color:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;vertical-align:middle}
+/* iarna și Crăciunul */
+.hm-snow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.hm-snow i{position:absolute;top:-30px;color:#fff;text-shadow:0 0 4px #9fc8ff;font-style:normal;animation:hmSnow linear infinite}
+@keyframes hmSnow{to{transform:translateY(110vh) translateX(40px) rotate(220deg)}}
+#home>.hm-top,#home>.hm-body{position:relative;z-index:1}
+.adv{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.adv-w{aspect-ratio:1;border:3px solid var(--ink);border-radius:12px;background:linear-gradient(135deg,#d62828,#8b1a1a);color:#fff;font:800 20px var(--font-d);box-shadow:0 3px 0 var(--ink)}
+.adv-w.later{opacity:.55}.adv-w.open{background:#fff6cf;font-size:24px}
+.adv-w.now{background:linear-gradient(135deg,#FFC93C,#ff7a2f);animation:nmPulse 1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.hm-snow{display:none}.adv-w.now{animation:none}}

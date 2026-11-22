@@ -345,7 +345,7 @@ export function openShop(tab) {
   const slots = { acc: 'Accesorii', puteri: 'Puteri', skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
   if (shopTab === 'puteri') return powerShop(slots);
   if (shopTab === 'acc') return accShop(slots);
-  const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).filter(([v]) => v !== 'explorator' || S.owned.includes('hat:explorator')).map(([v, n]) => [v, n, v === 'explorator' ? 0 : PRICES[shopTab][v]]);
+  const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).filter(([v]) => !['explorator', 'mos', 'ren'].includes(v) || S.owned.includes('hat:' + v)).map(([v, n]) => [v, n, ['explorator', 'mos', 'ren'].includes(v) ? 0 : PRICES[shopTab][v]]);
   const owned = (v, p) => p === 0 || shopTab === 'skin' || S.owned.includes(shopTab + ':' + v);
   showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Garderoba</h2>
     <div class="tabs">${Object.entries(slots).map(([k, n]) => `<button class="tab ${k === shopTab ? 'on' : ''}" type="button" data-tab="${k}">${n}</button>`).join('')}</div>
