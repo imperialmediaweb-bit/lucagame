@@ -26,6 +26,7 @@ import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceL
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
 import { accOn } from './accessories.js';
+import { MOVERS as FUN_MOVERS } from './worlds/fun.js';
 import { initSeason } from './season.js';
 import { initNatura } from './natura.js';
 import { initWorlds, updateWorlds, worldAt, currentWorld } from './worlds/index.js';
@@ -227,7 +228,7 @@ const camPos = new Vector3(0, 8, 16);
 // ce e departe (alte lumi, alte insule) nu se mai desenează și nu mai face umbre: jocul merge fluid
 function cullFar() {
   for (const m of scene.meshes) {
-    const b = m.getBoundingInfo && m.getBoundingInfo(); if (!b) continue;
+    const b = m.getBoundingInfo && m.getBoundingInfo(); if (!b) continue; if (!m._ci) { m.computeWorldMatrix(true); m._ci = 1; } // o dată: altfel o plasă nouă pare că e în centrul lumii
     const c = b.boundingSphere.centerWorld, far = Math.hypot(c.x - P.x, c.z - P.z) - b.boundingSphere.radiusWorld > 230;
     if (far && m.isEnabled(false)) { m.setEnabled(false); m._farOff = true; } else if (!far && m._farOff) { m._farOff = false; m.setEnabled(true); }
   }
@@ -249,9 +250,10 @@ scene.registerBeforeRender(() => {
   const fx = -Math.sin(yawS), fz = -Math.cos(yawS), rx = -Math.cos(yawS), rz = Math.sin(yawS);
   const speed = 8.5 * (accOn('skate') ? 1.4 : 1) * (accOn('rapid') ? 1.25 : 1), mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
   // platforme care se mișcă
-  for (const mv of W.movers) {
-    const nxp = mv.base + Math.sin(t * mv.sp) * mv.amp, d = nxp - mv.m.position.x; mv.m.position.x = nxp; mv.c.x1 += d; mv.c.x2 += d;
-    if (standing === mv.c) P.x += d;
+  for (const mv of W.movers.concat(FUN_MOVERS)) {
+    const ax = mv.axis || 'x', np = mv.base + Math.sin(t * mv.sp + (mv.ph || 0)) * mv.amp, d = np - mv.m.position[ax]; mv.m.position[ax] = np;
+    mv.c[ax + '1'] += d; mv.c[ax + '2'] += d;
+    if (standing === mv.c) P[ax] += d;
   }
   const chase = updateChase(dt, P);
   if (!chase) physics(dt, mx, mz); else face = Math.PI;
