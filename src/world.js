@@ -299,7 +299,17 @@ export function buildWorld(scene, shadow) {
     classroom.podium[place] = { x, z: CZ - 6.2, y: h };
   });
 
-  statics.forEach((m) => m.freezeWorldMatrix());
+  // tot ce nu se mișcă se unește într-un singur obiect pentru fiecare culoare: placa video desenează de zeci de ori mai puține bucăți
+  const groups = new Map();
+  statics.forEach((m) => { const k = m.material; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(m); });
+  for (const list of groups.values()) {
+    if (list.length < 2) { list[0].freezeWorldMatrix(); continue; }
+    const cast = list.some((m) => shadow.getShadowMap().renderList.includes(m));
+    const merged = Mesh.MergeMeshes(list, true, true);
+    if (!merged) continue;
+    merged.receiveShadows = true; merged.freezeWorldMatrix();
+    if (cast) shadow.addShadowCaster(merged);
+  }
   return { colliders, npcs, pads, coins, chests, clouds, movers, statue, classroom, gates, spawn: { x: 5, y: 0.5, z: -5 } };
 }
 

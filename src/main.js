@@ -33,23 +33,26 @@ import { openLobby, openCreate, roomChanged, mpGameStart, mpQuestion, mpAnswered
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
 const engine = new Engine(canvas, true, { preserveDrawingBuffer: false, stencil: true, adaptToDeviceRatio: false });
-engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.75));
+const COARSE = matchMedia('(pointer:coarse)').matches; // telefon/tabletă: grafică mai ușoară, ca să meargă fluid
+engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 1.75));
 const scene = new Scene(engine);
 scene.clearColor = Color4.FromHexString('#8fd3f0ff');
 scene.ambientColor = new Color3(0.3, 0.3, 0.3);
 scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogColor = Color3.FromHexString('#8fd3f0'); scene.fogStart = 60; scene.fogEnd = 160;
 
 const camera = new FreeCamera('cam', new Vector3(0, 6, 14), scene);
-camera.inputs.clear(); camera.minZ = 0.1; camera.fov = 1.0;
+camera.inputs.clear(); camera.minZ = 0.1; camera.fov = 1.0; camera.maxZ = 260; scene.skipPointerMovePicking = true;
 
 const hemi = new HemisphericLight('h', new Vector3(0.2, 1, 0.1), scene);
 hemi.intensity = 0.75; hemi.groundColor = Color3.FromHexString('#6aa060');
 const sun = new DirectionalLight('sun', new Vector3(-0.5, -1, -0.35), scene);
 sun.position = new Vector3(30, 60, 25); sun.intensity = 0.9;
-const shadow = new ShadowGenerator(1024, sun);
+const shadow = new ShadowGenerator(COARSE ? 512 : 1024, sun);
 shadow.usePercentageCloserFiltering = true; shadow.bias = 0.002; shadow.darkness = 0.35;
 sun.autoUpdateExtends = false; sun.shadowMinZ = 1; sun.shadowMaxZ = 150; sun.orthoLeft = -30; sun.orthoRight = 30; sun.orthoTop = 30; sun.orthoBottom = -30;
-const glow = new GlowLayer('glow', scene, { blurKernelSize: 32 }); glow.intensity = 0.4;
+if (COARSE) shadow.filteringQuality = ShadowGenerator.QUALITY_LOW;
+const glow = new GlowLayer('glow', scene, { blurKernelSize: COARSE ? 16 : 32, mainTextureRatio: COARSE ? 0.35 : 0.5 }); glow.intensity = 0.4;
+if (COARSE) glow.isEnabled = false; // pe telefon fără strălucire: mult mai fluid
 
 const W = buildWorld(scene, shadow);
 const me = createAvatar(scene, S.look, shadow, 'luca');
@@ -80,8 +83,9 @@ function physics(dt, mx, mz) {
   jumpReq = false;
   if (P.y < -6) { const w = worldAt(P); if (w) { teleport(w.spawn.x, w.spawn.z, w.spawn.y); toast('Hopa! Înapoi la intrare.'); } else { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); } }
 }
-function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; }
-if (location.hostname === 'localhost') window.__dbg = { P, teleport: (x, z, y) => teleport(x, z, y), setYaw: (y) => { yaw = y; yawS = y; }, W, areaLocked };
+let cullT = 0;
+function teleport(x, z, y = 0.5) { P.x = x; P.z = z; P.y = y; P.vy = 0; cullT = 0; }
+if (location.hostname === 'localhost') window.__dbg = { scene, engine, glow: () => glow, P, teleport: (x, z, y) => teleport(x, z, y), setYaw: (y) => { yaw = y; yawS = y; }, W, areaLocked };
 
 /* ---------- control ---------- */
 const CAM_SPEED = { incet: 0.0025, mediu: 0.0045, rapid: 0.007 };
@@ -202,8 +206,17 @@ startFlow(hooks);
 /* ---------- bucla ---------- */
 let t = 0, hudT = 0;
 const camPos = new Vector3(0, 8, 16);
+// ce e departe (alte lumi, alte insule) nu se mai desenează și nu mai face umbre: jocul merge fluid
+function cullFar() {
+  for (const m of scene.meshes) {
+    const b = m.getBoundingInfo && m.getBoundingInfo(); if (!b) continue;
+    const c = b.boundingSphere.centerWorld, far = Math.hypot(c.x - P.x, c.z - P.z) - b.boundingSphere.radiusWorld > 230;
+    if (far && m.isEnabled(false)) { m.setEnabled(false); m._farOff = true; } else if (!far && m._farOff) { m._farOff = false; m.setEnabled(true); }
+  }
+}
 scene.registerBeforeRender(() => {
   const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+  cullT -= dt; if (cullT <= 0) { cullT = 0.4; cullFar(); }
   tickTime(dt); hudT += dt; if (hudT > 5) { hudT = 0; save(); refreshHud(); }
   let fwd = 0, side = 0;
   if (!paused()) {
