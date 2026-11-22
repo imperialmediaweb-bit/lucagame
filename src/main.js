@@ -1,5 +1,6 @@
 // Mintoria: motorul jocului (Babylon.js), personajul, controalele și legătura cu ecranele.
 import { Engine } from '@babylonjs/core/Engines/engine';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { Scene } from '@babylonjs/core/scene';
 import { FreeCamera } from '@babylonjs/core/Cameras/freeCamera';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
@@ -10,7 +11,7 @@ import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator'
 import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 import { GlowLayer } from '@babylonjs/core/Layers/glowLayer';
 import '@babylonjs/core/Layers/effectLayerSceneComponent';
-import { LABELS } from './avatar.js';
+import { LABELS, mat } from './avatar.js';
 import { S, save, areaLocked, GRADE_NAMES } from './state.js';
 import { SFX } from './audio.js';
 import { createAvatar } from './avatar.js';
@@ -24,6 +25,7 @@ import { chasing } from './chase.js';
 import { initChase, updateChase, updatePortals, portalPanel, raceInviteUI, raceLobbyUI, raceStartUI, raceProgUI, raceEndUI } from './chase.js';
 import { AREAS } from './content/missions.js';
 import { initHome, openHome } from './home.js';
+import { accOn } from './accessories.js';
 import { initNatura } from './natura.js';
 import { initWorlds, updateWorlds, worldAt, currentWorld } from './worlds/index.js';
 import { offerPlacement } from './placement.js';
@@ -56,6 +58,13 @@ if (COARSE) glow.isEnabled = false; // pe telefon fără strălucire: mult mai f
 
 const W = buildWorld(scene, shadow);
 const me = createAvatar(scene, S.look, shadow, 'luca');
+// accesoriile vizibile: skateboard sub picioare, aripi pe spate
+const gear = (() => {
+  const board = MeshBuilder.CreateBox('skate', { width: 0.75, height: 0.08, depth: 1.5 }, scene); board.material = mat(scene, '#ff7a2f'); board.parent = me.root; board.position.y = 0.04;
+  [-0.55, 0.55].forEach((z) => [-0.28, 0.28].forEach((x) => { const w = MeshBuilder.CreateCylinder('wh', { diameter: 0.16, height: 0.1 }, scene); w.rotation.z = Math.PI / 2; w.material = mat(scene, '#1F2B3A'); w.parent = board; w.position.set(x, -0.08, z); }));
+  const wings = [-1, 1].map((sd) => { const w = MeshBuilder.CreateBox('wing', { width: 1.3, height: 0.85, depth: 0.06 }, scene); w.material = mat(scene, '#ffffff', 0.35); w.parent = me.root; w.position.set(sd * 0.75, 1.85, -0.3); w.rotation.z = sd * 0.35; return w; });
+  return { board, wings };
+})();
 LABELS.forEach((l) => glow.addExcludedMesh(l));
 let yaw0 = Math.atan2(W.spawn.x, W.spawn.z);
 
@@ -79,7 +88,9 @@ function physics(dt, mx, mz) {
     for (const b of W.colliders) if (P.x + R > b.x1 && P.x - R < b.x2 && P.z + R > b.z1 && P.z - R < b.z2 && P.y + HGT <= b.y1 + 0.08 && ny + HGT > b.y1) { ny = b.y1 - HGT; P.vy = 0; }
   }
   P.y = ny; P.coyote = P.ground ? 0.12 : Math.max(0, P.coyote - dt);
-  if (jumpReq && P.coyote > 0) { P.vy = 11; P.coyote = 0; P.ground = false; SFX.jump(); }
+  if (P.ground) P.dj = false;
+  if (jumpReq && P.coyote > 0) { P.vy = accOn('arc') ? 14.5 : 11; P.coyote = 0; P.ground = false; SFX.jump(); }
+  else if (jumpReq && !P.dj && accOn('aripi') && !P.ground) { P.vy = 10.5; P.dj = true; SFX.boing(); } // aripile: săritură dublă
   jumpReq = false;
   if (P.y < -6) { const w = worldAt(P); if (w) { teleport(w.spawn.x, w.spawn.z, w.spawn.y); toast('Hopa! Înapoi la intrare.'); } else { teleport(W.spawn.x, W.spawn.z); toast('Hopa! Înapoi în piață.'); } }
 }
@@ -228,7 +239,7 @@ scene.registerBeforeRender(() => {
   { let d = yaw - yawS; while (d > Math.PI) { d -= 2 * Math.PI; yaw -= 2 * Math.PI; } while (d < -Math.PI) { d += 2 * Math.PI; yaw += 2 * Math.PI; } yawS += d * Math.min(1, dt * 7); }
   // Babylon e „mâna stângă”: dreapta ecranului este (-cos, sin)
   const fx = -Math.sin(yawS), fz = -Math.cos(yawS), rx = -Math.cos(yawS), rz = Math.sin(yawS);
-  const speed = 7.5, mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
+  const speed = 8.5 * (accOn('skate') ? 1.4 : 1), mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
   // platforme care se mișcă
   for (const mv of W.movers) {
     const nxp = mv.base + Math.sin(t * mv.sp) * mv.amp, d = nxp - mv.m.position.x; mv.m.position.x = nxp; mv.c.x1 += d; mv.c.x2 += d;
@@ -239,7 +250,8 @@ scene.registerBeforeRender(() => {
   const moving = chase || Math.hypot(mx, mz) > 0.3;
   if (moving && !chase) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
   cheerT = Math.max(0, cheerT - dt);
-  me.root.position.set(P.x, P.y, P.z); me.root.rotation.y = face;
+  gear.board.setEnabled(accOn('skate')); gear.wings.forEach((w, i) => { w.setEnabled(accOn('aripi')); w.rotation.y = (i ? -1 : 1) * (0.3 + Math.sin(t * (P.ground ? 2 : 12)) * 0.25); });
+  me.root.position.set(P.x, P.y + (accOn('skate') ? 0.12 : 0), P.z); me.root.rotation.y = face;
   if (moving) seated = false;
   me.update(dt, { speed: chase ? 1 : moving ? Math.min(1, l) : 0, air: !chase && !P.ground && P.coyote <= 0 && !seated, dance: cheerT > 0 && P.ground && !moving && !seated, sit: seated });
 
@@ -281,7 +293,7 @@ scene.registerBeforeRender(() => {
   for (const c of W.coins) {
     if (c.back > 0) { c.back -= dt; if (c.back <= 0) c.m.isVisible = true; continue; }
     c.m.rotation.y += dt * 3;
-    if (Math.hypot(c.m.position.x - P.x, c.m.position.z - P.z) < 1.1 && Math.abs(c.m.position.y - (P.y + 1)) < 1.5) { c.m.isVisible = false; c.back = 60; S.coins += 1; SFX.coin(); refreshHud(); }
+    if (Math.hypot(c.m.position.x - P.x, c.m.position.z - P.z) < (accOn('magnet') ? 6 : 1.1) && Math.abs(c.m.position.y - (P.y + 1)) < (accOn('magnet') ? 4 : 1.5)) { c.m.isVisible = false; c.back = 60; S.coins += 1; SFX.coin(); refreshHud(); }
   }
   for (const c of W.clouds) { c.position.x += dt * 0.8; if (c.position.x > 130) c.position.x = -130; }
   W.statue.update(dt, { dance: true });

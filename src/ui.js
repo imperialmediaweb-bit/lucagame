@@ -1,4 +1,5 @@
 // Ecranele jocului: dialog cu personajele, misiuni, test, ciornă, lecții, garderobă, progres.
+import { ACC, accOwned, accOn, accBuy, accToggle } from './accessories.js';
 import { CREDITS } from './credits.js';
 import { diagnose } from './mistakes.js';
 import { POWERS, has as hasPower, count as countPower, use as usePower, buy as buyPower, doubleOn, doubleLeft } from './powers.js';
@@ -341,8 +342,9 @@ const PRICES = { shirt: 10, pants: 10, hat: { nimic: 0, sapca: 0, fundita: 20, b
 let shopTab = 'shirt';
 export function openShop(tab) {
   if (tab) shopTab = tab;
-  const slots = { puteri: 'Puteri', skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
+  const slots = { acc: 'Accesorii', puteri: 'Puteri', skin: 'Piele', shirt: 'Tricou', pants: 'Pantaloni', hat: 'Pălărie', face: 'Față' };
   if (shopTab === 'puteri') return powerShop(slots);
+  if (shopTab === 'acc') return accShop(slots);
   const items = shopTab === 'skin' ? SKINS.map((v) => [v, '', 0]) : shopTab === 'shirt' || shopTab === 'pants' ? Object.entries(COLORS).map(([v, n]) => [v, n, PRICES[shopTab]]) : Object.entries(shopTab === 'hat' ? HATS : FACES).filter(([v]) => v !== 'explorator' || S.owned.includes('hat:explorator')).map(([v, n]) => [v, n, v === 'explorator' ? 0 : PRICES[shopTab][v]]);
   const owned = (v, p) => p === 0 || shopTab === 'skin' || S.owned.includes(shopTab + ':' + v);
   showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Garderoba</h2>
@@ -357,6 +359,20 @@ export function openShop(tab) {
   });
 }
 
+function accShop(slots) {
+  showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Accesorii</h2>
+    <div class="tabs">${Object.entries(slots).map(([k, n]) => `<button class="tab ${k === shopTab ? 'on' : ''}" type="button" data-tab="${k}">${n}</button>`).join('')}</div>
+    <p>Le cumperi o singură dată și le porți când vrei. Chiar te ajută în joc!</p>
+    <div class="shopgrid">${Object.entries(ACC).map(([k, a]) => `<button class="item pw ${accOn(k) ? 'on' : ''}" type="button" data-acc="${k}"><span class="pwi">${a.icon}</span><b>${a.name}</b><span>${a.desc}</span><span>${accOwned(k) ? (accOn(k) ? '✓ îl porți · atinge ca să-l scoți' : 'al tău · atinge ca să-l pui') : `<b>${a.price}</b> monede`}</span></button>`).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-close>Gata</button></div>`);
+  $('panelCard').querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => openShop(b.dataset.tab));
+  $('panelCard').querySelectorAll('[data-acc]').forEach((b) => b.onclick = () => {
+    const k = b.dataset.acc, a = ACC[k];
+    if (accOwned(k)) { accToggle(k); SFX.tap(); toast(accOn(k) ? `Porți: ${a.name}` : `Ai scos: ${a.name}`); return accShop(slots); }
+    if (!accBuy(k)) { toast(`Îți mai trebuie ${a.price - S.coins} monede. Rezolvă misiuni!`); return; }
+    SFX.coin(); confetti(); refreshHud(); toast(`Ai cumpărat: ${a.name}!`); accShop(slots);
+  });
+}
 function powerShop(slots) {
   showPanel(`<div class="eyebrow">Ai ${S.coins} monede</div><h2>Puteri</h2>
     <div class="tabs">${Object.entries(slots).map(([k, n]) => `<button class="tab ${k === shopTab ? 'on' : ''}" type="button" data-tab="${k}">${n}</button>`).join('')}</div>
