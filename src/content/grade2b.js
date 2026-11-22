@@ -162,6 +162,15 @@ export const G2M = {
     ['Ce parte a plantei ia apa din pământ?', 'rădăcina', ['floarea', 'frunza', 'fructul'], 'Rădăcina absoarbe apa din sol.'],
     ['Ce cresc toate viețuitoarele?', 'cresc și se înmulțesc', ['nu se schimbă', 'se fac pietre', 'dispar'], 'Viețuitoarele cresc și se înmulțesc.']
   ]),
+  m2relief: () => fromBank([
+    ['Din ce e alcătuit Pământul?', 'uscat, apă și aer (atmosferă)', ['doar apă', 'doar nisip', 'doar nori'], 'Pământul are uscat, apă și atmosferă.'],
+    ['Ce formă de relief este cea mai înaltă?', 'munții', ['câmpiile', 'dealurile', 'lacurile'], 'Munții sunt cei mai înalți; dealurile sunt mai joase; câmpiile sunt plate.'],
+    ['Ce formă de relief este netedă, plată?', 'câmpia', ['muntele', 'dealul', 'vulcanul'], 'Câmpia e întinsă și netedă.'],
+    ['Ce formă de relief e mai joasă decât muntele, dar mai înaltă decât câmpia?', 'dealul', ['marea', 'lacul', 'pădurea'], 'Dealurile au înălțimi potrivite și pante line.'],
+    ['Pe hartă, cu ce culoare sunt desenați munții?', 'maro', ['verde', 'albastru', 'roz'], 'Munții: maro; dealurile: galben-portocaliu; câmpiile: verde; apele: albastru.'],
+    ['Pe hartă, cu ce culoare sunt desenate câmpiile?', 'verde', ['maro', 'roșu', 'negru'], 'Câmpiile se colorează cu verde.'],
+    ['Pe hartă, cu ce culoare sunt desenate apele?', 'albastru', ['maro', 'verde', 'galben'], 'Apele (râuri, lacuri, mări) sunt albastre.']
+  ]),
   m2pamant: () => fromBank([
     ['Din ce e alcătuit Pământul?', 'uscat, apă și aer (atmosferă)', ['doar apă', 'doar nisip', 'doar nori'], 'Pământul are uscat, apă și atmosferă.'],
     ['Ce formă de relief este cea mai înaltă?', 'munții', ['câmpiile', 'dealurile', 'lacurile'], 'Munții sunt cei mai înalți; dealurile sunt mai joase; câmpiile sunt plate.'],
@@ -186,21 +195,35 @@ export const G2M = {
 };
 
 /* ---------------- LIMBA ROMÂNĂ (clasa a II-a) ---------------- */
-const ORTO2 = [
-  ['Câinele ___ dezlegat din lanț.', 's-a', 'sa'], ['Mama și-a luat geanta ___.', 'sa', 's-a'], ['Ana ___ jucat în parc.', 's-a', 'sa'], ['Pisica își caută mâncarea ___.', 'sa', 's-a'],
-  ['Copiii ___ dus la școală.', 's-au', 'sau'], ['Vrei mere ___ pere?', 'sau', 's-au'], ['Frunzele ___ îngălbenit.', 's-au', 'sau'], ['Desenezi cu creionul ___ cu carioca?', 'sau', 's-au'],
-  ['Bunica ___ dat o carte.', 'i-a', 'ia'], ['___ umbrela, că plouă!', 'Ia', 'I-a'], ['Tata ___ cumpărat o minge.', 'i-a', 'ia'], ['Mihai ___ mereu creionul roșu.', 'ia', 'i-a'],
-  ['Părinții ___ dus la mare.', 'i-au', 'iau'], ['Eu ___ autobuzul la ora 7.', 'iau', 'i-au'], ['Colegii ___ adus flori.', 'i-au', 'iau'], ['Mâine ___ o carte de la bibliotecă.', 'iau', 'i-au'],
-  ['Ion ___ văzut pe Radu.', 'l-a', 'la'], ['Mergem ___ mare vara.', 'la', 'l-a'], ['Doamna ___ lăudat pe Andrei.', 'l-a', 'la'], ['Ne vedem ___ ora 5.', 'la', 'l-a'],
-  ['Învățătoarea ___ citit o poveste.', 'ne-a', 'nea'], ['___ Ion are o grădină mare.', 'Nea', 'Ne-a'], ['Bunicul ___ arătat stupii.', 'ne-a', 'nea'],
-  ['Am găsit ___ floare rară în grădină.', 'într-o', 'într o'], ['A scos o carte ___ cutie.', 'dintr-o', 'din tr-o'], ['Locuim ___ casă cu etaj.', 'într-o', 'intr-o'], ['A ieșit ___ pădure deasă.', 'dintr-o', 'dintro']
+const ORTO2A = [ // într-o / într-un
+  ['Am găsit ___ floare rară în grădină.', 'într-o', 'într o'], ['Locuim ___ casă cu etaj.', 'într-o', 'intr-o'], ['Pisica doarme ___ coș.', 'într-un', 'într un'],
+  ['Am pus creioanele ___ cutie.', 'într-o', 'întro'], ['Ne jucăm ___ parc frumos.', 'într-un', 'întrun'], ['Peștii înoată ___ lac.', 'într-un', 'într un'], ['A scris ___ zi o poezie.', 'într-o', 'în tr-o']
 ];
+const ORTO2B = [ // sa / s-a
+  ['Câinele ___ dezlegat din lanț.', 's-a', 'sa'], ['Mama și-a luat geanta ___.', 'sa', 's-a'], ['Ana ___ jucat în parc.', 's-a', 'sa'], ['Pisica își caută mâncarea ___.', 'sa', 's-a'],
+  ['Băiatul ___ trezit devreme.', 's-a', 'sa'], ['Fiecare elev are banca ___.', 'sa', 's-a'], ['Afară ___ întunecat.', 's-a', 'sa'], ['Ursul își apără vizuina ___.', 'sa', 's-a'],
+  ['Mingea ___ rostogolit sub masă.', 's-a', 'sa'], ['Bunica și-a pus rochia ___ nouă.', 'sa', 's-a']
+];
+const ORTO2C = [ // sau / s-au, dintr-o / dintr-un
+  ['Copiii ___ dus la școală.', 's-au', 'sau'], ['Vrei mere ___ pere?', 'sau', 's-au'], ['Frunzele ___ îngălbenit.', 's-au', 'sau'], ['Desenezi cu creionul ___ cu carioca?', 'sau', 's-au'],
+  ['Păsările ___ întors primăvara.', 's-au', 'sau'], ['Mergem la mare ___ la munte?', 'sau', 's-au'],
+  ['A scos o carte ___ cutie.', 'dintr-o', 'din tr-o'], ['A ieșit ___ pădure deasă.', 'dintr-o', 'dintro'], ['A băut apă ___ pahar.', 'dintr-un', 'dintrun'], ['A sărit ___ copac.', 'dintr-un', 'din trun']
+];
+const ORTO_RULE = { 's-a': '„s-a” = el s-a/ea s-a (face ceva): „s-a dezlegat”.', sa: '„sa” = a lui/a ei: „geanta sa”.', 's-au': '„s-au” = ei s-au (fac ceva): „s-au dus”.', sau: '„sau” = ori: „mere sau pere”.', 'într-o': '„într-o” și „într-un” se scriu cu cratimă.', 'într-un': '„într-o” și „într-un” se scriu cu cratimă.', 'dintr-o': '„dintr-o” și „dintr-un” se scriu cu cratimă.', 'dintr-un': '„dintr-o” și „dintr-un” se scriu cu cratimă.' };
+function ortoFrom(bank) {
+  const [sent, a, w] = pick(bank);
+  return { text: 'Alege forma corectă:', expr: sent, ans: a, opts: [a, w].sort(() => Math.random() - 0.5), steps: [ORTO_RULE[a] || 'Gândește-te la înțeles.', `Corect: ${sent.replace('___', a)}`], why: { [w]: ORTO_RULE[a] || 'Citește încă o dată propoziția.' } };
+}
+// cuvinte cu â și î: î la început și la sfârșit de cuvânt, â în interior
+
 export const G2R = {
-  orto2() {
-    const [s, a, w] = pick(ORTO2), shown = s.replace('___', '___');
-    const rule = { 's-a': '„s-a” = el s-a/ea s-a (verb): „s-a dezlegat”.', sa: '„sa” = a lui/a ei: „geanta sa”.', 's-au': '„s-au” = ei s-au (verb): „s-au dus”.', sau: '„sau” = ori: „mere sau pere”.', 'i-a': '„i-a” = lui i-a dat.', ia: '„ia” = el ia / ia tu!', 'i-au': '„i-au” = lui i-au dat.', iau: '„iau” = eu iau.', 'l-a': '„l-a” = pe el l-a văzut.', la: '„la” = unde? la mare.', 'ne-a': '„ne-a” = nouă ne-a dat.', nea: '„nea” = nenea.', 'într-o': '„într-o” se scrie cu cratimă.', 'dintr-o': '„dintr-o” se scrie cu cratimă.' };
-    const cap = (x) => (s.startsWith('___') ? x.charAt(0).toUpperCase() + x.slice(1) : x);
-    return { text: 'Alege forma corectă:', expr: shown, ans: cap(a), opts: [cap(a), cap(w)].sort(() => Math.random() - 0.5), steps: [rule[a.toLowerCase()] || rule[a] || 'Gândește-te la înțeles.', `Corect: ${s.replace('___', cap(a))}`], why: { [cap(w)]: rule[w.toLowerCase()] || 'Citește încă o dată propoziția și gândește-te la înțeles.' } };
+  orto2a: () => ortoFrom(ORTO2A),
+  orto2b: () => ortoFrom(ORTO2B),
+  orto2c: () => ortoFrom(ORTO2C),
+  aiI() {
+    const W = [['c_ine', 'câine'], ['_nger', 'înger'], ['p_ine', 'pâine'], ['m_na', 'mâna'], ['r_u', 'râu'], ['_nalt', 'înalt'], ['g_nd', 'gând'], ['_ncet', 'încet'], ['st_nga', 'stânga'], ['ur_t', 'urât'], ['cobor_', 'coborî'], ['_nvăț', 'învăț']];
+    const [w, ans] = pick(W), letter = ans[w.indexOf('_')];
+    return { text: `Ce literă lipsește: „${w}”?`, ans: letter, opts: ['â', 'î'], steps: ['„î” se scrie la începutul și la sfârșitul cuvântului; „â” se scrie în interiorul cuvântului.', `Corect: ${ans}`] };
   },
   punct2b() {
     return fromBank([
