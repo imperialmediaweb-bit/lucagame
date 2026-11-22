@@ -1,0 +1,246 @@
+// Clasa a II-a după programa OMEN 3418/2013 (Matematică și explorarea mediului + Comunicare în limba română),
+// în ordinea din școală: recapitulare 0-100, numere 0-1000, adunări fără/cu trecere, înmulțirea ca adunare repetată,
+// tabla, împărțirea, jumătate/sfert, măsuri, figuri și corpuri, explorarea mediului; ortograme, punctuație, silabe.
+// Tot aici: adunările până la 100 (clasa I, nivelul Expert).
+import { rnd, pick, shuffle, opts, textOpts } from './util.js';
+
+const U = ['zero', 'unu', 'doi', 'trei', 'patru', 'cinci', 'șase', 'șapte', 'opt', 'nouă'];
+const TEEN = ['zece', 'unsprezece', 'doisprezece', 'treisprezece', 'paisprezece', 'cincisprezece', 'șaisprezece', 'șaptesprezece', 'optsprezece', 'nouăsprezece'];
+const TENS = ['', '', 'douăzeci', 'treizeci', 'patruzeci', 'cincizeci', 'șaizeci', 'șaptezeci', 'optzeci', 'nouăzeci'];
+const HUND = ['', 'o sută', 'două sute', 'trei sute', 'patru sute', 'cinci sute', 'șase sute', 'șapte sute', 'opt sute', 'nouă sute'];
+export function inCuvinte(n) {
+  if (n === 0) return 'zero';
+  const s = Math.floor(n / 100), r = n % 100, z = Math.floor(r / 10), u = r % 10, parts = [];
+  if (s) parts.push(HUND[s]);
+  if (r) parts.push(r < 10 ? U[r] : r < 20 ? TEEN[r - 10] : TENS[z] + (u ? ' și ' + U[u] : ''));
+  return parts.join(' ');
+}
+const fromBank = (bank) => { const [q, a, w, why] = pick(bank); return { text: q, ans: a, opts: textOpts(a, shuffle([...w]).slice(0, 3)), steps: [why] }; };
+const noCarry = (a, b) => String(a).split('').reverse().every((d, i) => +d + +(String(b).split('').reverse()[i] || 0) < 10);
+const noBorrow = (a, b) => String(a).split('').reverse().every((d, i) => +d >= +(String(b).split('').reverse()[i] || 0));
+
+/* ---------------- MATEMATICĂ ---------------- */
+export const G2B = {
+  // recapitulare 0-100: comparare, vecini, pare/impare
+  rec100() {
+    const t = rnd(0, 2);
+    if (t === 0) { const a = rnd(10, 99); let b = rnd(10, 99); while (b === a) b = rnd(10, 99); const ans = a < b ? '<' : '>'; return { text: 'Ce semn pui?', expr: `${a} ___ ${b}`, ans, opts: ['<', '>', '='], steps: ['Compari întâi zecile, apoi unitățile.', `${a} ${ans} ${b}`] }; }
+    if (t === 1) { const n = rnd(11, 98), prev = Math.random() < 0.5, ans = prev ? n - 1 : n + 1; return { text: `Care este vecinul ${prev ? 'dinainte' : 'de după'} al numărului ${n}?`, ans, opts: opts(ans, [prev ? n + 1 : n - 1, n + (prev ? -10 : 10)]), steps: [prev ? 'Vecinul dinainte e cu 1 mai mic.' : 'Vecinul de după e cu 1 mai mare.'] }; }
+    const n = rnd(10, 99), ans = n % 2 ? 'impar' : 'par'; return { text: `Numărul ${n} este par sau impar?`, ans, opts: ['par', 'impar'], steps: ['Te uiți la ultima cifră: 0, 2, 4, 6, 8 → par; 1, 3, 5, 7, 9 → impar.', `${n} se termină în ${n % 10}, deci e ${ans}.`] };
+  },
+  // adunări și scăderi 0-100 fără trecere peste ordin
+  adun100f() {
+    let a, b; if (Math.random() < 0.5) { do { a = rnd(10, 88); b = rnd(1, 99 - a); } while (!noCarry(a, b)); const r = a + b; return { text: 'Calculează:', expr: `${a} + ${b} =`, ans: r, opts: opts(r, [r + 10, r - 1, r + 1]), steps: ['Aduni unitățile cu unitățile, zecile cu zecile.', `${a} + ${b} = ${r}`] }; }
+    do { a = rnd(20, 99); b = rnd(1, a - 1); } while (!noBorrow(a, b)); const r = a - b; return { text: 'Calculează:', expr: `${a} − ${b} =`, ans: r, opts: opts(r, [r + 10, r - 1, r + 1]), steps: ['Scazi unitățile din unități, zecile din zeci.', `${a} − ${b} = ${r}`] };
+  },
+  // adunări și scăderi 0-100 cu trecere peste ordin
+  adun100t() {
+    let a, b; if (Math.random() < 0.5) { do { a = rnd(15, 85); b = rnd(5, 99 - a); } while (noCarry(a, b)); const r = a + b; return { text: 'Calculează:', expr: `${a} + ${b} =`, ans: r, opts: opts(r, [r - 10, r + 10, r - 1]), steps: [`Unitățile: ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}: scrii ${((a % 10) + (b % 10)) % 10} și ții minte 1.`, `${a} + ${b} = ${r}`] }; }
+    do { a = rnd(30, 99); b = rnd(5, a - 5); } while (noBorrow(a, b)); const r = a - b; return { text: 'Calculează:', expr: `${a} − ${b} =`, ans: r, opts: opts(r, [r + 10, r - 10, r + 1]), steps: [`${a % 10} − ${b % 10} nu se poate: împrumuți o zece și faci ${10 + (a % 10)} − ${b % 10}.`, `${a} − ${b} = ${r}`] };
+  },
+  // numerele 0-1000: formare, cifra sutelor, comparare, scrise în cuvinte, ordonare
+  numere1000() {
+    const t = rnd(0, 4), n = rnd(101, 999), [s, z, u] = String(n).split('').map(Number);
+    if (t === 0) return { text: `Ce număr are ${s} sute, ${z} zeci și ${u} unități?`, ans: n, opts: opts(n, [s * 100 + u * 10 + z, u * 100 + z * 10 + s, n + 100]), steps: [`${s} sute = ${s * 100}, ${z} zeci = ${z * 10}, ${u} unități = ${u}`, `${s * 100} + ${z * 10} + ${u} = ${n}`] };
+    if (t === 1) { const names = ['sutelor', 'zecilor', 'unităților'], k = rnd(0, 2), d = [s, z, u][k]; return { text: `Care este cifra ${names[k]} în numărul ${n}?`, ans: d, opts: opts(d, [s, z, u].filter((x) => x !== d).concat([d + 1 <= 9 ? d + 1 : d - 1])), steps: ['De la stânga: sute, zeci, unități.', `În ${n}, cifra ${names[k]} este ${d}.`] }; }
+    if (t === 2) { let b = rnd(101, 999); while (b === n) b = rnd(101, 999); const ans = n < b ? '<' : '>'; return { text: 'Ce semn pui?', expr: `${n} ___ ${b}`, ans, opts: ['<', '>', '='], steps: ['Compari întâi sutele, apoi zecile, apoi unitățile.', `${n} ${ans} ${b}`] }; }
+    if (t === 3) return { text: 'Cum se scrie cu cifre?', expr: inCuvinte(n), ans: n, opts: opts(n, [s * 100 + u * 10 + z, n + 10, n - 100 > 0 ? n - 100 : n + 200]), steps: [`„${inCuvinte(n)}” = ${s} sute, ${z} zeci, ${u} unități = ${n}`] };
+    const xs = [n, rnd(101, 999), rnd(101, 999)].filter((v, i, a) => a.indexOf(v) === i); while (xs.length < 3) xs.push(rnd(101, 999));
+    const asc = [...xs].sort((a, b) => a - b).join(', '), [p, q, r] = xs;
+    const perms = [[p, q, r], [p, r, q], [q, p, r], [q, r, p], [r, p, q], [r, q, p]].map((x) => x.join(', ')).filter((x, k, all) => x !== asc && all.indexOf(x) === k);
+    return { text: 'Care e ordinea crescătoare (de la mic la mare)?', ans: asc, opts: textOpts(asc, shuffle(perms).slice(0, 3)), steps: ['Compari sutele, apoi zecile, apoi unitățile.', asc] };
+  },
+  rotunjire2() {
+    const sute = Math.random() < 0.4, n = sute ? rnd(101, 949) : rnd(11, 989), base = sute ? 100 : 10, r = Math.round(n / base) * base, low = Math.floor(n / base) * base;
+    return { text: `Rotunjește numărul ${n} la ${sute ? 'sute' : 'zeci'}.`, ans: r, opts: opts(r, [r === low ? low + base : low, n, r + base]), steps: [`Se află între ${low} și ${low + base}.`, `Cifra ${sute ? 'zecilor' : 'unităților'} e ${sute ? Math.floor(n / 10) % 10 : n % 10}: dacă e 5 sau mai mare urci, altfel cobori.`, `${n} → ${r}`] };
+  },
+  // adunări și scăderi 0-1000 fără trecere peste ordin
+  adun1000f() {
+    let a, b; if (Math.random() < 0.5) { do { a = rnd(100, 800); b = rnd(10, 999 - a); } while (!noCarry(a, b)); const r = a + b; return { text: 'Calculează:', expr: `${a} + ${b} =`, ans: r, opts: opts(r, [r + 100, r + 10, r - 1]), steps: ['Aduni unități cu unități, zeci cu zeci, sute cu sute.', `${a} + ${b} = ${r}`] }; }
+    do { a = rnd(200, 999); b = rnd(10, a - 50); } while (!noBorrow(a, b)); const r = a - b; return { text: 'Calculează:', expr: `${a} − ${b} =`, ans: r, opts: opts(r, [r + 100, r - 10, r + 1]), steps: ['Scazi unități din unități, zeci din zeci, sute din sute.', `${a} − ${b} = ${r}`] };
+  },
+  // termenul necunoscut (balanța): doar adunare și scădere
+  necun2b() {
+    const t = rnd(0, 2);
+    if (t === 0) { const x = rnd(5, 60), p = rnd(5, 39), q = x + p; return { text: 'Află numărul care lipsește:', expr: `___ + ${p} = ${q}`, ans: x, opts: opts(x, [q + p, x + 1, x + 10]), steps: ['Termenul necunoscut = suma − termenul cunoscut.', `${q} − ${p} = ${x}`], why: { [q + p]: 'Ai adunat. Termenul care lipsește se află prin scădere: suma − termenul cunoscut.' } }; }
+    if (t === 1) { const x = rnd(20, 99), p = rnd(5, x - 3), q = x - p; return { text: 'Află numărul care lipsește:', expr: `___ − ${p} = ${q}`, ans: x, opts: opts(x, [q - p > 0 ? q - p : x + 5, x + 10, x - 1]), steps: ['Descăzutul = diferența + scăzătorul.', `${q} + ${p} = ${x}`] }; }
+    const a = rnd(30, 99), x = rnd(5, a - 5), q = a - x; return { text: 'Află numărul care lipsește:', expr: `${a} − ___ = ${q}`, ans: x, opts: opts(x, [a + q, x + 10, x + 1]), steps: ['Scăzătorul = descăzutul − diferența.', `${a} − ${q} = ${x}`] };
+  },
+  // înmulțirea ca adunare repetată
+  inmRep() {
+    const b = rnd(2, 5); let a = rnd(2, 10); while (a === b) a = rnd(2, 10); const sum = Array(b).fill(a).join(' + '), r = a * b;
+    if (Math.random() < 0.5) return { text: 'Scrie ca înmulțire:', expr: `${sum} =`, ans: `${b} × ${a}`, opts: textOpts(`${b} × ${a}`, [`${a} + ${b}`, `${a} × ${a}`, `${b} + ${b}`]), steps: [`Numărul ${a} se adună de ${b} ori: ${b} × ${a}.`] };
+    return { text: 'Cât fac?', expr: `${sum} =`, ans: r, opts: opts(r, [a + b, r + a, r - a]), steps: [`${a} adunat de ${b} ori = ${b} × ${a} = ${r}`] };
+  },
+  // tabla ușoară: 2, 3, 4, 5, 10
+  tablaUsor() {
+    const a = pick([2, 3, 4, 5, 10]), b = rnd(1, 10), r = a * b;
+    return { text: 'Tabla înmulțirii:', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [r + a, r - a > 0 ? r - a : r + 2 * a, a + b]), steps: [`Numeri din ${a} în ${a} de ${b} ori: ${Array.from({ length: b }, (_, i) => a * (i + 1)).join(', ')}.`] };
+  },
+  // împărțirea prin împărțire în grupe egale / scădere repetată
+  impRep() {
+    const k = rnd(2, 5), q = rnd(2, 10), n = k * q, obj = pick(['bomboane', 'mere', 'creioane', 'baloane', 'cărți']);
+    return { text: `${n} ${obj} se împart în mod egal la ${k} copii. Câte primește fiecare?`, ans: q, opts: opts(q, [n - k, k, q + 1]), steps: [`Împărțim ${n} în ${k} grupe egale: ${n} : ${k} = ${q}.`, `Verificăm: ${k} × ${q} = ${n} ✔`] };
+  },
+  // jumătate, sfert, dublu, triplu
+  jumSfert() {
+    const t = rnd(0, 3);
+    if (t === 0) { const q = rnd(2, 50), n = 2 * q; return { text: `Cât este jumătate din ${n}?`, ans: q, opts: opts(q, [n * 2, q + 1, n - 2]), steps: ['Jumătatea = împarți la 2.', `${n} : 2 = ${q}`] }; }
+    if (t === 1) { const q = rnd(2, 25), n = 4 * q; return { text: `Cât este un sfert din ${n}?`, ans: q, opts: opts(q, [n / 2, q * 2, q + 4]), steps: ['Sfertul = împarți la 4 (4 părți egale, iei una).', `${n} : 4 = ${q}`] }; }
+    if (t === 2) { const n = rnd(3, 50), r = 2 * n; return { text: `Cât este dublul lui ${n}?`, ans: r, opts: opts(r, [n + 2, n, r + 2]), steps: ['Dublul = de 2 ori mai mult.', `${n} × 2 = ${r}`] }; }
+    const parts = pick([2, 4]), name = parts === 2 ? 'jumătate (o doime)' : 'un sfert (o pătrime)';
+    return { text: `O pizza e tăiată în ${parts} bucăți egale. Cât reprezintă o bucată?`, ans: name, opts: textOpts(name, [parts === 2 ? 'un sfert (o pătrime)' : 'jumătate (o doime)', 'toată pizza', 'o treime']), steps: [parts === 2 ? '2 bucăți egale → fiecare e o jumătate: 1/2.' : '4 bucăți egale → fiecare e un sfert: 1/4.', 'Știai că 2 sferturi fac o jumătate? 2/4 = 1/2.'] };
+  },
+  // ordinea operațiilor, simplu
+  ordine2b() {
+    if (Math.random() < 0.5) { const a = rnd(2, 9), b = rnd(2, 5), c = rnd(1, 30), r = a * b + c; return { text: 'Calculează (întâi înmulțirea!):', expr: `${a} × ${b} + ${c} =`, ans: r, opts: opts(r, [a * (b + c), r + 1, r - 1]), steps: [`Înmulțirea se face prima: ${a} × ${b} = ${a * b}.`, `${a * b} + ${c} = ${r}`], why: { [a * (b + c)]: `Ai adunat întâi ${b} + ${c}. Înmulțirea se face înaintea adunării.` } }; }
+    const b = rnd(2, 5), q = rnd(2, 9), m = b * q, a = rnd(m + 1, m + 40), r = a - m; return { text: 'Calculează (întâi înmulțirea!):', expr: `${a} − ${b} × ${q} =`, ans: r, opts: opts(r, [(a - b) * q, r + 1, r + q]), steps: [`Întâi: ${b} × ${q} = ${m}.`, `${a} − ${m} = ${r}`], why: { [(a - b) * q]: `Ai scăzut întâi. Înmulțirea se face înaintea scăderii.` } };
+  },
+  // probleme cu două operații
+  prob2() {
+    const n1 = pick(['Ana', 'Matei', 'Ioana', 'Radu', 'Elena']), t = rnd(0, 2);
+    if (t === 0) { const a = rnd(20, 60), b = rnd(5, 30), c = rnd(5, a + b - 5), r = a + b - c; return { text: `${n1} avea ${a} de timbre. A mai primit ${b}, apoi i-a dat fratelui ${c}. Câte timbre are acum?`, ans: r, opts: opts(r, [a + b + c, a + b, a - b - c > 0 ? a - b - c : r + 10]), steps: [`Întâi a primit: ${a} + ${b} = ${a + b}`, `Apoi a dat: ${a + b} − ${c} = ${r}`] }; }
+    if (t === 1) { const a = rnd(10, 40), d = rnd(3, 15), b = a + d, r = a + b; return { text: `Într-un coș sunt ${a} mere, iar în altul cu ${d} mai multe. Câte mere sunt în ambele coșuri?`, ans: r, opts: opts(r, [b, a + a, r + 10]), steps: [`Al doilea coș: ${a} + ${d} = ${b}`, `Împreună: ${a} + ${b} = ${r}`], why: { [b]: `${b} sunt doar merele din al doilea coș. Mai adună și primul coș: ${a} + ${b}.`, [a + a]: `Ai adunat primul coș de două ori. Al doilea are cu ${d} mai multe.` } }; }
+    const k = rnd(2, 5), p = rnd(2, 9), c = rnd(1, 10), r = k * p + c; return { text: `${n1} cumpără ${k} caiete a câte ${p} lei și un creion de ${c} lei. Cât plătește în total?`, ans: r, opts: opts(r, [k * p, k + p + c, (k + 1) * p]), steps: [`Caietele: ${k} × ${p} = ${k * p} lei`, `Plus creionul: ${k * p} + ${c} = ${r} lei`] };
+  },
+  // figuri plane și corpuri
+  figuri2() {
+    return fromBank([
+      ['Ce formă are o minge?', 'sferă', ['cub', 'cilindru', 'con'], 'Mingea e rotundă din toate părțile: sferă.'],
+      ['Ce formă are un zar?', 'cub', ['sferă', 'con', 'cilindru'], 'Zarul are 6 fețe pătrate egale: cub.'],
+      ['Ce formă are o cutie de conserve?', 'cilindru', ['cub', 'sferă', 'con'], 'Conserva are două baze rotunde: cilindru.'],
+      ['Ce formă are un cornet de înghețată?', 'con', ['cilindru', 'cub', 'sferă'], 'Cornetul are vârf și bază rotundă: con.'],
+      ['Ce formă are o cutie de pantofi?', 'cuboid', ['cub', 'sferă', 'con'], 'Cutia are fețe dreptunghiulare: cuboid (paralelipiped).'],
+      ['Câte laturi are un triunghi?', '3', ['4', '5', '0'], 'Tri = trei: 3 laturi.'],
+      ['Câte laturi are un pătrat?', '4', ['3', '5', '6'], 'Pătratul are 4 laturi egale.'],
+      ['Ce figură are 4 laturi, două câte două egale?', 'dreptunghiul', ['triunghiul', 'cercul', 'semicercul'], 'Dreptunghiul are laturile opuse egale.'],
+      ['Ce figură nu are nicio latură dreaptă?', 'cercul', ['pătratul', 'triunghiul', 'dreptunghiul'], 'Cercul e o linie curbă închisă.'],
+      ['Câte fețe are un cub?', '6', ['4', '8', '12'], 'Cubul are 6 fețe pătrate.'],
+      ['Ce împarte o figură în două părți la fel, ca în oglindă?', 'axa de simetrie', ['latura', 'colțul', 'cercul'], 'Axa de simetrie: dacă pliezi figura pe ea, părțile se suprapun.'],
+      ['Jumătate de cerc se numește...', 'semicerc', ['triunghi', 'pătrat', 'cub'], 'Semi = jumătate: semicerc.']
+    ]);
+  },
+  // măsurători clasa a II-a
+  masuri2b() {
+    return fromBank([
+      ['1 metru = ? centimetri', '100', ['10', '1000', '50'], '1 m = 100 cm.'], ['1 metru = ? milimetri', '1000', ['100', '10', '500'], '1 m = 1000 mm.'],
+      ['1 litru = ? mililitri', '1000', ['100', '10', '500'], '1 l = 1000 ml.'], ['1 kilogram = ? grame', '1000', ['100', '10', '500'], '1 kg = 1000 g.'],
+      ['O oră are câte minute?', '60', ['100', '30', '24'], '1 oră = 60 de minute.'], ['Jumătate de oră înseamnă câte minute?', '30', ['15', '50', '60'], 'Jumătate din 60 = 30 de minute.'],
+      ['Un sfert de oră înseamnă câte minute?', '15', ['25', '30', '4'], 'Un sfert din 60 = 15 minute.'], ['Câte zile are o săptămână?', '7', ['5', '10', '30'], 'Săptămâna are 7 zile.'],
+      ['Dacă azi e marți, ce zi a fost ieri?', 'luni', ['miercuri', 'duminică', 'joi'], 'Ieri = ziua dinainte.'], ['Dacă azi e joi, ce zi va fi poimâine?', 'sâmbătă', ['vineri', 'duminică', 'miercuri'], 'Poimâine = peste 2 zile: vineri, sâmbătă.'],
+      ['Câte luni are un an?', '12', ['10', '7', '52'], 'Anul are 12 luni.'], ['În ce anotimp este luna ianuarie?', 'iarna', ['vara', 'toamna', 'primăvara'], 'Iarna: decembrie, ianuarie, februarie.'],
+      ['În ce anotimp este luna iulie?', 'vara', ['iarna', 'toamna', 'primăvara'], 'Vara: iunie, iulie, august.'], ['În ce anotimp este luna octombrie?', 'toamna', ['vara', 'iarna', 'primăvara'], 'Toamna: septembrie, octombrie, noiembrie.'],
+      ['1 leu = ? bani', '100', ['10', '1000', '50'], '1 leu = 100 de bani.'], ['Cu ce măsurăm masa unui pepene?', 'cu cântarul', ['cu rigla', 'cu ceasul', 'cu termometrul'], 'Masa se măsoară cu cântarul sau balanța.'],
+      ['Cu ce măsoară croitoreasa talia?', 'cu panglica de croitorie', ['cu cântarul', 'cu ceasul', 'cu litrul'], 'Panglica de croitorie se îndoaie pe corp.'], ['Ce măsurăm în litri?', 'apa dintr-o sticlă', ['lungimea băncii', 'masa unui măr', 'ora'], 'Lichidele se măsoară în litri.']
+    ]);
+  }
+};
+
+/* ---------------- EXPLORAREA MEDIULUI (clasa a II-a) ---------------- */
+export const G2M = {
+  m2corp: () => fromBank([
+    ['Ce organ pompează sângele?', 'inima', ['plămânii', 'stomacul', 'creierul'], 'Inima pompează sângele în tot corpul.'],
+    ['Cu ce respirăm?', 'cu plămânii', ['cu stomacul', 'cu inima', 'cu oasele'], 'Plămânii iau aerul.'],
+    ['Unde se digeră mâncarea?', 'în stomac', ['în plămâni', 'în inimă', 'în creier'], 'Stomacul digeră mâncarea.'],
+    ['Ce organ ne ajută să gândim?', 'creierul', ['stomacul', 'inima', 'genunchiul'], 'Creierul conduce tot corpul.'],
+    ['Ce ne ține corpul drept, ca un schelet?', 'oasele', ['mușchii feței', 'părul', 'unghiile'], 'Oasele formează scheletul.'],
+    ['Cum ne ferim de gripă?', 'ne spălăm des pe mâini și ne acoperim gura când strănutăm', ['împărțim paharul cu cel bolnav', 'nu ne spălăm', 'ieșim fără haine iarna'], 'Gripa e produsă de un virus; igiena ne apără.'],
+    ['Ce produce gripa?', 'un virus', ['o bomboană', 'soarele', 'un măr'], 'Virușii sunt foarte mici și ne pot îmbolnăvi.'],
+    ['Ce e sănătos să mâncăm zilnic?', 'fructe și legume', ['doar dulciuri', 'doar chipsuri', 'nimic'], 'O dietă sănătoasă are fructe și legume.'],
+    ['Ce ne ajută să fim sănătoși?', 'mișcarea și somnul', ['statul toată ziua la televizor', 'dulciurile', 'nespălatul'], 'Mișcare, odihnă, igienă.']
+  ]),
+  m2viata: () => fromBank([
+    ['De ce au nevoie toate viețuitoarele?', 'aer, apă și hrană', ['doar jucării', 'doar lumină de lampă', 'doar zăpadă'], 'Nevoile de bază: aer, apă, hrană.'],
+    ['Unde trăiește ursul polar?', 'la Polul Nord', ['în deșert', 'în baltă', 'în Delta Dunării'], 'Ursul polar trăiește în ținuturile înghețate de la Polul Nord.'],
+    ['Unde trăiește pinguinul?', 'la Polul Sud', ['la Polul Nord', 'în pădure', 'în deșert'], 'Pinguinii trăiesc la Polul Sud.'],
+    ['Ce animal trăiește în deșert?', 'cămila', ['broasca', 'delfinul', 'ursul polar'], 'Cămila rezistă mult fără apă.'],
+    ['Ce animal trăiește în baltă?', 'broasca', ['cămila', 'pinguinul', 'leul'], 'Balta e casa broaștelor, a rațelor, a peștilor.'],
+    ['Ce pasăre întâlnim în Delta Dunării?', 'pelicanul', ['pinguinul', 'struțul', 'papagalul de junglă'], 'Delta Dunării e casa pelicanilor.'],
+    ['Ce animal trăiește în pădure?', 'căprioara', ['delfinul', 'cămila', 'pinguinul'], 'În pădure trăiesc căprioare, urși, vulpi.'],
+    ['Ce animal trăiește în Marea Neagră?', 'delfinul', ['ursul', 'cămila', 'vulpea'], 'În Marea Neagră trăiesc delfini și pești.'],
+    ['Care sunt părțile unei plante?', 'rădăcina, tulpina, frunzele, floarea', ['solzii și penele', 'aripile și ciocul', 'blana și ghearele'], 'Planta are rădăcină, tulpină, frunze, flori, fructe cu semințe.'],
+    ['Ce parte a plantei ia apa din pământ?', 'rădăcina', ['floarea', 'frunza', 'fructul'], 'Rădăcina absoarbe apa din sol.'],
+    ['Ce cresc toate viețuitoarele?', 'cresc și se înmulțesc', ['nu se schimbă', 'se fac pietre', 'dispar'], 'Viețuitoarele cresc și se înmulțesc.']
+  ]),
+  m2pamant: () => fromBank([
+    ['Din ce e alcătuit Pământul?', 'uscat, apă și aer (atmosferă)', ['doar apă', 'doar nisip', 'doar nori'], 'Pământul are uscat, apă și atmosferă.'],
+    ['Ce formă de relief este cea mai înaltă?', 'munții', ['câmpiile', 'dealurile', 'lacurile'], 'Munții sunt cei mai înalți; dealurile sunt mai joase; câmpiile sunt plate.'],
+    ['Ce formă de relief este netedă, plată?', 'câmpia', ['muntele', 'dealul', 'vulcanul'], 'Câmpia e întinsă și netedă.'],
+    ['De ce avem zi și noapte?', 'Pământul se rotește', ['Soarele se stinge noaptea', 'Luna acoperă Pământul', 'norii ascund Soarele'], 'Pământul se învârte: partea spre Soare are zi.'],
+    ['Ce este Soarele?', 'o stea', ['o planetă', 'un satelit', 'un nor'], 'Soarele e steaua care ne dă lumină și căldură.'],
+    ['A câta planetă de la Soare este Pământul?', 'a treia', ['prima', 'a cincea', 'a opta'], 'Mercur, Venus, Pământul: a treia.'],
+    ['Care este cea mai mare planetă?', 'Jupiter', ['Pământul', 'Marte', 'Mercur'], 'Jupiter e uriaș.'],
+    ['Ce se învârte în jurul Pământului?', 'Luna', ['Soarele', 'Marte', 'Jupiter'], 'Luna este satelitul Pământului.'],
+    ['Care planetă e numită „planeta roșie”?', 'Marte', ['Venus', 'Saturn', 'Pământul'], 'Marte are culoare roșiatică.']
+  ]),
+  m2fizica: () => fromBank([
+    ['Ce atrage magnetul?', 'obiectele de fier', ['lemnul', 'hârtia', 'plasticul'], 'Magnetul atrage fierul.'],
+    ['Câți poli are un magnet?', '2: Nord și Sud', ['unul singur', '5', 'niciunul'], 'Magnetul are polul Nord (N) și polul Sud (S).'],
+    ['Ce se întâmplă când apropii doi poli la fel (N și N)?', 'se resping', ['se atrag', 'se topesc', 'nu se întâmplă nimic'], 'Polii la fel se resping, polii diferiți se atrag.'],
+    ['Ce se întâmplă când apropii polul N de polul S?', 'se atrag', ['se resping', 'se rup', 'se încălzesc'], 'Polii diferiți se atrag.'],
+    ['Ce material conduce curentul electric?', 'cuprul (metalul)', ['lemnul', 'plasticul', 'cauciucul'], 'Metalele conduc electricitatea.'],
+    ['De ce firele electrice sunt îmbrăcate în plastic?', 'plasticul nu conduce curentul și ne apără', ['ca să fie colorate', 'ca să fie grele', 'nu au plastic'], 'Plasticul e izolator.'],
+    ['Ce aparat funcționează cu electricitate?', 'frigiderul', ['bicicleta', 'creionul', 'mingea'], 'Frigiderul are nevoie de curent.'],
+    ['Ce trebuie să NU facem cu priza?', 'să băgăm degetele sau obiecte în ea', ['să o lăsăm în pace', 'să o folosească un adult', 'să o ocolim'], 'Curentul electric e periculos!']
+  ])
+};
+
+/* ---------------- LIMBA ROMÂNĂ (clasa a II-a) ---------------- */
+const ORTO2 = [
+  ['Câinele ___ dezlegat din lanț.', 's-a', 'sa'], ['Mama și-a luat geanta ___.', 'sa', 's-a'], ['Ana ___ jucat în parc.', 's-a', 'sa'], ['Pisica își caută mâncarea ___.', 'sa', 's-a'],
+  ['Copiii ___ dus la școală.', 's-au', 'sau'], ['Vrei mere ___ pere?', 'sau', 's-au'], ['Frunzele ___ îngălbenit.', 's-au', 'sau'], ['Desenezi cu creionul ___ cu carioca?', 'sau', 's-au'],
+  ['Bunica ___ dat o carte.', 'i-a', 'ia'], ['___ umbrela, că plouă!', 'Ia', 'I-a'], ['Tata ___ cumpărat o minge.', 'i-a', 'ia'], ['Mihai ___ mereu creionul roșu.', 'ia', 'i-a'],
+  ['Părinții ___ dus la mare.', 'i-au', 'iau'], ['Eu ___ autobuzul la ora 7.', 'iau', 'i-au'], ['Colegii ___ adus flori.', 'i-au', 'iau'], ['Mâine ___ o carte de la bibliotecă.', 'iau', 'i-au'],
+  ['Ion ___ văzut pe Radu.', 'l-a', 'la'], ['Mergem ___ mare vara.', 'la', 'l-a'], ['Doamna ___ lăudat pe Andrei.', 'l-a', 'la'], ['Ne vedem ___ ora 5.', 'la', 'l-a'],
+  ['Învățătoarea ___ citit o poveste.', 'ne-a', 'nea'], ['___ Ion are o grădină mare.', 'Nea', 'Ne-a'], ['Bunicul ___ arătat stupii.', 'ne-a', 'nea'],
+  ['Am găsit ___ floare rară în grădină.', 'într-o', 'într o'], ['A scos o carte ___ cutie.', 'dintr-o', 'din tr-o'], ['Locuim ___ casă cu etaj.', 'într-o', 'intr-o'], ['A ieșit ___ pădure deasă.', 'dintr-o', 'dintro']
+];
+export const G2R = {
+  orto2() {
+    const [s, a, w] = pick(ORTO2), shown = s.replace('___', '___');
+    const rule = { 's-a': '„s-a” = el s-a/ea s-a (verb): „s-a dezlegat”.', sa: '„sa” = a lui/a ei: „geanta sa”.', 's-au': '„s-au” = ei s-au (verb): „s-au dus”.', sau: '„sau” = ori: „mere sau pere”.', 'i-a': '„i-a” = lui i-a dat.', ia: '„ia” = el ia / ia tu!', 'i-au': '„i-au” = lui i-au dat.', iau: '„iau” = eu iau.', 'l-a': '„l-a” = pe el l-a văzut.', la: '„la” = unde? la mare.', 'ne-a': '„ne-a” = nouă ne-a dat.', nea: '„nea” = nenea.', 'într-o': '„într-o” se scrie cu cratimă.', 'dintr-o': '„dintr-o” se scrie cu cratimă.' };
+    const cap = (x) => (s.startsWith('___') ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+    return { text: 'Alege forma corectă:', expr: shown, ans: cap(a), opts: [cap(a), cap(w)].sort(() => Math.random() - 0.5), steps: [rule[a.toLowerCase()] || rule[a] || 'Gândește-te la înțeles.', `Corect: ${s.replace('___', cap(a))}`], why: { [cap(w)]: rule[w.toLowerCase()] || 'Citește încă o dată propoziția și gândește-te la înțeles.' } };
+  },
+  punct2b() {
+    return fromBank([
+      ['Ce semn pui în enumerare? „Am cumpărat mere___ pere și prune.”', 'virgula (,)', ['punctul (.)', 'semnul întrebării (?)', 'linia de dialog (—)'], 'Când enumerăm, despărțim cuvintele prin virgulă.'],
+      ['Ce semn pui înainte de vorbirea cuiva? „Mama a zis___”', 'două puncte (:)', ['virgula (,)', 'semnul exclamării (!)', 'punctul (.)'], 'Înainte de vorbirea personajului punem două puncte.'],
+      ['Cu ce începe replica unui personaj în dialog?', 'cu linia de dialog (—)', ['cu virgula', 'cu punctul', 'cu cratima'], 'Replica începe pe rând nou, cu linie de dialog.'],
+      ['Ce semn pui la sfârșit? „Ce frumos e afară___”', 'semnul exclamării (!)', ['virgula (,)', 'două puncte (:)', 'cratima (-)'], 'Când exprimăm bucurie, mirare: semnul exclamării.'],
+      ['Ce semn pui la sfârșit? „Unde ai pus ghiozdanul___”', 'semnul întrebării (?)', ['punctul (.)', 'virgula (,)', 'două puncte (:)'], 'La întrebare punem semnul întrebării.'],
+      ['Ce semn pui la sfârșit? „Azi plouă___”', 'punctul (.)', ['semnul întrebării (?)', 'virgula (,)', 'linia de dialog (—)'], 'Propoziția care spune ceva se încheie cu punct.']
+    ]);
+  },
+  vocCons() {
+    const words = ['casa', 'masa', 'pom', 'carte', 'floare', 'copil', 'școala', 'mere', 'lună', 'soare', 'pisică', 'banca'];
+    const V = 'aeiouăâî';
+    if (Math.random() < 0.5) { const w = pick(words), n = [...w].filter((c) => V.includes(c)).length; return { text: `Câte vocale are cuvântul „${w}”?`, ans: n, opts: opts(n, [n + 1, n > 1 ? n - 1 : n + 2, w.length - n]), steps: ['Vocalele sunt: a, ă, â, e, i, î, o, u.', `În „${w}”: ${[...w].filter((c) => V.includes(c)).join(', ')} → ${n}`] }; }
+    const v = pick([...'aeiouăî']), cs = shuffle([...'bcdfgmnprstv']).slice(0, 3);
+    return { text: 'Care literă este vocală?', ans: v, opts: textOpts(v, cs), steps: ['Vocalele: a, ă, â, e, i, î, o, u. Celelalte sunt consoane.'] };
+  },
+  silabe2() {
+    const W = [['ca-se-ta', ['cas-e-ta', 'c-ase-ta', 'case-ta']], ['mă-ră', ['măr-ă', 'm-ără', 'mă-r-ă']], ['pă-du-re', ['păd-u-re', 'pă-dur-e', 'pădu-re']], ['co-pa-cul', ['cop-a-cul', 'co-pac-ul', 'copa-cul']],
+      ['fe-reas-tră', ['fer-eas-tră', 'fe-rea-stră', 'fereas-tră']], ['bu-ni-ca', ['bun-i-ca', 'bu-nic-a', 'buni-ca']], ['flu-tu-re', ['flut-u-re', 'flu-tur-e', 'flutu-re']], ['ma-și-nă', ['maș-i-nă', 'mași-nă', 'm-a-și-nă']], ['gră-di-nă', ['grăd-i-nă', 'gră-din-ă', 'grădi-nă']], ['al-bi-nă', ['alb-i-nă', 'a-lbi-nă', 'albi-nă']]];
+    const [ans, wrong] = pick(W);
+    const n = ans.split('-').length;
+    if (Math.random() < 0.5) return { text: 'Care este despărțirea corectă în silabe?', ans, opts: textOpts(ans, wrong), steps: ['Bate din palme la fiecare silabă.', ans] };
+    return { text: `Câte silabe are cuvântul „${ans.replace(/-/g, '')}”?`, ans: n, opts: opts(n, [n + 1, n - 1 > 0 ? n - 1 : n + 2]), steps: ['Bate din palme la fiecare silabă.', `${ans} → ${n} silabe`] };
+  },
+  sinAnt2() {
+    const P = [['mare', 'uriaș', 'mic'], ['vesel', 'bucuros', 'trist'], ['repede', 'iute', 'încet'], ['cald', 'fierbinte', 'rece'], ['frumos', 'drăguț', 'urât'], ['sus', 'deasupra', 'jos'], ['a începe', 'a porni', 'a termina'], ['bun', 'cumsecade', 'rău'], ['lung', 'întins', 'scurt'], ['plin', 'încărcat', 'gol']];
+    const [w, sin, ant] = pick(P), askSin = Math.random() < 0.5, ans = askSin ? sin : ant, other = P.filter((x) => x[0] !== w).map((x) => x[askSin ? 1 : 2]);
+    return { text: askSin ? `Care cuvânt are ÎNȚELES ASEMĂNĂTOR cu „${w}”?` : `Care cuvânt are ÎNȚELES OPUS lui „${w}”?`, ans, opts: textOpts(ans, [askSin ? ant : sin, ...shuffle(other).slice(0, 2)]), steps: [askSin ? `${w} = ${sin} (sens asemănător)` : `${w} ≠ ${ant} (sens opus)`] };
+  },
+  majuscula() {
+    return fromBank([
+      ['Care cuvânt se scrie cu literă mare?', 'Dunărea', ['râul', 'apa', 'barca'], 'Numele de râuri se scriu cu literă mare.'],
+      ['Care cuvânt se scrie cu literă mare?', 'București', ['orașul', 'strada', 'casa'], 'Numele de orașe se scriu cu literă mare.'],
+      ['Care cuvânt se scrie cu literă mare?', 'Ana', ['fata', 'colega', 'sora'], 'Numele de persoane se scriu cu literă mare.'],
+      ['Care cuvânt se scrie cu literă mare?', 'Grivei', ['câinele', 'cățelul', 'lătratul'], 'Numele animalelor (Grivei, Miau) se scriu cu literă mare.'],
+      ['Cu ce literă începe orice propoziție?', 'cu literă mare', ['cu literă mică', 'cu cifră', 'cu punct'], 'Prima literă din propoziție este mare.'],
+      ['Care cuvânt se scrie cu literă mare?', 'România', ['țara', 'harta', 'drapelul'], 'Numele de țări se scriu cu literă mare.']
+    ]);
+  }
+};
+export const GRADE2B = { ...G2B, ...G2M, ...G2R };

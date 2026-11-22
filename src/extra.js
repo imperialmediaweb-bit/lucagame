@@ -1,5 +1,5 @@
 // Compunerea scrisă de copil (cu verificare automată), fișele de lucru de printat și „Unde am ajuns la școală”.
-import { S, save, G, GRADE_NAMES } from './state.js';
+import { S, save, G, GRADE_NAMES, levelNow, LEVELS } from './state.js';
 import { SFX } from './audio.js';
 import { showPanel, toast, confetti, refreshHud } from './ui.js';
 import { GEN, MISSIONS, TYPE_NAMES, SUBJECT_NAMES } from './content/missions.js';
@@ -113,4 +113,6 @@ export function openChapters() {
   $('cSave').onclick = () => { const ids = boxes().filter((b) => b.checked).map((b) => b.dataset.c); S.chapters = ids.length === ms.length ? null : ids; save(); $('panel').hidden = true; toast(ids.length ? `Gata: ${ids.length} capitole făcute la școală.` : 'Nu ai bifat niciun capitol.'); };
 }
 /** Capitolele permise pentru antrenament (null = toate). */
-export const chapterOk = (m) => !S.chapters || S.chapters.includes(m.id) || !m.types;
+// un capitol e „deschis” dacă e la nivelul ales (sau mai jos) și, dacă s-a bifat „unde am ajuns”, e bifat
+export const chapterOk = (m) => !m.types || ((!m.per || m.per <= levelNow()) && (!S.chapters || S.chapters.includes(m.id)));
+export const fogWhy = (m) => (m.per && m.per > levelNow() ? `nivel ${LEVELS[m.per]} · vine mai târziu în an` : 'încă nu ați ajuns la școală');

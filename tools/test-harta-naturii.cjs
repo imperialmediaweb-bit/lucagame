@@ -40,7 +40,7 @@ const results = []; const ok = (n, c, i = '') => results.push({ n, pass: !!c, i 
     }
     // bonus: adevărat sau fals
     await p.click('#nsTf');
-    for (let k = 0; k < 10; k++) { if (!(await p.locator('.nm-tf').count())) break; const v = await p.evaluate(() => window.__natAns); if (ri === 0 && k === 1) await p.screenshot({ path: dir + '/n-tf.png' }); const before = await p.textContent('.nm-fact p'); await p.click(`.nm-tf [data-v="${v}"]`); await p.waitForFunction((b) => !document.querySelector('.nm-tf') || document.querySelector('.nm-fact p').textContent !== b, before, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(150); }
+    for (let k = 0; k < 10; k++) { if (!(await p.locator('.nm-tf').count())) break; const v = await p.evaluate(() => window.__natAns); const before = await p.textContent('.nm-fact p'); await p.click(`.nm-tf [data-v="${v}"]`); await p.waitForFunction((b) => !document.querySelector('.nm-tf') || document.querySelector('.nm-fact p').textContent !== b, before, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(150); }
     await p.click('#tfOk');
     if (ri === 0) await p.screenshot({ path: dir + '/n-tinut.png' });
     // 4. exerciții: 5/5

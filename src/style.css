@@ -380,3 +380,4 @@ input.cc.carry{height:26px;font-size:17px;color:#d23a3a;width:28px;border-bottom
 .wq-opts i{width:24px;height:24px;font-size:16px}
 #wq em,.wq em{display:none}
 #nmap>*{flex-shrink:0}
+.hm-lvl{display:inline-block;margin-left:6px;font:800 12px var(--font-d);background:#2EC4A6;color:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 8px;vertical-align:middle}

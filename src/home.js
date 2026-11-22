@@ -1,12 +1,12 @@
 // Ecranul „Acasă”: copilul alege direct jocul (Matematică, Română, Științe, Engleză, Fuga de monștri, Test, Cursă…).
 // Fiecare materie are o „hartă a capitolelor” cu noduri și stele.
-import { S, save, G, GRADE_NAMES, level, xpFor, starsTotal, areaLocked } from './state.js';
+import { S, save, G, GRADE_NAMES, level, xpFor, starsTotal, areaLocked, levelNow, LEVELS, LEVEL_WHEN, autoLevel } from './state.js';
 import { SFX } from './audio.js';
 import { MISSIONS, ROMANA, SUBJECT_NAMES } from './content/missions.js';
 import { SPEED, SPEED_IDS } from './content/speed.js';
 import { startMission, openDaily, openShop, openProgress, toast, showTutorial, openMenu } from './ui.js';
 import { openAtelier } from './atelier.js';
-import { openWrite, openFise, chapterOk } from './extra.js';
+import { openWrite, openFise, chapterOk, fogWhy } from './extra.js';
 import { portalPanel } from './chase.js';
 import { openCreate, openLobby } from './mpui.js';
 import { NET, joinRoom, createRoom, inviteLink } from './net.js';
@@ -86,7 +86,7 @@ export function openHome() {
   TILES = tiles; const rec = recommend(subj);
   $('home').innerHTML = `<div class="hm-top">
       <div class="hm-me"><div class="hm-av" style="background:${S.look.shirt}"><span style="background:${S.look.skin}"></span></div>
-        <div><b>${esc(S.name || 'Jucător')}</b><small>${esc(GRADE_NAMES[G()])} · nivelul ${lv}</small><div class="hm-xp"><i style="width:${pct}%"></i></div></div></div>
+        <div><b>${esc(S.name || 'Jucător')}</b><small>${esc(GRADE_NAMES[G()])} · nivelul ${lv}</small><button class="hm-lvl" type="button" id="hmLvl">${LEVELS[levelNow()]} ▾</button><div class="hm-xp"><i style="width:${pct}%"></i></div></div></div>
       <div class="hm-stats"><span class="pill"><span class="ic"></span>${S.coins}</span><span class="pill"><span class="st">★</span>${starsTotal()}</span><span class="pill">Serie ${S.streak}</span></div>
       <button class="iconbtn" type="button" id="hmMenu">☰ Meniu</button>
     </div>
@@ -111,6 +111,7 @@ export function openHome() {
     set('prieteni', bd.friendReq ? `${bd.friendReq} cereri noi!` : `${bd.friends} prieteni`, bd.friendReq);
   });
   if ($('hmRec')) $('hmRec').onclick = () => { closeHome(); startMission(rec.m); };
+  $('hmLvl').onclick = () => pickLevel();
   $('hmMenu').onclick = () => { openMenu(); };
   $('hmPlace').onclick = () => startPlacement(() => openHome());
   $('hmHelp').onclick = () => showTutorial(matchMedia('(pointer:coarse)').matches);
@@ -213,7 +214,7 @@ export function subjectMap(k) {
     <div class="hm-body"><div class="hm-path" style="--c:${c}">
       ${list.map((m, i) => { const st = (S.missions[m.id] || {}).stars || 0, school = chapterOk(m); return `<button class="hm-node ${i % 2 ? 'r' : 'l'} ${i === firstTodo ? 'now' : ''} ${st === 3 ? 'gold' : ''} ${school ? '' : 'fog'}" type="button" data-m="${m.id}">
         <span class="hm-dot">${st === 3 ? '★' : i + 1}</span><span class="hm-lbl"><b>${esc(m.title)}</b><small>${esc(m.desc)}</small>
-        <span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3 - st)}</span></span>${school ? '' : '<i>în ceață · încă nu ați ajuns la școală</i>'}</span></button>`; }).join('')}
+        <span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3 - st)}</span></span>${school ? '' : `<i>în ceață · ${fogWhy(m)}</i>`}</span></button>`; }).join('')}
       ${k === 'romana' ? `<button class="hm-node ${list.length % 2 ? 'r' : 'l'}" type="button" id="hmWrite"><span class="hm-dot">✎</span><span class="hm-lbl"><b>Scriu o compunere</b><small>Jocul verifică titlul, alineatele, ortogramele</small></span></button>` : ''}
     </div>
     <div class="row" style="justify-content:center"><button class="btn light" type="button" id="hmFise">Fișă de lucru pentru această materie</button></div></div>`;
@@ -234,3 +235,14 @@ function portalPick() {
   document.querySelectorAll('#panelCard [data-p]').forEach((b) => b.onclick = () => portalPanel(b.dataset.p));
 }
 export { save };
+
+/* alegerea nivelului: Începător / Mijlociu / Expert (sau automat, după lună) */
+function pickLevel() {
+  const cur = S.lvlPer || 0;
+  H.showPanel(`<div class="eyebrow">${esc(GRADE_NAMES[G()])}</div><h2>Ce nivel?</h2>
+    <p>Exercițiile vin în ordinea de la școală. Ce e peste nivelul ales rămâne „în ceață”, ca să nu primești lucruri pe care nu le-ați făcut.</p>
+    <div class="shopgrid">${[1, 2, 3].map((l) => `<button class="item ${cur === l ? 'on' : ''}" type="button" data-l="${l}"><b>${['🌱', '🌿', '🌳'][l - 1]} ${LEVELS[l]}</b><span>${LEVEL_WHEN[l]}</span></button>`).join('')}
+      <button class="item ${cur ? '' : 'on'}" type="button" data-l="0"><b>📅 Automat</b><span>după lună: acum ${LEVELS[autoLevel()]}</span></button></div>
+    <div class="row"><button class="btn light" type="button" data-close>Închide</button></div>`);
+  document.querySelectorAll('#panelCard [data-l]').forEach((b) => b.onclick = () => { S.lvlPer = +b.dataset.l || null; save(); document.getElementById('panel').hidden = true; toast(`Nivel: ${LEVELS[levelNow()]}`); openHome(); });
+}

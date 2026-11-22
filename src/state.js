@@ -7,7 +7,7 @@ const DEFAULTS = {
   stats: {}, review: {}, today: { day: 0, sec: 0 }, streak: 0, lastGoalDay: -9, seen: {}, mute: false, tutorial: false,
   testBest: 0, chests: {}, camSpeed: 'incet', grade: 0, chapters: null, name: '', atelier: {}
 };
-DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {}; DEFAULTS.grade = null; DEFAULTS.gv = 2; DEFAULTS.unlocked = {}; DEFAULTS.placed = null; DEFAULTS.powers = {}; DEFAULTS.nat = {}; DEFAULTS.doubleUntil = 0;
+DEFAULTS.xp = 0; DEFAULTS.badges = {}; DEFAULTS.records = {}; DEFAULTS.grade = null; DEFAULTS.gv = 2; DEFAULTS.unlocked = {}; DEFAULTS.placed = null; DEFAULTS.powers = {}; DEFAULTS.nat = {}; DEFAULTS.lvlPer = null; DEFAULTS.doubleUntil = 0;
 const migrate = (o) => { if (o.gv !== 2) { if (o.grade === 0) o.grade = null; o.gv = 2; } return o; };
 export const S = JSON.parse(JSON.stringify(DEFAULTS));
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(S, migrate(s)); } catch (e) { /* fără salvare */ }
@@ -37,6 +37,11 @@ export const areaLocked = (areaId) => {
   if (n > g) return !(S.unlocked || {})[n];
   return false;
 };
+// nivelul din an: Începător (sept–nov), Mijlociu (dec–mar), Expert (apr–iun); se poate alege din Acasă
+export const LEVELS = { 1: 'Începător', 2: 'Mijlociu', 3: 'Expert' };
+export const LEVEL_WHEN = { 1: 'început de an (sept.–nov.)', 2: 'mijloc de an (dec.–mart.)', 3: 'sfârșit de an (apr.–iun.)' };
+export const autoLevel = () => { const mo = new Date().getMonth(); return mo >= 8 && mo <= 10 ? 1 : mo === 11 || mo <= 2 ? 2 : 3; };
+export const levelNow = () => S.lvlPer || autoLevel();
 export const level = () => Math.floor(Math.sqrt((S.xp || 0) / 40)) + 1;
 export const xpFor = (l) => 40 * (l - 1) * (l - 1);
 export const DAY = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
