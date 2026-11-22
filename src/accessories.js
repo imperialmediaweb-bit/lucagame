@@ -4,6 +4,8 @@ export const ACC = {
   skate: { name: 'Skateboard', price: 150, icon: '🛹', desc: 'Mergi cu 40% mai repede.' },
   arc: { name: 'Bocanci cu arcuri', price: 120, icon: '👟', desc: 'Sari mult mai sus.' },
   aripi: { name: 'Aripi', price: 250, icon: '🪽', desc: 'Mai sari o dată în aer (săritură dublă).' },
+  rapid: { name: 'Pantofi rapizi', price: 80, icon: '⚡', desc: 'Mergi cu 25% mai repede (merge și cu skateboard-ul).' },
+  zbor: { name: 'Rucsac zburător', price: 400, icon: '🚀', desc: 'Ții apăsat pe Spațiu (sau pe butonul de săritură) și zbori!' },
   magnet: { name: 'Magnet de monede', price: 100, icon: '🧲', desc: 'Monedele vin la tine de la 6 metri.' }
 };
 const A = () => (S.acc = S.acc || { owned: {}, on: {} });

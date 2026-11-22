@@ -77,9 +77,13 @@ function moveAxis(ax, d) {
   if (!b) { P.x = nx; P.z = nz; return; }
   if (P.ground && b.y2 - P.y <= 0.55 && !hitAt(nx, b.y2, nz)) { P.x = nx; P.z = nz; P.y = b.y2; }
 }
-let jumpReq = false, standing = null;
+let jumpReq = false, jumpHeld = false, standing = null;
 function physics(dt, mx, mz) {
   moveAxis('x', mx * dt); moveAxis('z', mz * dt);
+  if (accOn('zbor')) { // rucsacul zburător: urci cât ții apăsat, apoi plutești ușor în jos
+    if (jumpHeld || keys.Space) P.vy = P.y > 38 ? Math.min(P.vy, 0) : Math.min(P.vy + 45 * dt, 7);
+    else if (P.vy < -4) P.vy = -4;
+  }
   P.vy -= 30 * dt; let ny = P.y + P.vy * dt; P.ground = false; standing = null;
   if (P.vy <= 0) {
     let land = -1e9, lb = null;
@@ -105,7 +109,7 @@ let dragAcc = 0, yawS = yaw0, face = 0;
 const keys = {}; let yaw = yaw0, pitch = 0.38, camDist = 10, jx = 0, jy = 0, stickId = null, camId = null, sx = 0, sy = 0, lx = 0, ly = 0;
 const touch = matchMedia('(pointer:coarse)').matches;
 if (touch) $('jump').hidden = false; else $('keys').hidden = false;
-const stop = () => { for (const k in keys) keys[k] = false; jx = jy = 0; stickId = null; $('stick').hidden = true; };
+const stop = () => { for (const k in keys) keys[k] = false; jx = jy = 0; jumpHeld = false; stickId = null; $('stick').hidden = true; };
 addEventListener('keydown', (e) => {
   if (paused() || e.target.tagName === 'TEXTAREA') return;
   keys[e.code] = true;
@@ -133,7 +137,8 @@ canvas.addEventListener('pointermove', (e) => {
 const endPtr = (e) => { if (e.pointerId === stickId) { stickId = null; jx = jy = 0; $('stick').hidden = true; $('knob').style.transform = ''; } if (e.pointerId === camId) camId = null; };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('wheel', (e) => { camDist = Math.max(5, Math.min(18, camDist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
-$('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpReq = true; });
+$('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpReq = true; jumpHeld = true; });
+['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('jump').addEventListener(ev, () => { jumpHeld = false; }));
 
 /* ---------- interacțiune ---------- */
 let near = null, cheerT = 0;
@@ -242,7 +247,7 @@ scene.registerBeforeRender(() => {
   { let d = yaw - yawS; while (d > Math.PI) { d -= 2 * Math.PI; yaw -= 2 * Math.PI; } while (d < -Math.PI) { d += 2 * Math.PI; yaw += 2 * Math.PI; } yawS += d * Math.min(1, dt * 7); }
   // Babylon e „mâna stângă”: dreapta ecranului este (-cos, sin)
   const fx = -Math.sin(yawS), fz = -Math.cos(yawS), rx = -Math.cos(yawS), rz = Math.sin(yawS);
-  const speed = 8.5 * (accOn('skate') ? 1.4 : 1), mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
+  const speed = 8.5 * (accOn('skate') ? 1.4 : 1) * (accOn('rapid') ? 1.25 : 1), mx = (fx * fwd + rx * side) * speed, mz = (fz * fwd + rz * side) * speed;
   // platforme care se mișcă
   for (const mv of W.movers) {
     const nxp = mv.base + Math.sin(t * mv.sp) * mv.amp, d = nxp - mv.m.position.x; mv.m.position.x = nxp; mv.c.x1 += d; mv.c.x2 += d;
@@ -253,7 +258,7 @@ scene.registerBeforeRender(() => {
   const moving = chase || Math.hypot(mx, mz) > 0.3;
   if (moving && !chase) { const target = Math.atan2(mx, mz); let d = target - face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; face += d * Math.min(1, dt * 12); }
   cheerT = Math.max(0, cheerT - dt);
-  gear.board.setEnabled(accOn('skate')); gear.wings.forEach((w, i) => { w.setEnabled(accOn('aripi')); w.rotation.y = (i ? -1 : 1) * (0.3 + Math.sin(t * (P.ground ? 2 : 12)) * 0.25); });
+  gear.board.setEnabled(accOn('skate')); gear.wings.forEach((w, i) => { w.setEnabled(accOn('aripi') || accOn('zbor')); w.rotation.y = (i ? -1 : 1) * (0.3 + Math.sin(t * (P.ground ? 2 : 12)) * 0.25); });
   me.root.position.set(P.x, P.y + (accOn('skate') ? 0.12 : 0), P.z); me.root.rotation.y = face;
   if (moving) seated = false;
   me.update(dt, { speed: chase ? 1 : moving ? Math.min(1, l) : 0, air: !chase && !P.ground && P.coyote <= 0 && !seated, dance: cheerT > 0 && P.ground && !moving && !seated, sit: seated });
