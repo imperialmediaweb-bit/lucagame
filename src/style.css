@@ -23,6 +23,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 #act{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 150px);z-index:6;font-size:18px;padding:12px 22px;animation:pop .25s ease}
 #act:active{transform:translateX(-50%) translateY(2px)}
 #jump{position:fixed;right:calc(env(safe-area-inset-right,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 34px);width:86px;height:86px;border-radius:50%;font-family:var(--font-d);font-size:20px;z-index:6;padding:0}
+#stickHome{position:fixed;left:calc(env(safe-area-inset-left,0px) + 26px);bottom:calc(env(safe-area-inset-bottom,0px) + 26px);width:120px;height:120px;border-radius:50%;background:rgba(255,250,240,.3);border:2px dashed rgba(31,43,58,.45);z-index:5;pointer-events:none;display:grid;place-items:center;transition:opacity .2s}
+#stickHome div{width:50px;height:50px;border-radius:50%;background:rgba(255,250,240,.75);border:2px solid rgba(31,43,58,.5)}
+#stickHome span{position:absolute;bottom:-24px;font-family:var(--font-d);font-size:15px;color:#1F2B3A;text-shadow:0 1px 0 #fff}
+#stickHome[hidden]{display:none}
 #stick{position:fixed;width:120px;height:120px;border-radius:50%;background:rgba(255,250,240,.35);border:2px solid rgba(31,43,58,.5);z-index:6;pointer-events:none;transform:translate(-50%,-50%)}
 #knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:var(--paper);border:2px solid var(--ink)}
 #keys{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);background:rgba(255,250,240,.85);border-radius:10px;padding:6px 10px;font-size:13px;color:var(--ink);z-index:4}

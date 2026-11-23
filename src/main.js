@@ -108,8 +108,9 @@ if (location.hostname === 'localhost') window.__dbg = { scene, engine, glow: () 
 const CAM_SPEED = { incet: 0.0025, mediu: 0.0045, rapid: 0.007 };
 let dragAcc = 0, yawS = yaw0, face = 0;
 const keys = {}; let yaw = yaw0, pitch = 0.38, camDist = 10, jx = 0, jy = 0, stickId = null, camId = null, sx = 0, sy = 0, lx = 0, ly = 0;
-const touch = matchMedia('(pointer:coarse)').matches;
-if (touch) $('jump').hidden = false; else $('keys').hidden = false;
+// ecran tactil: unele telefoane nu raportează „pointer:coarse”, deci verificăm și atingerile
+const touch = matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+if (touch) { $('jump').hidden = false; $('stickHome').hidden = false; } else $('keys').hidden = false;
 const stop = () => { for (const k in keys) keys[k] = false; jx = jy = 0; jumpHeld = false; stickId = null; $('stick').hidden = true; };
 addEventListener('keydown', (e) => {
   if (paused() || e.target.tagName === 'TEXTAREA') return;
@@ -121,7 +122,7 @@ addEventListener('keyup', (e) => { keys[e.code] = false; });
 canvas.addEventListener('pointerdown', (e) => {
   if (paused()) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && e.clientY > innerHeight * 0.3 && stickId === null) {
-    stickId = e.pointerId; sx = e.clientX; sy = e.clientY; const st = $('stick'); st.style.left = sx + 'px'; st.style.top = sy + 'px'; st.hidden = false;
+    stickId = e.pointerId; sx = e.clientX; sy = e.clientY; const st = $('stick'); st.style.left = sx + 'px'; st.style.top = sy + 'px'; st.hidden = false; $('stickHome').style.opacity = 0;
   } else if (camId === null) { camId = e.pointerId; lx = e.clientX; ly = e.clientY; dragAcc = 0; }
   canvas.setPointerCapture(e.pointerId);
 });
@@ -135,7 +136,7 @@ canvas.addEventListener('pointermove', (e) => {
     yaw -= dx * k; pitch = Math.max(0.15, Math.min(1.0, pitch + dy * k * 0.6));
   }
 });
-const endPtr = (e) => { if (e.pointerId === stickId) { stickId = null; jx = jy = 0; $('stick').hidden = true; $('knob').style.transform = ''; } if (e.pointerId === camId) camId = null; };
+const endPtr = (e) => { if (e.pointerId === stickId) { stickId = null; jx = jy = 0; $('stick').hidden = true; $('knob').style.transform = ''; $('stickHome').style.opacity = ''; } if (e.pointerId === camId) camId = null; };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('wheel', (e) => { camDist = Math.max(5, Math.min(18, camDist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
 $('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpReq = true; jumpHeld = true; });
