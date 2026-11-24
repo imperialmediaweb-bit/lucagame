@@ -89,7 +89,8 @@ export const MISSIONS = [
 
   { id: 'g3-numere', area: '3', per: 1, npc: 'Contesa Miilor', look: ['#f3c9a0', '#f2b632', '#2b2f38', 'coroana', 'zambet'], title: 'Numere până la 10.000', desc: 'Mii, sute, zeci, unități, comparare, rotunjire.', types: ['numere10k', 'rotunjire', 'ordonare'], lesson: 'numere10k' },
   { id: 'g3-calcule', area: '3', per: 1, npc: 'Strajerul Coloană', look: ['#c98e5f', '#9aa4b2', '#4a4f5a', 'coif', 'zambet'], title: 'Adunări și scăderi mari', desc: 'Calcule până la 10.000, în coloană.', types: ['adun10k', 'proprietati'] },
-  { id: 'g3-inmultire', area: '3', per: 2, npc: 'Fierarul Fix', look: ['#8a5a3b', '#7a5a3b', '#2b2f38', 'casca', 'cool'], title: 'Înmulțirea mare', desc: 'Număr de 2 cifre × 1 cifră, × 10, × 100.', types: ['inm', 'inm3'], lesson: 'inm' },
+  { id: 'g3-inmcol', area: '3', per: 1, npc: 'Inginerul Coloană', look: ['#e0b48a', '#42c0d8', '#2b2f38', 'casca', 'zambet'], title: 'Înmulțirea în coloană', desc: 'Unul sub altul, cu „ține minte”: cu o cifră și cu două cifre.', types: ['inmCol1', 'inmCol1', 'inmCol2'], lesson: 'inm' },
+  { id: 'g3-inmultire', area: '3', per: 1, npc: 'Fierarul Fix', look: ['#8a5a3b', '#7a5a3b', '#2b2f38', 'casca', 'cool'], title: 'Înmulțirea mare', desc: 'Număr de 2 cifre × 1 cifră, × 10, × 100.', types: ['inm', 'inm3'], lesson: 'inm' },
   { id: 'g3-rest', area: '3', per: 2, npc: 'Grădinarul Rest', look: ['#e0b48a', '#2fae5f', '#7a5a3b', 'palarie', 'zambet'], title: 'Împărțirea cu rest', desc: 'Câte încap și ce rămâne.', types: ['impRest'], lesson: 'rest' },
   { id: 'g3-figurativ', area: '3', per: 2, npc: 'Pictorița Bandă', look: ['#f3c9a0', '#ff8ac0', '#2b3a55', 'fundita', 'fericit'], title: 'Metoda figurativă', desc: 'Suma și diferența, „de atâtea ori mai mult”.', types: ['sumadif', 'sumacat', 'deOri'], lesson: 'figurativ' },
   { id: 'g3-masuri', area: '3', per: 3, npc: 'Negustorul Cântar', look: ['#c98e5f', '#e07a2f', '#3b3b3b', 'palarie', 'zambet'], title: 'Unități de măsură', desc: 'm, km, kg, l, lei, ore, secol.', types: ['masuri3', 'ceas', 'calendar'] },
@@ -134,6 +135,7 @@ export const areaById = (id) => AREAS.find((a) => a.id === id);
 export const typeArea = (t, pref) => { const ms = MISSIONS.filter((m) => m.types && m.types.includes(t)); return ((pref !== undefined && ms.find((m) => m.area === String(pref))) || ms[0] || {}).area; };
 
 export const TYPE_NAMES = {
+  inmCol1: 'Înmulțirea în coloană cu o cifră', inmCol2: 'Înmulțirea cu un număr de două cifre',
   compara: 'Comparare și vecini', vecini: 'Numărul dinainte / de după', adun20: 'Adunări până la 20', scad20: 'Scăderi până la 20', zeci: 'Zeci și unități',
   prob1: 'Probleme cu o operație', silabe: 'Silabe', cegi: 'ce / ci / ge / gi / che / chi',
   adun1000: 'Calcule până la 1000', tabla: 'Tabla înmulțirii', imp: 'Împărțirea', maimult: '„cu … mai mult / mai puțin”', masuri: 'Măsurători',

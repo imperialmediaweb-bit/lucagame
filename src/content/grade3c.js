@@ -6,6 +6,31 @@ import { rnd, pick, shuffle, opts, textOpts } from './util.js';
 const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 export const G3C = {
+  // înmulțirea scrisă unul sub altul, cu o cifră: pas cu pas, cu „ține minte”
+  inmCol1() {
+    let a, b;
+    do { a = rnd(23, 489); b = rnd(3, 9); } while (a * b > 9999 || (a % 10) * b < 10);
+    const r = a * b, ds = String(a).split('').reverse().map(Number), steps = [];
+    let c = 0, noCarry = '';
+    ds.forEach((d, i) => {
+      const p = d * b + c, last = i === ds.length - 1;
+      steps.push(`${d} × ${b} = ${d * b}${c ? ` și cu ${c} ținut minte = ${p}` : ''}: ${last ? `scrii ${p}` : `scrii ${p % 10}, ții minte ${Math.floor(p / 10)}`}.`);
+      noCarry = (last ? String(d * b) : String((d * b) % 10)) + noCarry; c = Math.floor(p / 10);
+    });
+    const nc = +noCarry;
+    return { text: 'Calculează unul sub altul (în coloană):', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [nc !== r ? nc : r + 10, r + b, r - 10 * b]),
+      steps: ['Scrii numerele unul sub altul: unitățile sub unități. Înmulțești de la dreapta.', ...steps, `Rezultat: ${r}.`],
+      why: { [nc]: 'Ai uitat să adaugi ce ai ținut minte la coloana următoare.', [r + b]: 'Ai adunat o dată în plus numărul de jos. Refă înmulțirea pe fiecare coloană.', [r - 10 * b]: 'Ai greșit la zeci: verifică ce ai ținut minte de la unități.' } };
+  },
+  // înmulțirea cu un număr de două cifre: două rânduri și le aduni
+  inmCol2() {
+    let a, b;
+    do { a = rnd(12, 98); b = rnd(12, 49); } while (b % 10 === 0 || b % 11 === 0);
+    const r = a * b, u = b % 10, z = Math.floor(b / 10), p1 = a * u, p2 = a * z, bad = p1 + p2;
+    return { text: 'Calculează unul sub altul (în coloană):', expr: `${a} × ${b} =`, ans: r, opts: opts(r, [bad, r + a, r - 10 * a]),
+      steps: [`Rândul 1: ${a} × ${u} (unitățile) = ${p1}.`, `Rândul 2: ${a} × ${z} (zecile) = ${p2}. Îl scrii mutat cu un loc spre stânga, adică ${p2 * 10}.`, `Aduni rândurile: ${p1} + ${p2 * 10} = ${r}.`],
+      why: { [bad]: `Al doilea rând (${p2}) trebuia mutat cu un loc spre stânga, pentru că ${z} înseamnă ${z} zeci: ${p2 * 10}, nu ${p2}.`, [r + a]: `Ai înmulțit cu ${b + 1} în loc de ${b}. Verifică rândul cu unitățile.`, [r - 10 * a]: `Ai înmulțit cu ${b - 10} în loc de ${b}. Verifică rândul cu zecile.` } };
+  },
   ordonare() {
     if (Math.random() < 0.5) {
       const ns = []; while (ns.length < 4) { const n = rnd(1000, 9999); if (!ns.includes(n)) ns.push(n); }
