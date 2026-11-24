@@ -85,7 +85,7 @@ export const MISSIONS = [
   { id: 'g3-veverite', area: '3', per: 1, npc: 'Ronțăilă', look: ['#c46a2f', '#e07a2f', '#7a3b1f', 'urechi', 'zambet'], title: 'Problema veverițelor', desc: 'Benzi colorate și sume, ca la 3 și 1 c).', types: ['veverite', 'abc'], lesson: 'veverite' },
   { id: 'g3-piata', area: '3', per: 1, npc: 'Bunica Ileana', look: ['#f0c8a8', '#d23a3a', '#3b3b3b', 'basma', 'zambet'], title: 'Piața bunicii', desc: 'Prețuri, rest și bani, ca la 4 și 5.', types: ['piata1', 'bunica', 'rest'], lesson: 'piata' },
   { id: 'g3-fractii', area: '3', per: 3, npc: 'Bucătarul Tort', look: ['#f3c9a0', '#ffffff', '#2b2f38', 'bucatar', 'zambet'], title: 'Fracții', desc: 'Jumătăți, sferturi și felii de tort.', types: ['fractii', 'fractii3'], lesson: 'fractii' },
-  { id: 'g3-vorbire', area: '3', per: 2, npc: 'Bibliotecara Ema', look: ['#f3c9a0', '#2fae5f', '#2b3a55', 'ochelari', 'zambet'], title: 'Părțile de vorbire', desc: 'Substantiv, verb sau adjectiv?', types: ['partivorbire'], lesson: 'vorbire' },
+  { id: 'g3-vorbire', area: '3', per: 1, npc: 'Bibliotecara Ema', look: ['#f3c9a0', '#2fae5f', '#2b3a55', 'ochelari', 'zambet'], title: 'Părțile de vorbire', desc: 'Substantiv, verb sau adjectiv?', types: ['partivorbire'], lesson: 'vorbire' },
 
   { id: 'g3-numere', area: '3', per: 1, npc: 'Contesa Miilor', look: ['#f3c9a0', '#f2b632', '#2b2f38', 'coroana', 'zambet'], title: 'Numere până la 10.000', desc: 'Mii, sute, zeci, unități, comparare, rotunjire.', types: ['numere10k', 'rotunjire', 'ordonare'], lesson: 'numere10k' },
   { id: 'g3-calcule', area: '3', per: 1, npc: 'Strajerul Coloană', look: ['#c98e5f', '#9aa4b2', '#4a4f5a', 'coif', 'zambet'], title: 'Adunări și scăderi mari', desc: 'Calcule până la 10.000, în coloană.', types: ['adun10k', 'proprietati'] },
@@ -96,7 +96,7 @@ export const MISSIONS = [
   { id: 'g3-perimetru', area: '3', per: 3, npc: 'Arhitectul Latură', look: ['#f3c9a0', '#42c0d8', '#2b2f38', 'casca', 'cool'], title: 'Perimetrul', desc: 'Pătrat, dreptunghi, triunghi.', types: ['perimetru', 'figuri3', 'corpuri'], lesson: 'perimetru' },
   { id: 'g3-romane', area: '3', per: 3, npc: 'Centurionul Marcus', look: ['#e0b48a', '#d23a3a', '#7a5a3b', 'coif', 'cool'], title: 'Cifre romane', desc: 'I, V, X, L.', types: ['romane'], lesson: 'romane' },
   { id: 'g3-sinonime', area: '3', per: 1, npc: 'Poetul Rima', look: ['#f3c9a0', '#4b3cc4', '#2b2f38', 'palarie', 'fericit'], title: 'Sinonime și antonime', desc: 'Cuvinte la fel și cuvinte opuse.', types: ['sinonime', 'omonime'], lesson: 'sinonime' },
-  { id: 'g3-substantiv', area: '3', per: 2, npc: 'Scribul Nume', look: ['#e0b48a', '#7a5a3b', '#2b3a55', 'ochelari', 'zambet'], title: 'Substantivul', desc: 'Comun sau propriu, singular sau plural.', types: ['substantiv'], lesson: 'vorbire' },
+  { id: 'g3-substantiv', area: '3', per: 1, npc: 'Scribul Nume', look: ['#e0b48a', '#7a5a3b', '#2b3a55', 'ochelari', 'zambet'], title: 'Substantivul', desc: 'Felul, numărul și genul. Găsește-l în propoziție.', types: ['substantiv'], lesson: 'vorbire' },
   { id: 'g3-propozitie', area: '3', per: 1, npc: 'Crainicul Glas', look: ['#f3c9a0', '#ffb020', '#2b3a55', 'sapca', 'surprins'], title: 'Propoziția și dialogul', desc: 'Enunțiativă, interogativă, exclamativă.', types: ['propozitie'] },
 
   { id: 'g3-date', area: '3', per: 3, npc: 'Cercetașa Tabel', look: ['#f3c9a0', '#42c0d8', '#2b3a55', 'sapca', 'fericit'], title: 'Tabele și date', desc: 'Citești un tabel și răspunzi.', types: ['tabel'] },

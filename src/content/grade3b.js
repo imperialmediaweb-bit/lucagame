@@ -97,11 +97,47 @@ export const G3B = {
       steps: [askSin ? `Sinonime = cuvinte cu același înțeles: ${w} = ${sin}.` : `Antonime = cuvinte cu înțeles opus: ${w} ≠ ${ant}.`] };
   },
   substantiv() {
-    const t = rnd(0, 1);
-    if (t === 0) { const L = [['Brașov', 'propriu'], ['oraș', 'comun'], ['Luca', 'propriu'], ['băiat', 'comun'], ['Dunărea', 'propriu'], ['râu', 'comun'], ['Grivei', 'propriu'], ['câine', 'comun'], ['România', 'propriu'], ['țară', 'comun']]; const [w, a] = pick(L);
-      return { text: 'Ce fel de substantiv este?', expr: w, ans: a, opts: ['comun', 'propriu'], steps: [a === 'propriu' ? 'Substantivul propriu e numele unei anumite ființe sau al unui loc și se scrie cu literă mare.' : 'Substantivul comun denumește orice ființă sau lucru de același fel și se scrie cu literă mică.'] }; }
-    const L = [['copii', 'plural'], ['carte', 'singular'], ['flori', 'plural'], ['munte', 'singular'], ['mere', 'plural'], ['elev', 'singular'], ['păsări', 'plural'], ['casă', 'singular']]; const [w, a] = pick(L);
-    return { text: 'La ce număr este substantivul?', expr: w, ans: a, opts: ['singular', 'plural'], steps: [a === 'plural' ? 'Plural = mai multe ființe sau lucruri.' : 'Singular = o singură ființă sau un singur lucru.'] };
+    const t = rnd(0, 5);
+    if (t === 0) { // felul: comun sau propriu
+      const L = [['Brașov', 'propriu'], ['oraș', 'comun'], ['Luca', 'propriu'], ['băiat', 'comun'], ['Dunărea', 'propriu'], ['râu', 'comun'], ['Grivei', 'propriu'], ['câine', 'comun'], ['România', 'propriu'], ['țară', 'comun'],
+        ['Carpați', 'propriu'], ['munte', 'comun'], ['Maria', 'propriu'], ['fată', 'comun'], ['Marea Neagră', 'propriu'], ['mare', 'comun'], ['Iași', 'propriu'], ['pisică', 'comun'], ['Miau', 'propriu'], ['școală', 'comun']];
+      const [w, a] = pick(L);
+      return { text: 'Ce fel de substantiv este?', expr: w, ans: a, opts: ['comun', 'propriu'], steps: [a === 'propriu' ? 'Substantivul propriu e numele unei anumite ființe sau al unui loc și se scrie cu literă mare.' : 'Substantivul comun denumește orice ființă sau lucru de același fel și se scrie cu literă mică.'],
+        why: { comun: 'Se scrie cu literă mare și e numele unui anume loc sau al unei anume ființe, deci e propriu.', propriu: 'E un nume pentru toate ființele sau lucrurile de felul ăsta, deci e comun (literă mică).' } };
+    }
+    if (t === 1) { // numărul
+      const L = [['copii', 'plural'], ['carte', 'singular'], ['flori', 'plural'], ['munte', 'singular'], ['mere', 'plural'], ['elev', 'singular'], ['păsări', 'plural'], ['casă', 'singular'], ['caiete', 'plural'], ['stilou', 'singular'], ['fete', 'plural'], ['pom', 'singular'], ['ouă', 'plural'], ['scaun', 'singular']];
+      const [w, a] = pick(L);
+      return { text: 'La ce număr este substantivul?', expr: w, ans: a, opts: ['singular', 'plural'], steps: [a === 'plural' ? 'Plural = mai multe ființe sau lucruri.' : 'Singular = o singură ființă sau un singur lucru.'] };
+    }
+    if (t === 2) { // genul: proba „un – doi”, „o – două”, „un – două”
+      const L = [['băiat', 'masculin', 'un băiat – doi băieți'], ['pom', 'masculin', 'un pom – doi pomi'], ['câine', 'masculin', 'un câine – doi câini'], ['elev', 'masculin', 'un elev – doi elevi'], ['munte', 'masculin', 'un munte – doi munți'],
+        ['fată', 'feminin', 'o fată – două fete'], ['carte', 'feminin', 'o carte – două cărți'], ['floare', 'feminin', 'o floare – două flori'], ['casă', 'feminin', 'o casă – două case'], ['pisică', 'feminin', 'o pisică – două pisici'],
+        ['caiet', 'neutru', 'un caiet – două caiete'], ['scaun', 'neutru', 'un scaun – două scaune'], ['ou', 'neutru', 'un ou – două ouă'], ['stilou', 'neutru', 'un stilou – două stilouri'], ['tren', 'neutru', 'un tren – două trenuri']];
+      const [w, a, proba] = pick(L);
+      return { text: 'Ce gen are substantivul? (fă proba: un – doi, o – două, un – două)', expr: w, ans: a, opts: ['masculin', 'feminin', 'neutru'],
+        steps: [`Proba: ${proba}.`, a === 'masculin' ? 'un … doi … → masculin' : a === 'feminin' ? 'o … două … → feminin' : 'un … două … → neutru'],
+        why: { masculin: `Proba e „${proba}”. Masculin ar fi „un … – doi …”.`, feminin: `Proba e „${proba}”. Feminin ar fi „o … – două …”.`, neutru: `Proba e „${proba}”. Neutru ar fi „un … – două …”.` } };
+    }
+    if (t === 3) { // găsește substantivul în propoziție
+      const L = [['Pisica doarme liniștită.', 'Pisica', ['doarme', 'liniștită']], ['Luca citește repede.', 'Luca', ['citește', 'repede']], ['Vântul bate puternic.', 'Vântul', ['bate', 'puternic']],
+        ['Mama gătește azi.', 'Mama', ['gătește', 'azi']], ['Copiii aleargă veseli.', 'Copiii', ['aleargă', 'veseli']], ['Afară ninge frumos.', 'Afară', null], ['Florile cresc încet.', 'Florile', ['cresc', 'încet']],
+        ['Ana scrie frumos.', 'Ana', ['scrie', 'frumos']], ['Trenul pleacă acum.', 'Trenul', ['pleacă', 'acum']], ['Câinele latră tare.', 'Câinele', ['latră', 'tare']]].filter((x) => x[2]);
+      const [p, a, wr] = pick(L);
+      return { text: 'Care cuvânt din propoziție este substantiv?', expr: p, ans: a, opts: shuffle([a, ...wr]),
+        steps: [`Întrebi „cine?” sau „ce?”: ${a} → substantiv (denumește o ființă sau un lucru).`], why: Object.fromEntries(wr.map((x) => [x, `„${x}” nu răspunde la „cine?/ce?”. Arată ce face cineva sau cum, deci nu e substantiv.`])) };
+    }
+    if (t === 4) { // forma de plural
+      const L = [['copil', 'copii', ['copili', 'copiluri']], ['carte', 'cărți', ['carti', 'cartele']], ['floare', 'flori', ['floare', 'floari']], ['pom', 'pomi', ['pome', 'pomuri']], ['ou', 'ouă', ['oauri', 'oui']],
+        ['munte', 'munți', ['muntei', 'muntele']], ['casă', 'case', ['casi', 'căsuri']], ['tren', 'trenuri', ['treni', 'trene']], ['pasăre', 'păsări', ['pasări', 'pasere']], ['scaun', 'scaune', ['scauni', 'scaunuri']]];
+      const [w, a, wr] = pick(L);
+      return { text: 'Care este forma de plural a substantivului?', expr: w, ans: a, opts: textOpts(a, wr), steps: [`Un/o ${w} → mai mulți/multe: ${a}.`] };
+    }
+    // scrierea corectă a substantivului propriu
+    const L = [['Am vizitat orașul Sibiu.', ['Am vizitat orașul sibiu.', 'Am vizitat Orașul Sibiu.']], ['Câinele meu se numește Azorel.', ['Câinele meu se numește azorel.', 'Câinele Meu se numește Azorel.']],
+      ['Râul Olt curge prin munți.', ['Râul olt curge prin munți.', 'râul Olt curge prin Munți.']], ['Prietena mea, Ioana, cântă.', ['Prietena mea, ioana, cântă.', 'Prietena Mea, Ioana, cântă.']], ['Locuim în România.', ['Locuim în românia.', 'Locuim În România.']]];
+    const [a, wr] = pick(L);
+    return { text: 'Care propoziție este scrisă corect?', ans: a, opts: textOpts(a, wr), steps: ['Substantivele proprii (nume de persoane, animale, orașe, râuri, țări) se scriu cu literă mare. Cele comune, cu literă mică.', 'Prima literă din propoziție e mereu mare.'] };
   },
   propozitie() {
     const L = [['Ce ai mâncat azi?', 'interogativă'], ['Afară plouă.', 'enunțiativă'], ['Ce frumos cântă!', 'exclamativă'], ['Unde mergi?', 'interogativă'], ['Am o pisică.', 'enunțiativă'], ['Ura, e vacanță!', 'exclamativă']];
